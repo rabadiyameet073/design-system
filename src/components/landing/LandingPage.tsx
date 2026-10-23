@@ -723,12 +723,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   };
 
   // Master Window-Level Section Travel Lock:
-  // Ensures that from upper (#live-render), downer (#exports), or anywhere on screen,
-  // the user cannot skip past #steps directly. They MUST travel through all 4 flights first.
+  // Fast, responsive (220ms) lock that guarantees complete section travel
+  // from upper, downer, or anywhere on screen with zero lag or scroll friction.
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
-      // Filter out negligible trackpad noise
-      if (Math.abs(e.deltaY) < 14) return;
+      // Responsive threshold for mouse wheel & trackpad
+      if (Math.abs(e.deltaY) < 10) return;
 
       const section = stepsSectionRef.current;
       if (!section) return;
@@ -743,21 +743,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       const topOffsetFromHeader = rect.top - headerH;
 
       // -----------------------------------------------------------------
-      // REGION 1: USER IS IN THE UPPER REGION (Above #steps)
+      // REGION 1: UPPER REGION (Above #steps, e.g. in #live-render)
       // -----------------------------------------------------------------
       if (topOffsetFromHeader > 40) {
-        // If section has not yet reached the bottom 80% of screen, allow normal page scroll down
-        if (rect.top > windowH * 0.8) return;
+        // Allow normal page scroll down until #steps reaches lower viewport
+        if (rect.top > windowH * 0.78) return;
 
-        // User is scrolling down and section enters the lower screen:
-        // CATCH SCROLL: Do NOT allow scrolling directly past #steps into #exports!
+        // Catch scroll before jumping over #steps: snap flush to #steps at Flight 1
         if (isScrollingDown) {
           e.preventDefault();
           e.stopPropagation();
 
           if (isWheelLockedRef.current) return;
 
-          // Lock and snap cleanly to #steps at Flight 1
           isWheelLockedRef.current = true;
           const targetY = window.scrollY + topOffsetFromHeader;
           window.scrollTo({ top: targetY, behavior: 'smooth' });
@@ -771,30 +769,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
           wheelCooldownTimerRef.current = setTimeout(() => {
             isWheelLockedRef.current = false;
-          }, 600);
+          }, 280);
           return;
         }
-
-        // If scrolling up while above #steps, allow normal scrolling up
         return;
       }
 
       // -----------------------------------------------------------------
-      // REGION 2: USER IS IN THE DOWNER REGION (Below #steps)
+      // REGION 2: DOWNER REGION (Below #steps, e.g. in #exports)
       // -----------------------------------------------------------------
-      if (rect.bottom < headerH + 30) {
-        // If section is far above the screen, allow normal scrolling up
-        if (rect.bottom < -windowH * 0.6) return;
+      if (rect.bottom < headerH + 25) {
+        // Allow normal page scroll up until #steps enters view
+        if (rect.bottom < -windowH * 0.5) return;
 
-        // User is scrolling up and section approaches from above:
-        // CATCH SCROLL: Do NOT allow scrolling directly past #steps into #live-render!
+        // Catch scroll before jumping over #steps: snap flush to #steps at Flight 4
         if (!isScrollingDown) {
           e.preventDefault();
           e.stopPropagation();
 
           if (isWheelLockedRef.current) return;
 
-          // Lock and snap cleanly to #steps at Flight 4 (Summit)
           isWheelLockedRef.current = true;
           const targetY = window.scrollY + topOffsetFromHeader;
           window.scrollTo({ top: targetY, behavior: 'smooth' });
@@ -808,34 +802,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
           wheelCooldownTimerRef.current = setTimeout(() => {
             isWheelLockedRef.current = false;
-          }, 600);
+          }, 280);
           return;
         }
-
-        // If scrolling down while below #steps, allow normal scrolling down
         return;
       }
 
       // -----------------------------------------------------------------
-      // REGION 3: USER IS INSIDE #steps (Section is framed in viewport)
+      // REGION 3: INSIDE #steps (Framed in viewport)
       // -----------------------------------------------------------------
-      // The section is occupying the screen. You MUST travel all flights before exiting!
-
-      // Keep section pinned neatly under sticky header if slightly drifted
-      if (Math.abs(topOffsetFromHeader) > 4 && Math.abs(topOffsetFromHeader) < 140) {
-        window.scrollTo({
-          top: window.scrollY + topOffsetFromHeader,
-          behavior: 'smooth',
-        });
-      }
+      // Lock page scroll to guarantee travel through all 4 flights
+      e.preventDefault();
+      e.stopPropagation();
 
       // SUB-CASE 3A: SCROLLING DOWN (Flight 1 -> 2 -> 3 -> 4 -> Next Section)
       if (isScrollingDown) {
-        // If user hasn't reached the final Flight 4:
         if (currentFlight < 4) {
-          e.preventDefault();
-          e.stopPropagation();
-
           if (isWheelLockedRef.current) return;
 
           isWheelLockedRef.current = true;
@@ -847,22 +829,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
           wheelCooldownTimerRef.current = setTimeout(() => {
             isWheelLockedRef.current = false;
-          }, 520);
+          }, 220);
           return;
         }
 
-        // User is at Flight 4 (Summit):
-        // If cooldown is still active from arriving at Flight 4, absorb momentum so it's seen
-        if (isWheelLockedRef.current) {
-          e.preventDefault();
-          e.stopPropagation();
-          return;
-        }
+        // On Flight 4: All flights traveled!
+        if (isWheelLockedRef.current) return;
 
-        // USER HAS TRAVELED ALL 4 FLIGHTS!
-        // Now, subsequent scroll down smoothly navigates to next section (#exports)
-        e.preventDefault();
-        e.stopPropagation();
+        // Advance smoothly to next section (#exports)
         isWheelLockedRef.current = true;
         const nextSection = document.getElementById('exports');
         if (nextSection) {
@@ -871,17 +845,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
         wheelCooldownTimerRef.current = setTimeout(() => {
           isWheelLockedRef.current = false;
-        }, 850);
+        }, 450);
         return;
       }
 
       // SUB-CASE 3B: SCROLLING UP (Flight 4 -> 3 -> 2 -> 1 -> Previous Section)
       if (!isScrollingDown) {
-        // If user hasn't traveled all the way back to Flight 1:
         if (currentFlight > 1) {
-          e.preventDefault();
-          e.stopPropagation();
-
           if (isWheelLockedRef.current) return;
 
           isWheelLockedRef.current = true;
@@ -893,22 +863,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
           wheelCooldownTimerRef.current = setTimeout(() => {
             isWheelLockedRef.current = false;
-          }, 520);
+          }, 220);
           return;
         }
 
-        // User is at Flight 1 (Foundation):
-        // If cooldown is still active, absorb momentum so it's seen
-        if (isWheelLockedRef.current) {
-          e.preventDefault();
-          e.stopPropagation();
-          return;
-        }
+        // On Flight 1: All flights traveled backward!
+        if (isWheelLockedRef.current) return;
 
-        // USER HAS TRAVELED ALL THE WAY BACK TO FLIGHT 1!
-        // Now, subsequent scroll up smoothly navigates to previous section (#live-render)
-        e.preventDefault();
-        e.stopPropagation();
+        // Advance smoothly to previous section (#live-render)
         isWheelLockedRef.current = true;
         const prevSection = document.getElementById('live-render');
         if (prevSection) {
@@ -917,7 +879,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
         wheelCooldownTimerRef.current = setTimeout(() => {
           isWheelLockedRef.current = false;
-        }, 850);
+        }, 450);
         return;
       }
     };
@@ -1624,19 +1586,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       {/* Soft floor reflection pedestal shadow */}
                       <div className="absolute bottom-24 w-48 sm:w-60 h-4 rounded-full bg-stone-950/15 blur-lg" />
 
-                      <AnimatePresence mode="wait">
+                      <AnimatePresence>
                         <motion.div
                           key={activeFlightData.id}
-                          initial={{ opacity: 0, scale: 0.92, y: 14 }}
+                          initial={{ opacity: 0, scale: 0.95, y: 10 }}
                           animate={{
                             opacity: 1,
                             scale: 1,
                             y: [0, -6, 0],
                           }}
-                          exit={{ opacity: 0, scale: 1.05, y: -14 }}
+                          exit={{ opacity: 0, scale: 1.04, y: -10 }}
                           transition={{
-                            opacity: { duration: 0.35, ease: 'easeOut' },
-                            scale: { type: 'spring', stiffness: 300, damping: 24 },
+                            opacity: { duration: 0.22, ease: 'easeOut' },
+                            scale: { type: 'spring', stiffness: 350, damping: 26 },
                             y: {
                               repeat: Infinity,
                               duration: 4.5,
@@ -1661,14 +1623,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <div className="relative z-20 p-5 sm:p-6 lg:p-7 flex items-end justify-between text-white pointer-events-auto mt-auto">
                       <div>
                         {/* Odometer Rolling Flight Number */}
-                        <div className="overflow-hidden h-[68px] sm:h-[80px] lg:h-[92px] flex items-center">
-                          <AnimatePresence mode="wait">
+                        <div className="overflow-hidden h-[68px] sm:h-[80px] lg:h-[92px] flex items-center relative">
+                          <AnimatePresence>
                             <motion.div
                               key={activeFlightData.numStr}
-                              initial={{ opacity: 0, y: 26, filter: 'blur(3px)' }}
-                              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                              exit={{ opacity: 0, y: -26, filter: 'blur(3px)' }}
-                              transition={{ type: 'spring', stiffness: 360, damping: 24 }}
+                              initial={{ opacity: 0, y: 22 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -22 }}
+                              transition={{ type: 'spring', stiffness: 380, damping: 26 }}
                               className="font-display text-6xl sm:text-7xl lg:text-8xl font-black leading-none tracking-tight text-white drop-shadow-lg"
                             >
                               {activeFlightData.numStr}
@@ -1708,7 +1670,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div
                 ref={rightColumnRef}
                 onScroll={handleRightColumnScroll}
-                className="h-full overflow-y-auto pr-3 sm:pr-6 space-y-6 sm:space-y-8 snap-y snap-mandatory scroll-smooth relative border-l border-rule/80 pl-6 sm:pl-10 pb-6 pt-2"
+                className="h-full overflow-y-auto pr-3 sm:pr-6 space-y-6 sm:space-y-8 relative border-l border-rule/80 pl-6 sm:pl-10 pb-6 pt-2"
                 style={{ scrollbarWidth: 'thin' }}
               >
                 {STAIRWAY_FLIGHTS.map((flight) => {
