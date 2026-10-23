@@ -682,14 +682,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const container = rightColumnRef.current;
     const el = document.getElementById(`flight-card-${flightId}`);
     if (container && el) {
-      const containerRect = container.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-      const offsetFromContainerTop = elRect.top - containerRect.top;
-      const targetScrollTop = container.scrollTop + offsetFromContainerTop;
-      container.scrollTo({
-        top: Math.max(0, targetScrollTop),
-        behavior: 'smooth',
-      });
+      if (flightId === 4) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth',
+        });
+      } else {
+        const containerRect = container.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+        const offsetFromContainerTop = elRect.top - containerRect.top;
+        const targetScrollTop = container.scrollTop + offsetFromContainerTop;
+        container.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: 'smooth',
+        });
+      }
     }
   };
 
@@ -698,6 +705,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     if (isWheelLockedRef.current) return;
     const container = rightColumnRef.current;
     if (!container) return;
+
+    if (container.scrollHeight - container.scrollTop - container.clientHeight < 30) {
+      if (activeFlightRef.current !== 4) {
+        setActiveFlight(4);
+        activeFlightRef.current = 4;
+      }
+      return;
+    }
 
     const containerRect = container.getBoundingClientRect();
 
@@ -1477,7 +1492,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section
         id="steps"
         ref={stepsSectionRef}
-        className="relative bg-white text-ink border-b border-rule w-full h-screen min-h-[660px] max-h-[960px] lg:h-screen flex flex-col justify-between py-6 sm:py-8 lg:py-10 overflow-hidden scroll-mt-18"
+        className="relative bg-white text-ink border-b border-rule w-full h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] max-h-[920px] flex flex-col justify-between py-3 sm:py-4 lg:py-4.5 overflow-hidden scroll-mt-18"
       >
         {/* Dynamic Studio Ambient Lighting & Architectural Grid */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
@@ -1497,30 +1512,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           />
         </div>
 
-        <div className="mx-auto max-w-7xl px-6 w-full h-full flex flex-col justify-between relative z-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 w-full h-full flex flex-col justify-between relative z-10">
           {/* Header Row: Compact Luxury Editorial Header */}
           <Reveal>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-4 border-b border-rule/80 shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 pb-2.5 sm:pb-3 border-b border-rule/80 shrink-0">
               <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 font-mono text-[11px] uppercase font-bold tracking-[0.2em] text-clay mb-1.5">
+                <div className="inline-flex items-center gap-2 font-mono text-[10px] sm:text-[11px] uppercase font-bold tracking-[0.2em] text-clay mb-1">
                   <span className="w-2 h-2 rounded-full bg-gradient-to-r from-clay via-rose-500 to-indigo-600 shadow-2xs" />
                   <span>The 14-Step Stairway Architecture</span>
                 </div>
-                <h2 className="font-display text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight text-ink leading-tight">
+                <h2 className="font-display text-xl sm:text-2xl lg:text-[28px] font-bold tracking-tight text-ink leading-tight">
                   Climb the 14-step staircase to your{' '}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-clay via-rose-600 to-indigo-600">
                     finished website.
                   </span>
                 </h2>
               </div>
-              <p className="max-w-md text-xs sm:text-sm text-ink/60 font-light hidden lg:block leading-relaxed">
+              <p className="max-w-md text-xs text-ink/60 font-light hidden lg:block leading-relaxed">
                 One connected system across strategy, typography, tokens, and code. Four ascending flights from idea to production tokens.
               </p>
             </div>
           </Reveal>
 
           {/* 2-Column Section: Left Image Showcase + Right Scrollable Column */}
-          <div className="flex-1 mt-5 sm:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch min-h-0 relative">
+          <div className="flex-1 mt-3 sm:mt-4 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch min-h-0 relative">
             
             {/* Left Column: Visual Showcase Card with 3D Parallax & Odometer Roll */}
             <div className="lg:col-span-5 h-full min-h-0 flex flex-col">
@@ -1559,7 +1574,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     }}
                     transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                     style={{ perspective: 1000, transformStyle: 'preserve-3d' }}
-                    className="relative w-full h-full min-h-[340px] rounded-[32px] overflow-hidden bg-gradient-to-b from-[#FDFEFE] via-[#F6F8FB] to-[#EDF2F7] border border-ink/10 shadow-xl shadow-ink/[0.05] flex flex-col justify-between select-none group"
+                    className="relative w-full h-full min-h-[260px] rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-b from-[#FDFEFE] via-[#F6F8FB] to-[#EDF2F7] border border-ink/10 shadow-xl shadow-ink/[0.05] flex flex-col justify-between select-none group"
                   >
                     {/* Dynamic Studio Ambient Lighting */}
                     <motion.div
@@ -1579,12 +1594,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     {/* Architectural Grid Lines */}
                     <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000004_1px,transparent_1px),linear-gradient(to_bottom,#00000004_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
-
-
                     {/* Active Flight 3D Image Stage with Micro-Floating Animation */}
-                    <div className="absolute inset-0 flex items-center justify-center p-8 sm:p-14 pointer-events-none">
+                    <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-10 pointer-events-none">
                       {/* Soft floor reflection pedestal shadow */}
-                      <div className="absolute bottom-24 w-48 sm:w-60 h-4 rounded-full bg-stone-950/15 blur-lg" />
+                      <div className="absolute bottom-20 w-40 sm:w-52 h-3.5 rounded-full bg-stone-950/15 blur-lg" />
 
                       <AnimatePresence>
                         <motion.div
@@ -1593,7 +1606,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           animate={{
                             opacity: 1,
                             scale: 1,
-                            y: [0, -6, 0],
+                            y: [0, -5, 0],
                           }}
                           exit={{ opacity: 0, scale: 1.04, y: -10 }}
                           transition={{
@@ -1610,28 +1623,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           <img
                             src={activeFlightData.image}
                             alt={activeFlightData.title}
-                            className="w-full h-full object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.16)] select-none pointer-events-none"
+                            className="w-full h-full max-h-[74%] object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.14)] select-none pointer-events-none"
                           />
                         </motion.div>
                       </AnimatePresence>
                     </div>
 
                     {/* Bottom Editorial Dark Gradient Mask */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/35 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/30 to-transparent pointer-events-none" />
 
-                    {/* Bottom Row: Big Odometer Number & Flight Info on Left, Interactive Step Rail on Right */}
-                    <div className="relative z-20 p-5 sm:p-6 lg:p-7 flex items-end justify-between text-white pointer-events-auto mt-auto">
+                    {/* Bottom Row: Big Odometer Number & Flight Info */}
+                    <div className="relative z-20 p-4 sm:p-5 lg:p-6 flex items-end justify-between text-white pointer-events-auto mt-auto">
                       <div>
                         {/* Odometer Rolling Flight Number */}
-                        <div className="overflow-hidden h-[68px] sm:h-[80px] lg:h-[92px] flex items-center relative">
+                        <div className="overflow-hidden h-[54px] sm:h-[64px] lg:h-[72px] flex items-center relative">
                           <AnimatePresence>
                             <motion.div
                               key={activeFlightData.numStr}
-                              initial={{ opacity: 0, y: 22 }}
+                              initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -22 }}
+                              exit={{ opacity: 0, y: -20 }}
                               transition={{ type: 'spring', stiffness: 380, damping: 26 }}
-                              className="font-display text-6xl sm:text-7xl lg:text-8xl font-black leading-none tracking-tight text-white drop-shadow-lg"
+                              className="font-display text-5xl sm:text-6xl lg:text-7xl font-black leading-none tracking-tight text-white drop-shadow-lg"
                             >
                               {activeFlightData.numStr}
                             </motion.div>
@@ -1648,8 +1661,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           </div>
                         </div>
                       </div>
-
-
                     </div>
                   </motion.div>
                 );
@@ -1670,7 +1681,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div
                 ref={rightColumnRef}
                 onScroll={handleRightColumnScroll}
-                className="h-full overflow-y-auto pr-3 sm:pr-6 space-y-6 sm:space-y-8 relative border-l border-rule/80 pl-6 sm:pl-10 pb-6 pt-2"
+                className="h-full overflow-y-auto pr-2 sm:pr-4 space-y-4 sm:space-y-6 relative border-l border-rule/80 pl-4 sm:pl-8 pb-3 pt-1"
                 style={{ scrollbarWidth: 'thin' }}
               >
                 {STAIRWAY_FLIGHTS.map((flight) => {
@@ -1680,7 +1691,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       key={flight.id}
                       id={`flight-card-${flight.id}`}
                       onClick={() => scrollToFlightCard(flight.id)}
-                      className={`snap-start min-h-[92%] sm:min-h-full flex flex-col justify-center p-6 sm:p-8 rounded-3xl border transition-all duration-400 cursor-pointer select-none relative overflow-hidden ${
+                      className={`snap-start min-h-full flex flex-col justify-between p-4 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl border transition-all duration-300 cursor-pointer select-none relative overflow-hidden ${
                         isActive
                           ? 'bg-gradient-to-br from-white via-[#FCFDFE] to-stone-50/90 border-2 border-clay/35 shadow-xl shadow-clay/[0.08] ring-1 ring-clay/20'
                           : 'bg-white/70 hover:bg-white border border-ink/10 hover:border-ink/20 shadow-2xs opacity-50 hover:opacity-85'
@@ -1688,109 +1699,106 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     >
                       {/* Active Ambient Radial Light in top corner */}
                       {isActive && (
-                        <div className="absolute top-0 right-0 w-72 h-72 bg-[radial-gradient(circle_at_100%_0%,rgba(217,85,43,0.06),transparent_70%)] pointer-events-none rounded-3xl" />
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(circle_at_100%_0%,rgba(217,85,43,0.06),transparent_70%)] pointer-events-none rounded-2xl sm:rounded-3xl" />
                       )}
 
                       {/* Active Accent Bar on left edge of the card */}
                       {isActive && (
                         <motion.span
                           layoutId="activeFlightAccentBarWhite"
-                          className="absolute -left-[26px] sm:-left-[42px] top-6 bottom-6 w-1.5 rounded-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-md shadow-clay/30"
+                          className="absolute -left-[18px] sm:-left-[34px] top-5 bottom-5 w-1.5 rounded-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-md shadow-clay/30"
                           transition={{ type: 'spring', stiffness: 350, damping: 28 }}
                         />
                       )}
 
-                      {/* Flight Header Row */}
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`font-mono text-xs font-black w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-                              isActive
-                                ? 'bg-clay text-white shadow-xs'
-                                : 'bg-stone-100 text-ink/45 border border-ink/10'
-                            }`}
-                          >
-                            {flight.numStr}
-                          </span>
-                          <span
-                            className={`text-xs font-bold font-mono px-3 py-1 rounded-full border transition-all ${
-                              isActive
-                                ? 'bg-clay-wash text-clay border-clay/30 shadow-2xs'
-                                : 'bg-stone-100 text-ink/60 border-ink/10'
-                            }`}
-                          >
-                            {flight.badge}
-                          </span>
-                          <span className="text-[11px] font-mono text-ink/45 hidden sm:inline flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-clay/50" />
-                            Elevation: {flight.elevation}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Flight Title & Subtitle */}
-                      <div className="mt-4">
-                        <h3 className={`font-display text-2xl sm:text-3xl lg:text-[32px] font-bold tracking-tight transition-colors ${isActive ? 'text-ink' : 'text-ink/75'}`}>
-                          {flight.title}
-                        </h3>
-                        <div className={`text-xs font-mono uppercase tracking-widest mt-1 transition-colors ${isActive ? 'text-clay font-bold' : 'text-ink/40'}`}>
-                          {flight.subtitle}
-                        </div>
-                      </div>
-
-                      {/* Flight Description */}
-                      <p className="mt-3 text-sm sm:text-[14.5px] leading-relaxed text-ink/75 font-light">
-                        {flight.description}
-                      </p>
-
-                      {/* Question Decisions Chips */}
-                      <div className="mt-5 flex flex-wrap gap-2.5">
-                        {flight.questions.map((q, qIdx) => {
-                          const Icon = q.icon;
-                          return (
-                            <motion.div
-                              key={q.step}
-                              initial={isActive ? { opacity: 0, y: 6 } : false}
-                              animate={isActive ? { opacity: 1, y: 0 } : false}
-                              transition={{ delay: qIdx * 0.04, duration: 0.2 }}
-                              whileHover={{ y: -2, scale: 1.02 }}
-                              className={`group/chip inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all duration-200 cursor-default ${
+                      <div>
+                        {/* Flight Header Row */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className={`font-mono text-xs font-black w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center transition-all ${
                                 isActive
-                                  ? 'bg-white border border-clay/25 shadow-2xs hover:border-clay/50 hover:shadow-xs'
-                                  : 'bg-stone-50/80 border border-ink/10 hover:border-ink/20'
+                                  ? 'bg-clay text-white shadow-xs'
+                                  : 'bg-stone-100 text-ink/45 border border-ink/10'
                               }`}
                             >
-                              <div
-                                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors ${
-                                  isActive ? 'bg-clay/10 text-clay' : 'bg-stone-200/60 text-ink/50'
+                              {flight.numStr}
+                            </span>
+                            <span
+                              className={`text-[11px] sm:text-xs font-bold font-mono px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border transition-all ${
+                                isActive
+                                  ? 'bg-clay-wash text-clay border-clay/30 shadow-2xs'
+                                  : 'bg-stone-100 text-ink/60 border-ink/10'
+                              }`}
+                            >
+                              {flight.badge}
+                            </span>
+                            <span className="text-[11px] font-mono text-ink/45 hidden sm:inline flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-clay/50" />
+                              Elevation: {flight.elevation}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Flight Title & Subtitle */}
+                        <div className="mt-2.5 sm:mt-3">
+                          <h3 className={`font-display text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight leading-tight transition-colors ${isActive ? 'text-ink' : 'text-ink/75'}`}>
+                            {flight.title}
+                          </h3>
+                          <div className={`text-[11px] font-mono uppercase tracking-widest mt-0.5 transition-colors ${isActive ? 'text-clay font-bold' : 'text-ink/40'}`}>
+                            {flight.subtitle}
+                          </div>
+                        </div>
+
+                        {/* Flight Description */}
+                        <p className="mt-1.5 sm:mt-2 text-xs sm:text-[13px] leading-relaxed text-ink/75 font-light line-clamp-2 sm:line-clamp-3">
+                          {flight.description}
+                        </p>
+
+                        {/* Question Decisions Chips */}
+                        <div className="mt-2.5 sm:mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
+                          {flight.questions.map((q, qIdx) => {
+                            const Icon = q.icon;
+                            return (
+                              <motion.div
+                                key={q.step}
+                                initial={isActive ? { opacity: 0, y: 5 } : false}
+                                animate={isActive ? { opacity: 1, y: 0 } : false}
+                                transition={{ delay: qIdx * 0.03, duration: 0.18 }}
+                                whileHover={{ y: -1, scale: 1.01 }}
+                                className={`group/chip flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all duration-200 cursor-default ${
+                                  isActive
+                                    ? 'bg-white border border-clay/25 shadow-2xs hover:border-clay/50 hover:shadow-xs'
+                                    : 'bg-stone-50/80 border border-ink/10 hover:border-ink/20'
                                 }`}
                               >
-                                <Icon className="w-3.5 h-3.5 stroke-[2]" />
-                              </div>
-                              <span className={`font-mono font-bold ${isActive ? 'text-clay' : 'text-ink/50'}`}>
-                                {q.qNum}
-                              </span>
-                              <span className="font-semibold text-ink">{q.title}</span>
-                              <span className="font-mono text-[10px] text-ink/40 hidden md:inline">
-                                ({q.keyDecision})
-                              </span>
-                            </motion.div>
-                          );
-                        })}
+                                <div
+                                  className={`w-4 h-4 sm:w-5 sm:h-5 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                                    isActive ? 'bg-clay/10 text-clay' : 'bg-stone-200/60 text-ink/50'
+                                  }`}
+                                >
+                                  <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2]" />
+                                </div>
+                                <span className={`font-mono font-bold text-[11px] sm:text-xs ${isActive ? 'text-clay' : 'text-ink/50'}`}>
+                                  {q.qNum}
+                                </span>
+                                <span className="font-semibold text-ink text-[11px] sm:text-xs truncate">{q.title}</span>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
                       </div>
 
                       {/* Active Status Footer Indicator */}
-                      {isActive && (
-                        <div className="mt-6 pt-4 border-t border-rule/60 flex items-center justify-between text-xs font-mono">
-                          <span className="text-ink/50 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                            <span>Active Architecture Flight</span>
-                          </span>
-                          <span className="text-clay font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                            {flight.id < 4 ? `Scroll down for Flight 0${flight.id + 1} →` : 'Summit reached · Scroll for Deliverables ↓'}
-                          </span>
-                        </div>
-                      )}
+                      <div className={`mt-3 pt-2.5 border-t border-rule/50 flex items-center justify-between text-[11px] font-mono transition-opacity ${isActive ? 'opacity-100' : 'opacity-0'}`}>
+                        <span className="text-ink/50 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                          <span>Active Architecture Flight</span>
+                        </span>
+                        <span className="text-clay font-bold flex items-center gap-1">
+                          {flight.id < 4 ? `Scroll down for Flight 0${flight.id + 1} →` : 'Summit reached · Scroll for Deliverables ↓'}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
