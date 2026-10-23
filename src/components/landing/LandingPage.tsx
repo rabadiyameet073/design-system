@@ -597,8 +597,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [activeStairStep, setActiveStairStep] = useState<number>(1);
   const [activeFlight, setActiveFlight] = useState<number>(1);
+  const [isFlightSectionHovered, setIsFlightSectionHovered] = useState(false);
   const [architectureTab, setArchitectureTab] = useState<'tokens' | '3d'>('tokens');
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Smooth auto-cycle between flights every 5.5s when not hovered, pausing on user interaction
+  useEffect(() => {
+    if (isFlightSectionHovered) return;
+    const timer = setInterval(() => {
+      setActiveFlight((prev) => (prev % 4) + 1);
+    }, 5500);
+    return () => clearInterval(timer);
+  }, [isFlightSectionHovered]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1127,44 +1137,49 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* =========================== ARCHITECTURAL 14-QUESTION STAIRCASE (INFINITE AUTOMATION INSPIRED) =========================== */}
-      <section id="steps" className="border-b border-rule bg-white relative py-20 lg:py-28 overflow-hidden">
+      <section
+        id="steps"
+        className="border-b border-rule bg-white relative py-12 lg:py-16"
+        onMouseEnter={() => setIsFlightSectionHovered(true)}
+        onMouseLeave={() => setIsFlightSectionHovered(false)}
+      >
         <div className="mx-auto max-w-7xl px-6">
           {/* Header Row: Eyebrow + Split Title and Subtitle */}
           <Reveal>
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 pb-14 lg:pb-20 border-b border-rule/70">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 pb-8 lg:pb-10 border-b border-rule/70">
               <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2.5 font-mono text-[11px] uppercase font-bold tracking-[0.2em] text-ink/60 mb-3.5">
+                <div className="inline-flex items-center gap-2.5 font-mono text-[11px] uppercase font-bold tracking-[0.2em] text-ink/60 mb-2">
                   <span className="w-2 h-2 rounded-full bg-gradient-to-r from-clay via-rose-500 to-indigo-600 shadow-2xs" />
                   <span>The 14-Step Stairway Architecture</span>
                 </div>
-                <h2 className="font-display text-[clamp(2.1rem,4.4vw,3.6rem)] font-bold leading-[1.06] tracking-[-0.025em] text-ink text-balance">
+                <h2 className="font-display text-[clamp(1.9rem,3.8vw,3rem)] font-bold leading-[1.08] tracking-[-0.025em] text-ink text-balance">
                   Climb the 14-step staircase to your{' '}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-clay via-rose-600 to-indigo-600">
                     finished website.
                   </span>
                 </h2>
               </div>
-              <p className="max-w-[420px] text-[15px] sm:text-base leading-[1.65] text-ink/65 text-pretty font-normal">
+              <p className="max-w-[420px] text-sm sm:text-[15px] leading-relaxed text-ink/65 text-pretty font-normal">
                 One connected system across strategy, typography, tokens, and code. Four ascending flights from initial idea to production-ready design system.
               </p>
             </div>
           </Reveal>
 
-          {/* 2-Column Showcase: Sticky Visual on Left, 4 Interactive Flight Steps on Right */}
-          <div className="mt-12 lg:mt-16 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+          {/* 2-Column Balanced Showcase: Visual on Left, All 4 Flights Visible on Right */}
+          <div className="mt-8 lg:mt-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
             
-            {/* Left Column: Sticky 3D Showcase Window */}
-            <div className="lg:col-span-6 lg:sticky lg:top-24">
+            {/* Left Column: Visual Showcase Window */}
+            <div className="lg:col-span-5 flex flex-col">
               {(() => {
                 const activeFlightData = STAIRWAY_FLIGHTS.find(f => f.id === activeFlight) || STAIRWAY_FLIGHTS[0];
                 return (
-                  <div className="relative w-full h-[460px] sm:h-[560px] lg:h-[620px] rounded-[28px] overflow-hidden border border-ink/10 bg-gradient-to-b from-[#FAFBFD] via-[#F4F6F9] to-[#EAEFF4] shadow-2xl shadow-ink/[0.06] flex flex-col justify-between">
+                  <div className="relative w-full h-[460px] sm:h-[520px] lg:h-full min-h-[460px] lg:min-h-[540px] rounded-[28px] overflow-hidden border border-ink/10 bg-gradient-to-b from-[#FAFBFD] via-[#F4F6F9] to-[#EAEFF4] shadow-xl shadow-ink/[0.05] flex flex-col justify-between">
                     {/* Ambient studio soft radial lighting */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.95),rgba(230,238,245,0.45))] pointer-events-none" />
 
                     {/* Top Floating Badges */}
-                    <div className="relative z-10 p-5 sm:p-6 flex items-center justify-between pointer-events-none">
-                      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-ink/10 shadow-xs text-xs font-mono font-bold text-ink">
+                    <div className="relative z-10 p-5 flex items-center justify-between pointer-events-none">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-ink/10 shadow-xs text-xs font-mono font-bold text-ink">
                         <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: activeFlightData.dotColor }} />
                         <span>Flight {activeFlightData.numStr} · {activeFlightData.elevation}</span>
                       </div>
@@ -1182,20 +1197,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           alt={activeFlightData.title}
                           initial={{ opacity: 0, scale: 0.94, y: 12 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 1.02, y: -12 }}
-                          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                          exit={{ opacity: 0, scale: 1.03, y: -12 }}
+                          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                           className="w-full h-full object-contain drop-shadow-2xl select-none"
                         />
                       </AnimatePresence>
                     </div>
 
                     {/* Bottom Gradient Overlay & Flight Indicator Controls */}
-                    <div className="relative z-10 p-6 sm:p-8 bg-gradient-to-t from-stone-950/90 via-stone-950/40 to-transparent flex items-end justify-between text-white">
+                    <div className="relative z-10 p-5 sm:p-7 bg-gradient-to-t from-stone-950/90 via-stone-950/40 to-transparent flex items-end justify-between text-white">
                       <div>
-                        <div className="font-display text-6xl sm:text-7xl lg:text-8xl font-extrabold leading-[0.85] tracking-tight text-white/95">
-                          {activeFlightData.numStr}
-                        </div>
-                        <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/70 mt-2">
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={activeFlightData.numStr}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.25 }}
+                            className="font-display text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[0.85] tracking-tight text-white/95"
+                          >
+                            {activeFlightData.numStr}
+                          </motion.div>
+                        </AnimatePresence>
+                        <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.2em] text-white/70 mt-2 font-medium">
                           {activeFlightData.title} · {activeFlightData.stepRange}
                         </div>
                       </div>
@@ -1209,10 +1233,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                               key={flight.id}
                               type="button"
                               onClick={() => setActiveFlight(flight.id)}
-                              aria-label={`Jump to Flight ${flight.numStr}`}
+                              aria-label={`Switch to Flight ${flight.numStr}`}
                               className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                                 isActive
-                                  ? 'w-10 sm:w-12 bg-white shadow-xs'
+                                  ? 'w-9 sm:w-11 bg-white shadow-xs'
                                   : 'w-2.5 sm:w-3 bg-white/40 hover:bg-white/70'
                               }`}
                             />
@@ -1225,116 +1249,120 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               })()}
             </div>
 
-            {/* Right Column: 4 Vertical Flight Progression Cards */}
-            <div className="lg:col-span-6 relative border-l border-ink/15 pl-7 sm:pl-10 space-y-4 sm:space-y-6">
+            {/* Right Column: All 4 Flights Visible Simultaneously in One Screen */}
+            <div className="lg:col-span-7 flex flex-col justify-between space-y-3 sm:space-y-3.5">
               {STAIRWAY_FLIGHTS.map((flight) => {
                 const isActive = flight.id === activeFlight;
                 return (
                   <div
                     key={flight.id}
                     onClick={() => setActiveFlight(flight.id)}
-                    className={`relative py-4 sm:py-6 transition-all duration-300 select-none ${
-                      isActive ? 'opacity-100' : 'opacity-45 hover:opacity-85 cursor-pointer'
+                    className={`relative rounded-2xl transition-all duration-300 cursor-pointer select-none ${
+                      isActive
+                        ? 'p-4 sm:p-5 bg-gradient-to-br from-stone-50 via-white to-stone-50/80 border-2 border-clay/35 shadow-md shadow-clay/[0.06]'
+                        : 'p-3.5 sm:p-4 bg-white hover:bg-stone-50/70 border border-ink/10 hover:border-ink/20 shadow-2xs opacity-75 hover:opacity-100'
                     }`}
                   >
-                    {/* Active Gradient Accent Bar along the vertical continuous line */}
+                    {/* Active Accent Bar on left edge of the card */}
                     {isActive && (
                       <motion.span
-                        layoutId="activeFlightLineIndicator"
-                        className="absolute left-[-29px] sm:left-[-41px] top-0 bottom-0 w-[3px] rounded-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-sm"
+                        layoutId="activeFlightAccentBar"
+                        className="absolute left-0 top-3 bottom-3 w-1.5 rounded-r-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-sm"
                         transition={{ type: 'spring', stiffness: 350, damping: 28 }}
                       />
                     )}
 
-                    {/* Flight Number & Level Badge Header */}
-                    <div className="flex items-center gap-3 mb-2.5">
-                      <span className={`font-mono text-sm sm:text-base font-bold ${isActive ? 'text-clay' : 'text-ink/40'}`}>
-                        {flight.numStr}
-                      </span>
-                      <span
-                        className={`text-xs font-bold font-mono px-3 py-0.5 rounded-full border transition-all ${
-                          isActive
-                            ? 'bg-clay-wash text-clay border-clay/20 shadow-2xs'
-                            : 'bg-stone-100 text-ink/60 border-ink/10'
-                        }`}
-                      >
-                        {flight.badge}
-                      </span>
-                      <span className="text-[11px] font-mono text-ink/40">
-                        Elevation: {flight.elevation}
-                      </span>
+                    {/* Flight Header Row */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className={`font-mono text-base font-bold ${isActive ? 'text-clay' : 'text-ink/40'}`}>
+                          {flight.numStr}
+                        </span>
+                        <span
+                          className={`text-xs font-bold font-mono px-2.5 py-0.5 rounded-full border transition-all ${
+                            isActive
+                              ? 'bg-clay-wash text-clay border-clay/20 shadow-2xs'
+                              : 'bg-stone-100 text-ink/60 border-ink/10'
+                          }`}
+                        >
+                          {flight.badge}
+                        </span>
+                        <span className="text-[11px] font-mono text-ink/45 hidden sm:inline">
+                          Elevation: {flight.elevation}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-mono text-ink/50 bg-stone-100 px-2 py-0.5 rounded-md border border-rule/70">
+                          {flight.timeEstimate}
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-clay">
+                          {flight.stepRange.split('·')[1]?.trim() || ''}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Flight Main Heading */}
-                    <h3 className="font-display text-2xl sm:text-3xl lg:text-[40px] font-bold text-ink leading-[1.08] tracking-tight">
-                      {flight.title}
-                    </h3>
+                    {/* Flight Title & Brief */}
+                    <div className="mt-2 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-4">
+                      <h3 className={`font-display text-lg sm:text-xl font-bold tracking-tight ${isActive ? 'text-ink' : 'text-ink/80'}`}>
+                        {flight.title}
+                      </h3>
+                      {!isActive && (
+                        <p className="text-xs text-ink/55 truncate max-w-sm">
+                          {flight.subtitle}
+                        </p>
+                      )}
+                    </div>
 
-                    {/* Flight Description */}
-                    <p className="mt-2.5 text-[15px] sm:text-base leading-relaxed text-ink/75 max-w-lg">
-                      {flight.description}
-                    </p>
-
-                    {/* Active Flight Expanded Questions Details */}
+                    {/* Active Expanded State: Description, Decisions Chips, and CTA */}
                     {isActive && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        className="mt-5 space-y-2.5 pt-2"
+                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        className="mt-2.5 pt-1"
                       >
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-ink/45 font-bold">
-                          Guided Flight Decisions ({flight.questions.length} questions):
-                        </div>
-                        <div className="grid gap-2">
+                        <p className="text-xs sm:text-[13px] leading-relaxed text-ink/70">
+                          {flight.description}
+                        </p>
+
+                        {/* Question Decisions Chips */}
+                        <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
                           {flight.questions.map((q) => {
                             const Icon = q.icon;
                             return (
                               <div
                                 key={q.step}
-                                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-stone-50/90 border border-ink/8 hover:border-ink/20 hover:bg-white transition-all shadow-2xs group"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-ink/10 shadow-2xs text-[11px]"
                               >
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <div className="w-8 h-8 rounded-lg bg-white border border-ink/10 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform text-clay">
-                                    <Icon className="w-4 h-4 stroke-[1.8]" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-mono text-[10px] font-bold text-clay bg-clay-wash px-1.5 py-0.5 rounded border border-clay/15">
-                                        {q.qNum}
-                                      </span>
-                                      <span className="text-xs sm:text-sm font-bold text-ink truncate">
-                                        {q.title}
-                                      </span>
-                                    </div>
-                                    <p className="text-[11px] text-ink/55 truncate mt-0.5">
-                                      {q.subtitle}
-                                    </p>
-                                  </div>
-                                </div>
-                                <span className="font-mono text-[10px] sm:text-[11px] text-ink/65 bg-white px-2.5 py-1 rounded-md border border-ink/10 shrink-0 shadow-2xs">
-                                  {q.keyDecision}
+                                <Icon className="w-3 h-3 text-clay stroke-[2]" />
+                                <span className="font-mono font-bold text-clay">{q.qNum}</span>
+                                <span className="font-semibold text-ink">{q.title}</span>
+                                <span className="font-mono text-[10px] text-ink/45 hidden md:inline">
+                                  ({q.keyDecision})
                                 </span>
                               </div>
                             );
                           })}
                         </div>
 
-                        {/* CTA button for this flight */}
-                        <div className="pt-2 flex flex-wrap items-center gap-3">
+                        {/* Start Flight Action Button */}
+                        <div className="mt-3.5 flex items-center justify-between gap-3 pt-1">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               onStartNew();
                             }}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-clay hover:bg-clay-deep text-white text-xs font-bold font-sansation shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
+                            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-clay hover:bg-clay-deep text-white text-xs font-bold font-sansation shadow-sm hover:shadow transition-all cursor-pointer active:scale-[0.98]"
                           >
                             <Sparkles className="w-3.5 h-3.5" />
                             <span>Start {flight.title} (Question {flight.startStep})</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>
+                          <span className="text-[11px] font-mono text-ink/45 hidden sm:inline">
+                            Flight {flight.numStr} of 04 · Ready to configure
+                          </span>
                         </div>
                       </motion.div>
                     )}
@@ -1346,7 +1374,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
       </section>
-
 
       {/* ============================ EXPORTS ============================ */}
       <section id="exports" className="border-b border-rule">
