@@ -640,8 +640,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [isFlightSectionHovered, setIsFlightSectionHovered] = useState(false);
   const [hoveredDeliverableId, setHoveredDeliverableId] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [leftCardTilt, setLeftCardTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [leftCardGlow, setLeftCardGlow] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
   const [architectureTab, setArchitectureTab] = useState<'tokens' | '3d'>('tokens');
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleLeftCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    setLeftCardTilt({
+      x: (py - 0.5) * -7,
+      y: (px - 0.5) * 7,
+    });
+    setLeftCardGlow({
+      x: px * 100,
+      y: py * 100,
+    });
+  };
+
+  const handleLeftCardMouseLeave = () => {
+    setLeftCardTilt({ x: 0, y: 0 });
+    setLeftCardGlow({ x: 50, y: 50 });
+  };
 
   const stepsSectionRef = useRef<HTMLElement>(null);
   const rightColumnRef = useRef<HTMLDivElement>(null);
@@ -1411,8 +1432,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         ref={stepsSectionRef}
         className="relative bg-white text-ink border-b border-rule w-full h-screen min-h-[660px] max-h-[960px] lg:h-screen flex flex-col justify-between py-6 sm:py-8 lg:py-10 overflow-hidden scroll-mt-18"
       >
-        <div className="mx-auto max-w-7xl px-6 w-full h-full flex flex-col justify-between">
-          {/* Header Row: Compact Luxury Header */}
+        {/* Dynamic Studio Ambient Lighting & Architectural Grid */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:48px_48px]" />
+          <motion.div
+            animate={{
+              background: activeFlight === 1
+                ? 'radial-gradient(750px circle at 15% 40%, rgba(37,99,235,0.06), transparent 70%)'
+                : activeFlight === 2
+                ? 'radial-gradient(750px circle at 15% 40%, rgba(147,51,234,0.07), transparent 70%)'
+                : activeFlight === 3
+                ? 'radial-gradient(750px circle at 15% 40%, rgba(217,119,6,0.06), transparent 70%)'
+                : 'radial-gradient(750px circle at 15% 40%, rgba(5,150,105,0.07), transparent 70%)'
+            }}
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0"
+          />
+        </div>
+
+        <div className="mx-auto max-w-7xl px-6 w-full h-full flex flex-col justify-between relative z-10">
+          {/* Header Row: Compact Luxury Editorial Header */}
           <Reveal>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-4 border-b border-rule/80 shrink-0">
               <div className="max-w-2xl">
@@ -1427,65 +1466,172 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </span>
                 </h2>
               </div>
-              <p className="max-w-md text-xs sm:text-sm text-ink/60 font-light hidden lg:block leading-relaxed">
-                One connected system across strategy, typography, tokens, and code. Four ascending flights from idea to production tokens.
-              </p>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="hidden lg:flex items-center gap-2 font-mono text-xs px-3.5 py-1.5 rounded-full bg-stone-100/90 border border-rule/80 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-clay animate-pulse" />
+                  <span className="text-ink/60">Flight:</span>
+                  <span className="font-bold text-ink">0{activeFlight} / 04</span>
+                  <span className="text-ink/30">·</span>
+                  <span className="text-clay font-semibold">14 Decisions</span>
+                </div>
+                <p className="max-w-xs text-xs text-ink/60 font-light hidden xl:block leading-relaxed">
+                  One connected system across strategy, typography, tokens, and code. Four ascending flights from idea to production tokens.
+                </p>
+              </div>
             </div>
           </Reveal>
 
           {/* 2-Column Section: Left Image Showcase + Right Scrollable Column */}
           <div className="flex-1 mt-5 sm:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch min-h-0 relative">
             
-            {/* Left Column: Visual Showcase Card (Syncs with Right Scroll) */}
+            {/* Left Column: Visual Showcase Card with 3D Parallax & Odometer Roll */}
             <div className="lg:col-span-5 h-full min-h-0 flex flex-col">
               {(() => {
                 const activeFlightData = STAIRWAY_FLIGHTS.find((f) => f.id === activeFlight) || STAIRWAY_FLIGHTS[0];
-                return (
-                  <div className="relative w-full h-full min-h-[340px] rounded-[28px] overflow-hidden bg-gradient-to-b from-[#FAFBFD] via-[#F4F6F9] to-[#EAEFF4] border border-ink/10 shadow-lg shadow-ink/[0.04] flex flex-col justify-between select-none">
-                    {/* Ambient studio soft radial lighting */}
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.95),rgba(230,238,245,0.45))] pointer-events-none" />
+                
+                const flightTheme = {
+                  1: {
+                    aura: 'radial-gradient(400px circle at 50% 38%, rgba(37,99,235,0.12), transparent 70%)',
+                    dotColor: 'bg-blue-500',
+                  },
+                  2: {
+                    aura: 'radial-gradient(400px circle at 50% 38%, rgba(147,51,234,0.14), transparent 70%)',
+                    dotColor: 'bg-purple-500',
+                  },
+                  3: {
+                    aura: 'radial-gradient(400px circle at 50% 38%, rgba(217,119,6,0.14), transparent 70%)',
+                    dotColor: 'bg-amber-500',
+                  },
+                  4: {
+                    aura: 'radial-gradient(400px circle at 50% 38%, rgba(5,150,105,0.14), transparent 70%)',
+                    dotColor: 'bg-emerald-500',
+                  },
+                }[activeFlight as 1 | 2 | 3 | 4] || {
+                  aura: 'radial-gradient(400px circle at 50% 38%, rgba(217,85,43,0.12), transparent 70%)',
+                  dotColor: 'bg-clay',
+                };
 
-                    {/* Active Flight Image with Smooth Crossfade Animation */}
-                    <div className="absolute inset-0 flex items-center justify-center p-8 sm:p-12 pointer-events-none">
+                return (
+                  <motion.div
+                    onMouseMove={handleLeftCardMouseMove}
+                    onMouseLeave={handleLeftCardMouseLeave}
+                    animate={{
+                      rotateX: leftCardTilt.x,
+                      rotateY: leftCardTilt.y,
+                    }}
+                    transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+                    style={{ perspective: 1000, transformStyle: 'preserve-3d' }}
+                    className="relative w-full h-full min-h-[340px] rounded-[32px] overflow-hidden bg-gradient-to-b from-[#FDFEFE] via-[#F6F8FB] to-[#EDF2F7] border border-ink/10 shadow-xl shadow-ink/[0.05] flex flex-col justify-between select-none group"
+                  >
+                    {/* Dynamic Studio Ambient Lighting */}
+                    <motion.div
+                      animate={{ background: flightTheme.aura }}
+                      transition={{ duration: 0.6 }}
+                      className="absolute inset-0 pointer-events-none"
+                    />
+
+                    {/* Specular Glass Sheen following cursor */}
+                    <div
+                      className="absolute inset-0 pointer-events-none opacity-50 transition-opacity duration-300 group-hover:opacity-90"
+                      style={{
+                        background: `radial-gradient(circle 350px at ${leftCardGlow.x}% ${leftCardGlow.y}%, rgba(255,255,255,0.7), transparent 70%)`,
+                      }}
+                    />
+
+                    {/* Architectural Grid Lines */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000004_1px,transparent_1px),linear-gradient(to_bottom,#00000004_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+                    {/* Top Floating Glass HUD */}
+                    <div className="relative z-20 p-5 sm:p-6 flex items-center justify-between gap-3 pointer-events-none">
+                      {/* Flight Live Badge */}
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-ink/10 shadow-xs">
+                        <span className={`w-2 h-2 rounded-full ${flightTheme.dotColor} animate-pulse`} />
+                        <span className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink">
+                          Flight 0{activeFlightData.id} <span className="text-ink/40 font-normal">/ 04</span>
+                        </span>
+                      </div>
+
+                      {/* Elevation HUD Tag */}
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md border border-ink/10 shadow-xs">
+                        <span className="font-mono text-[10px] font-medium text-ink/50 uppercase tracking-widest">
+                          Elevation
+                        </span>
+                        <span className="font-mono text-[11px] font-bold text-ink">
+                          {activeFlightData.elevation}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Active Flight 3D Image Stage with Micro-Floating Animation */}
+                    <div className="absolute inset-0 flex items-center justify-center p-8 sm:p-14 pointer-events-none">
+                      {/* Soft floor reflection pedestal shadow */}
+                      <div className="absolute bottom-24 w-48 sm:w-60 h-4 rounded-full bg-stone-950/15 blur-lg" />
+
                       <AnimatePresence mode="wait">
-                        <motion.img
+                        <motion.div
                           key={activeFlightData.id}
-                          src={activeFlightData.image}
-                          alt={activeFlightData.title}
-                          initial={{ opacity: 0, scale: 0.94, y: 12 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 1.03, y: -12 }}
-                          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                          className="w-full h-full object-contain drop-shadow-2xl select-none"
-                        />
+                          initial={{ opacity: 0, scale: 0.92, y: 14 }}
+                          animate={{
+                            opacity: 1,
+                            scale: 1,
+                            y: [0, -6, 0],
+                          }}
+                          exit={{ opacity: 0, scale: 1.05, y: -14 }}
+                          transition={{
+                            opacity: { duration: 0.35, ease: 'easeOut' },
+                            scale: { type: 'spring', stiffness: 300, damping: 24 },
+                            y: {
+                              repeat: Infinity,
+                              duration: 4.5,
+                              ease: 'easeInOut',
+                            },
+                          }}
+                          className="w-full h-full flex items-center justify-center select-none"
+                        >
+                          <img
+                            src={activeFlightData.image}
+                            alt={activeFlightData.title}
+                            className="w-full h-full object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.16)] select-none pointer-events-none"
+                          />
+                        </motion.div>
                       </AnimatePresence>
                     </div>
 
-                    {/* Bottom Dark Gradient Overlay for legible contrast */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/30 to-transparent pointer-events-none" />
+                    {/* Bottom Editorial Dark Gradient Mask */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/35 to-transparent pointer-events-none" />
 
-                    {/* Bottom Row: Big Number on Left, 4 Dash Indicators on Right */}
-                    <div className="relative z-10 p-5 sm:p-6 flex items-end justify-between text-white pointer-events-auto mt-auto">
+                    {/* Bottom Row: Big Odometer Number & Flight Info on Left, Interactive Step Rail on Right */}
+                    <div className="relative z-20 p-5 sm:p-6 lg:p-7 flex items-end justify-between text-white pointer-events-auto mt-auto">
                       <div>
-                        <AnimatePresence mode="wait">
-                          <motion.div
-                            key={activeFlightData.numStr}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.25 }}
-                            className="font-display text-6xl sm:text-7xl lg:text-8xl font-extrabold leading-[0.85] tracking-tight text-white/95"
-                          >
-                            {activeFlightData.numStr}
-                          </motion.div>
-                        </AnimatePresence>
-                        <div className="text-xs sm:text-sm font-display font-semibold tracking-wide text-white/90 mt-2">
-                          {activeFlightData.title}
+                        {/* Odometer Rolling Flight Number */}
+                        <div className="overflow-hidden h-[68px] sm:h-[80px] lg:h-[92px] flex items-center">
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={activeFlightData.numStr}
+                              initial={{ opacity: 0, y: 26, filter: 'blur(3px)' }}
+                              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                              exit={{ opacity: 0, y: -26, filter: 'blur(3px)' }}
+                              transition={{ type: 'spring', stiffness: 360, damping: 24 }}
+                              className="font-display text-6xl sm:text-7xl lg:text-8xl font-black leading-none tracking-tight text-white drop-shadow-lg"
+                            >
+                              {activeFlightData.numStr}
+                            </motion.div>
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Flight Title and Subtitle */}
+                        <div className="mt-1">
+                          <div className="text-sm sm:text-base font-display font-bold tracking-tight text-white">
+                            {activeFlightData.title}
+                          </div>
+                          <div className="text-xs text-white/70 font-light mt-0.5 max-w-[220px] sm:max-w-xs truncate">
+                            {activeFlightData.subtitle}
+                          </div>
                         </div>
                       </div>
 
-                      {/* 4-Flight Dash Bar Indicators */}
-                      <div className="flex items-center gap-2">
+                      {/* Interactive 4-Flight Pill Indicator Bar */}
+                      <div className="flex items-center gap-1.5 bg-stone-900/60 backdrop-blur-md p-1.5 rounded-full border border-white/15">
                         {STAIRWAY_FLIGHTS.map((flight) => {
                           const isActive = flight.id === activeFlight;
                           return (
@@ -1494,23 +1640,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                               type="button"
                               onClick={() => scrollToFlightCard(flight.id)}
                               aria-label={`Switch to Flight ${flight.numStr}`}
-                              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                              className={`h-7 rounded-full transition-all duration-300 cursor-pointer flex items-center justify-center font-mono text-[11px] font-bold ${
                                 isActive
-                                  ? 'w-9 sm:w-11 bg-white shadow-xs'
-                                  : 'w-2.5 sm:w-3 bg-white/40 hover:bg-white/70'
+                                  ? 'px-3 bg-white text-stone-950 shadow-md scale-105'
+                                  : 'w-7 bg-white/20 hover:bg-white/40 text-white/80 hover:text-white'
                               }`}
-                            />
+                            >
+                              {isActive ? `0${flight.id}` : flight.id}
+                            </button>
                           );
                         })}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })()}
             </div>
 
-            {/* Right Column: Scrollable List of Flights (Scrolls Right, Changes Left Image) */}
+            {/* Right Column: Architectural Flight Cards with Interactive Spinal Progress */}
             <div className="lg:col-span-7 h-full min-h-0 flex flex-col relative">
+              {/* Architectural Vertical Progress Spine along the separator */}
+              <div className="absolute left-0 top-3 bottom-3 w-[2px] bg-rule/50 hidden lg:block pointer-events-none">
+                <motion.div
+                  className="w-[3px] -left-[0.5px] relative rounded-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-[0_0_10px_rgba(217,85,43,0.4)]"
+                  animate={{ height: `${Math.max(15, (activeFlight / 4) * 100)}%` }}
+                  transition={{ type: 'spring', stiffness: 220, damping: 24 }}
+                />
+              </div>
+
               <div
                 ref={rightColumnRef}
                 onScroll={handleRightColumnScroll}
@@ -1524,17 +1681,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       key={flight.id}
                       id={`flight-card-${flight.id}`}
                       onClick={() => scrollToFlightCard(flight.id)}
-                      className={`snap-start min-h-[92%] sm:min-h-full flex flex-col justify-center p-6 sm:p-8 rounded-2xl border transition-all duration-300 cursor-pointer select-none relative ${
+                      className={`snap-start min-h-[92%] sm:min-h-full flex flex-col justify-center p-6 sm:p-8 rounded-3xl border transition-all duration-400 cursor-pointer select-none relative overflow-hidden ${
                         isActive
-                          ? 'bg-gradient-to-br from-stone-50 via-white to-stone-50/90 border-2 border-clay/35 shadow-md shadow-clay/[0.06]'
-                          : 'bg-white hover:bg-stone-50/70 border border-ink/10 hover:border-ink/20 shadow-2xs opacity-60 hover:opacity-90'
+                          ? 'bg-gradient-to-br from-white via-[#FCFDFE] to-stone-50/90 border-2 border-clay/35 shadow-xl shadow-clay/[0.08] ring-1 ring-clay/20'
+                          : 'bg-white/70 hover:bg-white border border-ink/10 hover:border-ink/20 shadow-2xs opacity-50 hover:opacity-85'
                       }`}
                     >
+                      {/* Active Ambient Radial Light in top corner */}
+                      {isActive && (
+                        <div className="absolute top-0 right-0 w-72 h-72 bg-[radial-gradient(circle_at_100%_0%,rgba(217,85,43,0.06),transparent_70%)] pointer-events-none rounded-3xl" />
+                      )}
+
                       {/* Active Accent Bar on left edge of the card */}
                       {isActive && (
                         <motion.span
                           layoutId="activeFlightAccentBarWhite"
-                          className="absolute -left-[26px] sm:-left-[42px] top-6 bottom-6 w-1 rounded-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-sm"
+                          className="absolute -left-[26px] sm:-left-[42px] top-6 bottom-6 w-1.5 rounded-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-md shadow-clay/30"
                           transition={{ type: 'spring', stiffness: 350, damping: 28 }}
                         />
                       )}
@@ -1542,61 +1704,102 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       {/* Flight Header Row */}
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <span className={`font-mono text-base font-bold ${isActive ? 'text-clay' : 'text-ink/40'}`}>
+                          <span
+                            className={`font-mono text-xs font-black w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                              isActive
+                                ? 'bg-clay text-white shadow-xs'
+                                : 'bg-stone-100 text-ink/45 border border-ink/10'
+                            }`}
+                          >
                             {flight.numStr}
                           </span>
                           <span
-                            className={`text-xs font-bold font-mono px-2.5 py-0.5 rounded-full border transition-all ${
+                            className={`text-xs font-bold font-mono px-3 py-1 rounded-full border transition-all ${
                               isActive
-                                ? 'bg-clay-wash text-clay border-clay/20 shadow-2xs'
+                                ? 'bg-clay-wash text-clay border-clay/30 shadow-2xs'
                                 : 'bg-stone-100 text-ink/60 border-ink/10'
                             }`}
                           >
                             {flight.badge}
                           </span>
-                          <span className="text-[11px] font-mono text-ink/45 hidden sm:inline">
+                          <span className="text-[11px] font-mono text-ink/45 hidden sm:inline flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-clay/50" />
                             Elevation: {flight.elevation}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-mono text-ink/50 bg-stone-100 px-2.5 py-0.5 rounded-md border border-rule/70">
+                        <div className="flex items-center gap-2 font-mono text-[11px]">
+                          <span className="text-ink/60 bg-stone-100/90 px-2.5 py-1 rounded-lg border border-rule/80">
                             {flight.timeEstimate}
                           </span>
-                          <span className="text-[11px] font-mono font-bold text-clay">
+                          <span className="font-bold text-clay bg-clay-wash px-2.5 py-1 rounded-lg border border-clay/20">
                             {flight.stepRange.split('·')[1]?.trim() || ''}
                           </span>
                         </div>
                       </div>
 
-                      {/* Flight Title */}
-                      <h3 className={`font-display text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight mt-3 transition-colors ${isActive ? 'text-ink' : 'text-ink/75'}`}>
-                        {flight.title}
-                      </h3>
+                      {/* Flight Title & Subtitle */}
+                      <div className="mt-4">
+                        <h3 className={`font-display text-2xl sm:text-3xl lg:text-[32px] font-bold tracking-tight transition-colors ${isActive ? 'text-ink' : 'text-ink/75'}`}>
+                          {flight.title}
+                        </h3>
+                        <div className={`text-xs font-mono uppercase tracking-widest mt-1 transition-colors ${isActive ? 'text-clay font-bold' : 'text-ink/40'}`}>
+                          {flight.subtitle}
+                        </div>
+                      </div>
 
                       {/* Flight Description */}
-                      <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-ink/70">
+                      <p className="mt-3 text-sm sm:text-[14.5px] leading-relaxed text-ink/75 font-light">
                         {flight.description}
                       </p>
 
                       {/* Question Decisions Chips */}
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        {flight.questions.map((q) => {
+                      <div className="mt-5 flex flex-wrap gap-2.5">
+                        {flight.questions.map((q, qIdx) => {
                           const Icon = q.icon;
                           return (
-                            <div
+                            <motion.div
                               key={q.step}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-ink/10 shadow-2xs text-xs"
+                              initial={isActive ? { opacity: 0, y: 6 } : false}
+                              animate={isActive ? { opacity: 1, y: 0 } : false}
+                              transition={{ delay: qIdx * 0.04, duration: 0.2 }}
+                              whileHover={{ y: -2, scale: 1.02 }}
+                              className={`group/chip inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all duration-200 cursor-default ${
+                                isActive
+                                  ? 'bg-white border border-clay/25 shadow-2xs hover:border-clay/50 hover:shadow-xs'
+                                  : 'bg-stone-50/80 border border-ink/10 hover:border-ink/20'
+                              }`}
                             >
-                              <Icon className="w-3.5 h-3.5 text-clay stroke-[2]" />
-                              <span className="font-mono font-bold text-clay">{q.qNum}</span>
+                              <div
+                                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                                  isActive ? 'bg-clay/10 text-clay' : 'bg-stone-200/60 text-ink/50'
+                                }`}
+                              >
+                                <Icon className="w-3.5 h-3.5 stroke-[2]" />
+                              </div>
+                              <span className={`font-mono font-bold ${isActive ? 'text-clay' : 'text-ink/50'}`}>
+                                {q.qNum}
+                              </span>
                               <span className="font-semibold text-ink">{q.title}</span>
-                              <span className="font-mono text-[10px] text-ink/45 hidden md:inline">
+                              <span className="font-mono text-[10px] text-ink/40 hidden md:inline">
                                 ({q.keyDecision})
                               </span>
-                            </div>
+                            </motion.div>
                           );
                         })}
                       </div>
+
+                      {/* Active Status Footer Indicator */}
+                      {isActive && (
+                        <div className="mt-6 pt-4 border-t border-rule/60 flex items-center justify-between text-xs font-mono">
+                          <span className="text-ink/50 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                            <span>Active Architecture Flight</span>
+                          </span>
+                          <span className="text-clay font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                            {flight.id < 4 ? `Scroll down for Flight 0${flight.id + 1} →` : 'Summit reached · Scroll for Deliverables ↓'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
