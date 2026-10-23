@@ -722,84 +722,121 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     }
   };
 
-  // Section-wide wheel interceptor: Mouse wheel anywhere inside #steps (left card, right column, header)
-  // steps through all 4 flights before releasing page scroll to next section (#exports) or previous section (#live-render).
+  // Master Window-Level Section Travel Lock:
+  // Ensures that from upper (#live-render), downer (#exports), or anywhere on screen,
+  // the user cannot skip past #steps directly. They MUST travel through all 4 flights first.
   useEffect(() => {
-    const section = stepsSectionRef.current;
-    if (!section) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      // Ignore tiny subpixel jitter
+    const handleGlobalWheel = (e: WheelEvent) => {
+      // Filter out negligible trackpad noise
       if (Math.abs(e.deltaY) < 14) return;
+
+      const section = stepsSectionRef.current;
+      if (!section) return;
 
       const rect = section.getBoundingClientRect();
       const windowH = window.innerHeight;
-      const headerH = 72;
-
-      // Section is considered active in viewport when its top is under or at the sticky header
-      // and its bottom occupies substantial space
-      const isSectionInActiveView = rect.top <= headerH + 25 && rect.bottom >= windowH * 0.45;
-
-      if (!isSectionInActiveView) {
-        wasSectionInViewRef.current = false;
-        return;
-      }
+      const headerEl = document.querySelector('header');
+      const headerH = headerEl ? headerEl.getBoundingClientRect().height : 72;
 
       const isScrollingDown = e.deltaY > 0;
-
-      // First entry into the active section:
-      if (!wasSectionInViewRef.current) {
-        wasSectionInViewRef.current = true;
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Pin/align section neatly below sticky header
-        if (Math.abs(rect.top - headerH) > 6 && rect.top > 0) {
-          window.scrollTo({
-            top: window.scrollY + (rect.top - headerH),
-            behavior: 'smooth',
-          });
-        }
-
-        if (isScrollingDown) {
-          if (activeFlightRef.current !== 1) {
-            activeFlightRef.current = 1;
-            setActiveFlight(1);
-            scrollToFlightCard(1);
-          }
-        } else {
-          if (activeFlightRef.current !== 4) {
-            activeFlightRef.current = 4;
-            setActiveFlight(4);
-            scrollToFlightCard(4);
-          }
-        }
-
-        isWheelLockedRef.current = true;
-        if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
-        wheelCooldownTimerRef.current = setTimeout(() => {
-          isWheelLockedRef.current = false;
-        }, 400);
-        return;
-      }
-
       const currentFlight = activeFlightRef.current;
+      const topOffsetFromHeader = rect.top - headerH;
 
-      // CASE 1: SCROLLING DOWN (Flight 1 -> 2 -> 3 -> 4 -> Next Section)
-      if (isScrollingDown) {
-        if (currentFlight < 4) {
+      // -----------------------------------------------------------------
+      // REGION 1: USER IS IN THE UPPER REGION (Above #steps)
+      // -----------------------------------------------------------------
+      if (topOffsetFromHeader > 40) {
+        // If section has not yet reached the bottom 80% of screen, allow normal page scroll down
+        if (rect.top > windowH * 0.8) return;
+
+        // User is scrolling down and section enters the lower screen:
+        // CATCH SCROLL: Do NOT allow scrolling directly past #steps into #exports!
+        if (isScrollingDown) {
           e.preventDefault();
           e.stopPropagation();
 
           if (isWheelLockedRef.current) return;
 
-          // Keep section locked in viewport
-          if (Math.abs(rect.top - headerH) > 6 && rect.top > 0) {
-            window.scrollTo({
-              top: window.scrollY + (rect.top - headerH),
-              behavior: 'smooth',
-            });
+          // Lock and snap cleanly to #steps at Flight 1
+          isWheelLockedRef.current = true;
+          const targetY = window.scrollY + topOffsetFromHeader;
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
+
+          if (activeFlightRef.current !== 1) {
+            activeFlightRef.current = 1;
+            setActiveFlight(1);
+            scrollToFlightCard(1);
           }
+
+          if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
+          wheelCooldownTimerRef.current = setTimeout(() => {
+            isWheelLockedRef.current = false;
+          }, 600);
+          return;
+        }
+
+        // If scrolling up while above #steps, allow normal scrolling up
+        return;
+      }
+
+      // -----------------------------------------------------------------
+      // REGION 2: USER IS IN THE DOWNER REGION (Below #steps)
+      // -----------------------------------------------------------------
+      if (rect.bottom < headerH + 30) {
+        // If section is far above the screen, allow normal scrolling up
+        if (rect.bottom < -windowH * 0.6) return;
+
+        // User is scrolling up and section approaches from above:
+        // CATCH SCROLL: Do NOT allow scrolling directly past #steps into #live-render!
+        if (!isScrollingDown) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (isWheelLockedRef.current) return;
+
+          // Lock and snap cleanly to #steps at Flight 4 (Summit)
+          isWheelLockedRef.current = true;
+          const targetY = window.scrollY + topOffsetFromHeader;
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
+
+          if (activeFlightRef.current !== 4) {
+            activeFlightRef.current = 4;
+            setActiveFlight(4);
+            scrollToFlightCard(4);
+          }
+
+          if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
+          wheelCooldownTimerRef.current = setTimeout(() => {
+            isWheelLockedRef.current = false;
+          }, 600);
+          return;
+        }
+
+        // If scrolling down while below #steps, allow normal scrolling down
+        return;
+      }
+
+      // -----------------------------------------------------------------
+      // REGION 3: USER IS INSIDE #steps (Section is framed in viewport)
+      // -----------------------------------------------------------------
+      // The section is occupying the screen. You MUST travel all flights before exiting!
+
+      // Keep section pinned neatly under sticky header if slightly drifted
+      if (Math.abs(topOffsetFromHeader) > 4 && Math.abs(topOffsetFromHeader) < 140) {
+        window.scrollTo({
+          top: window.scrollY + topOffsetFromHeader,
+          behavior: 'smooth',
+        });
+      }
+
+      // SUB-CASE 3A: SCROLLING DOWN (Flight 1 -> 2 -> 3 -> 4 -> Next Section)
+      if (isScrollingDown) {
+        // If user hasn't reached the final Flight 4:
+        if (currentFlight < 4) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (isWheelLockedRef.current) return;
 
           isWheelLockedRef.current = true;
           const nextFlight = currentFlight + 1;
@@ -810,19 +847,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
           wheelCooldownTimerRef.current = setTimeout(() => {
             isWheelLockedRef.current = false;
-          }, 550);
+          }, 520);
           return;
         }
 
-        // On Flight 4:
-        // Swallow remaining momentum of the 3->4 transition so Flight 4 is clearly seen
+        // User is at Flight 4 (Summit):
+        // If cooldown is still active from arriving at Flight 4, absorb momentum so it's seen
         if (isWheelLockedRef.current) {
           e.preventDefault();
           e.stopPropagation();
           return;
         }
 
-        // User is on Flight 4 and intentionally scrolls down again: navigate to next section (#exports)
+        // USER HAS TRAVELED ALL 4 FLIGHTS!
+        // Now, subsequent scroll down smoothly navigates to next section (#exports)
         e.preventDefault();
         e.stopPropagation();
         isWheelLockedRef.current = true;
@@ -837,21 +875,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         return;
       }
 
-      // CASE 2: SCROLLING UP (Flight 4 -> 3 -> 2 -> 1 -> Prev Section)
+      // SUB-CASE 3B: SCROLLING UP (Flight 4 -> 3 -> 2 -> 1 -> Previous Section)
       if (!isScrollingDown) {
+        // If user hasn't traveled all the way back to Flight 1:
         if (currentFlight > 1) {
           e.preventDefault();
           e.stopPropagation();
 
           if (isWheelLockedRef.current) return;
-
-          // Keep section locked in viewport
-          if (Math.abs(rect.top - headerH) > 6 && rect.top > 0) {
-            window.scrollTo({
-              top: window.scrollY + (rect.top - headerH),
-              behavior: 'smooth',
-            });
-          }
 
           isWheelLockedRef.current = true;
           const prevFlight = currentFlight - 1;
@@ -862,19 +893,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
           wheelCooldownTimerRef.current = setTimeout(() => {
             isWheelLockedRef.current = false;
-          }, 550);
+          }, 520);
           return;
         }
 
-        // On Flight 1:
-        // Swallow remaining momentum
+        // User is at Flight 1 (Foundation):
+        // If cooldown is still active, absorb momentum so it's seen
         if (isWheelLockedRef.current) {
           e.preventDefault();
           e.stopPropagation();
           return;
         }
 
-        // User is on Flight 1 and scrolls up again: navigate to previous section (#live-render)
+        // USER HAS TRAVELED ALL THE WAY BACK TO FLIGHT 1!
+        // Now, subsequent scroll up smoothly navigates to previous section (#live-render)
         e.preventDefault();
         e.stopPropagation();
         isWheelLockedRef.current = true;
@@ -890,10 +922,63 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       }
     };
 
-    section.addEventListener('wheel', handleWheel, { passive: false });
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      const isDown = e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ';
+      const isUp = e.key === 'ArrowUp' || e.key === 'PageUp';
+      if (!isDown && !isUp) return;
+
+      const section = stepsSectionRef.current;
+      if (!section) return;
+
+      const rect = section.getBoundingClientRect();
+      const headerEl = document.querySelector('header');
+      const headerH = headerEl ? headerEl.getBoundingClientRect().height : 72;
+      const topOffsetFromHeader = rect.top - headerH;
+
+      const isInside =
+        Math.abs(topOffsetFromHeader) <= 60 ||
+        (rect.top <= headerH && rect.bottom >= window.innerHeight * 0.5);
+
+      if (!isInside) return;
+
+      const currentFlight = activeFlightRef.current;
+
+      if (isDown) {
+        if (currentFlight < 4) {
+          e.preventDefault();
+          const next = currentFlight + 1;
+          activeFlightRef.current = next;
+          setActiveFlight(next);
+          scrollToFlightCard(next);
+        } else {
+          e.preventDefault();
+          document.getElementById('exports')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else if (isUp) {
+        if (currentFlight > 1) {
+          e.preventDefault();
+          const prev = currentFlight - 1;
+          activeFlightRef.current = prev;
+          setActiveFlight(prev);
+          scrollToFlightCard(prev);
+        } else {
+          e.preventDefault();
+          document.getElementById('live-render')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    };
+
+    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      section.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('wheel', handleGlobalWheel);
+      window.removeEventListener('keydown', handleKeyDown);
       if (wheelCooldownTimerRef.current) {
         clearTimeout(wheelCooldownTimerRef.current);
       }
