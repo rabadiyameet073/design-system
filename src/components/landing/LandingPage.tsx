@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowRight,
   ChevronDown,
@@ -445,6 +445,95 @@ const STAIRCASE_QUESTIONS: StairQuestion[] = [
   },
 ];
 
+interface StairwayFlight {
+  id: number;
+  numStr: string;
+  badge: string;
+  elevation: string;
+  timeEstimate: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  gradient: string;
+  accentColor: string;
+  dotColor: string;
+  stepRange: string;
+  startStep: number;
+  questions: StairQuestion[];
+}
+
+const STAIRWAY_FLIGHTS: StairwayFlight[] = [
+  {
+    id: 1,
+    numStr: '01',
+    badge: 'Ground Floor',
+    elevation: '0.0m',
+    timeEstimate: '6 min',
+    title: 'Foundation Flight',
+    subtitle: 'Project identity, website genre & market audience',
+    description: 'Set the architectural bedrock of your product. Establish your brand naming, select from 32 proven industry website genres, and define your core target audience positioning.',
+    image: '/images/stairway/flight_1_foundation.jpg',
+    gradient: 'from-blue-600 to-indigo-600',
+    accentColor: 'text-blue-600',
+    dotColor: '#2563eb',
+    stepRange: 'Q01–Q03 · 3 Decisions',
+    startStep: 1,
+    questions: STAIRCASE_QUESTIONS.filter(q => q.level === 1)
+  },
+  {
+    id: 2,
+    numStr: '02',
+    badge: 'Brand Soul',
+    elevation: '+3.0m Riser',
+    timeEstimate: '5 min',
+    title: 'Brand Soul Flight',
+    subtitle: 'Energy, emotional tone & visual direction',
+    description: 'Determine how your website feels in the first 50 milliseconds. Calibrate brand energy, temperament, and visual style from minimal editorial to bold modernist.',
+    image: '/images/stairway/flight_2_brandsoul.jpg',
+    gradient: 'from-purple-600 to-violet-600',
+    accentColor: 'text-purple-600',
+    dotColor: '#9333ea',
+    stepRange: 'Q04–Q05 · 2 Decisions',
+    startStep: 4,
+    questions: STAIRCASE_QUESTIONS.filter(q => q.level === 2)
+  },
+  {
+    id: 3,
+    numStr: '03',
+    badge: 'Design Engine',
+    elevation: '+6.5m Engine',
+    timeEstimate: '9 min',
+    title: 'Tokens & Style Flight',
+    subtitle: 'Color palettes, typography scales & 8pt rhythmic grid',
+    description: 'Synthesize brand soul into mathematical design tokens: 14 harmonious color palettes, verified contrast ratios, bespoke typography pairings, and 8pt rhythmic spatial grids.',
+    image: '/images/stairway/flight_3_tokens.jpg',
+    gradient: 'from-amber-600 to-orange-600',
+    accentColor: 'text-amber-600',
+    dotColor: '#d97706',
+    stepRange: 'Q06–Q09 · 4 Decisions',
+    startStep: 6,
+    questions: STAIRCASE_QUESTIONS.filter(q => q.level === 3)
+  },
+  {
+    id: 4,
+    numStr: '04',
+    badge: 'The Summit',
+    elevation: '+10.0m Summit',
+    timeEstimate: '10 min',
+    title: 'Summit & Launch Flight',
+    subtitle: 'Production UI kit, mobile testing & multi-format code export',
+    description: 'Assemble production UI components, test across phone/tablet/desktop, audit dark mode contrast, review in an interactive live sandbox, and export code in 5 formats.',
+    image: '/images/stairway/flight_4_summit.jpg',
+    gradient: 'from-emerald-600 to-teal-600',
+    accentColor: 'text-emerald-600',
+    dotColor: '#059669',
+    stepRange: 'Q10–Q14 · 5 Decisions',
+    startStep: 10,
+    questions: STAIRCASE_QUESTIONS.filter(q => q.level === 4)
+  }
+];
+
 const DELIVERABLES = [
   {
     kicker: 'PDF · 4 pages',
@@ -507,6 +596,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [activeStairStep, setActiveStairStep] = useState<number>(1);
+  const [activeFlight, setActiveFlight] = useState<number>(1);
   const [architectureTab, setArchitectureTab] = useState<'tokens' | '3d'>('tokens');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -1036,477 +1126,227 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* =========================== ARCHITECTURAL 14-QUESTION STAIRCASE =========================== */}
-      <section id="steps" className="border-b border-rule bg-stone-50/70 relative overflow-hidden py-16 lg:py-24">
-        {/* Subtle architectural background dot grid */}
-        <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(#1c1917_1px,transparent_1px)] [background-size:24px_24px]" />
-
-        <div className="mx-auto max-w-7xl px-6 relative z-10">
+      {/* =========================== ARCHITECTURAL 14-QUESTION STAIRCASE (INFINITE AUTOMATION INSPIRED) =========================== */}
+      <section id="steps" className="border-b border-rule bg-white relative py-20 lg:py-28 overflow-hidden">
+        <div className="mx-auto max-w-7xl px-6">
+          {/* Header Row: Eyebrow + Split Title and Subtitle */}
           <Reveal>
-            <div className="text-center max-w-3xl mx-auto">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-ink/10 text-xs font-bold text-clay shadow-2xs mb-4">
-                <Workflow className="w-3.5 h-3.5 text-clay stroke-[2]" />
-                <span className="font-mono uppercase tracking-wider text-[11px]">14-Question Stepped Architecture</span>
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 pb-14 lg:pb-20 border-b border-rule/70">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-2.5 font-mono text-[11px] uppercase font-bold tracking-[0.2em] text-ink/60 mb-3.5">
+                  <span className="w-2 h-2 rounded-full bg-gradient-to-r from-clay via-rose-500 to-indigo-600 shadow-2xs" />
+                  <span>The 14-Step Stairway Architecture</span>
+                </div>
+                <h2 className="font-display text-[clamp(2.1rem,4.4vw,3.6rem)] font-bold leading-[1.06] tracking-[-0.025em] text-ink text-balance">
+                  Climb the 14-step staircase to your{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-clay via-rose-600 to-indigo-600">
+                    finished website.
+                  </span>
+                </h2>
               </div>
-              <h2 className="font-display text-[clamp(1.9rem,3.6vw,2.85rem)] font-bold leading-[1.08] tracking-[-0.02em] text-ink text-balance">
-                Climb the 14-step staircase to your finished website.
-              </h2>
-              <p className="mt-3.5 text-[15px] sm:text-base leading-relaxed text-ink/70 text-pretty max-w-2xl mx-auto">
-                No design degree or coding required. 14 simple multiple-choice decisions across 4 ascending physical levels assemble your complete design system and website code.
+              <p className="max-w-[420px] text-[15px] sm:text-base leading-[1.65] text-ink/65 text-pretty font-normal">
+                One connected system across strategy, typography, tokens, and code. Four ascending flights from initial idea to production-ready design system.
               </p>
             </div>
           </Reveal>
 
-          {/* ==================== THE UNIFIED MASTER STAIRCASE ==================== */}
-          <div className="mt-12 rounded-3xl border border-ink/15 bg-white/95 backdrop-blur-sm shadow-xl p-6 sm:p-8 lg:p-10 relative overflow-hidden">
+          {/* 2-Column Showcase: Sticky Visual on Left, 4 Interactive Flight Steps on Right */}
+          <div className="mt-12 lg:mt-16 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
             
-            {/* Top Bar: Elevation Tracker & Ruler */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-rule text-xs font-mono">
-              <div className="flex items-center gap-2.5 text-ink/80">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-bold text-ink tracking-wider uppercase">Stairway Progression: 4 Flights · 14 Steps</span>
-              </div>
-              <div className="flex items-center gap-3 text-ink/50 font-bold">
-                <span className="hidden sm:inline">Ascent: Ground Floor (0.0m) ➔ Summit (+11.2m)</span>
-                <span className="hidden sm:inline text-ink/20">|</span>
-                <span className="text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-mono text-[11px]">
-                  ~30 Min Total
-                </span>
-              </div>
-            </div>
+            {/* Left Column: Sticky 3D Showcase Window */}
+            <div className="lg:col-span-6 lg:sticky lg:top-24">
+              {(() => {
+                const activeFlightData = STAIRWAY_FLIGHTS.find(f => f.id === activeFlight) || STAIRWAY_FLIGHTS[0];
+                return (
+                  <div className="relative w-full h-[460px] sm:h-[560px] lg:h-[620px] rounded-[28px] overflow-hidden border border-ink/10 bg-gradient-to-b from-[#FAFBFD] via-[#F4F6F9] to-[#EAEFF4] shadow-2xl shadow-ink/[0.06] flex flex-col justify-between">
+                    {/* Ambient studio soft radial lighting */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.95),rgba(230,238,245,0.45))] pointer-events-none" />
 
-            {/* Architectural Elevation Horizon Ruler (Continuous Ascending Datum Line) */}
-            <div className="my-6 hidden md:block">
-              <div className="flex items-center justify-between text-[11px] font-mono text-ink/60 font-semibold px-1 mb-2">
-                <span className="flex items-center gap-1.5 text-blue-700">
-                  <span className="w-2 h-2 rounded-full bg-blue-600" />
-                  Flight 1: Ground Floor (0.0m)
-                </span>
-                <span className="text-ink/30 font-light">──── +3.0m Riser ────➔</span>
-                <span className="flex items-center gap-1.5 text-purple-700">
-                  <span className="w-2 h-2 rounded-full bg-purple-600" />
-                  Flight 2: Brand Identity (+3.0m)
-                </span>
-                <span className="text-ink/30 font-light">──── +3.5m Riser ────➔</span>
-                <span className="flex items-center gap-1.5 text-amber-700">
-                  <span className="w-2 h-2 rounded-full bg-amber-600" />
-                  Flight 3: Design Engine (+6.5m)
-                </span>
-                <span className="text-ink/30 font-light">──── +3.5m Riser ────➔</span>
-                <span className="flex items-center gap-1.5 text-emerald-700">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                  Flight 4: The Summit (+10.0m)
-                </span>
-              </div>
-              
-              {/* Stepped Architectural Progress Bar */}
-              <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden flex">
-                <div className="h-full bg-blue-500 w-[21.4%]" />
-                <div className="h-full bg-purple-500 w-[14.3%]" />
-                <div className="h-full bg-amber-500 w-[28.6%]" />
-                <div className="h-full bg-emerald-500 w-[35.7%]" />
-              </div>
-            </div>
-
-            {/* ==================== THE 4 ASCENDING PHYSICAL FLIGHTS ==================== */}
-            {/* Unified Staircase: Clean architectural terraces with open tread rows (NO small box tabs or nested cards) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-end gap-5 lg:gap-6 mt-6">
-              
-              {/* -------------------- FLIGHT 1: FOUNDATION -------------------- */}
-              <div className="rounded-2xl border border-blue-200/80 bg-white shadow-xs overflow-hidden flex flex-col justify-between transition-all hover:border-blue-300">
-                {/* Physical Step Tread Lip */}
-                <div className="h-1.5 bg-blue-600 w-full" />
-                
-                <div className="p-4 sm:p-5">
-                  {/* Flight Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-ink/8">
-                    <div>
-                      <span className="text-[10px] font-mono uppercase font-bold text-blue-600 tracking-wider block">
-                        Flight 01 · 0.0m Elevation
-                      </span>
-                      <h3 className="text-sm font-bold text-ink font-display mt-0.5">
-                        Foundation Flight
-                      </h3>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200/70">
-                      Q01–Q03
-                    </span>
-                  </div>
-
-                  {/* Open Step Treads (NO nested box cards!) */}
-                  <div className="divide-y divide-ink/5 mt-1">
-                    {STAIRCASE_QUESTIONS.filter(q => q.level === 1).map((q) => {
-                      const Icon = q.icon;
-                      const isSelected = activeStairStep === q.step;
-                      return (
-                        <button
-                          key={q.step}
-                          type="button"
-                          onClick={() => setActiveStairStep(q.step)}
-                          className={`w-full text-left py-3 px-2 sm:px-3 rounded-lg transition-all flex items-center gap-3 cursor-pointer select-none ${
-                            isSelected
-                              ? 'bg-blue-50/90 text-ink ring-1 ring-blue-300/60 shadow-2xs'
-                              : 'hover:bg-stone-50 text-ink/80 hover:text-ink'
-                          }`}
-                        >
-                          <span className={`font-mono text-[11px] font-bold shrink-0 ${isSelected ? 'text-blue-700' : 'text-ink/40'}`}>
-                            0{q.step}
-                          </span>
-                          <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-                            isSelected ? 'bg-blue-600 text-white shadow-2xs' : 'bg-stone-100 text-ink/60'
-                          }`}>
-                            <Icon className="w-3.5 h-3.5 stroke-[1.75]" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="text-xs font-bold text-ink truncate">{q.title}</span>
-                              <span className={`font-mono text-[10px] ${isSelected ? 'text-blue-700 font-bold' : 'text-ink/40'}`}>{q.qNum}</span>
-                            </div>
-                            <p className="text-[11px] text-ink/60 truncate mt-0.5">{q.subtitle}</p>
-                          </div>
-                          {isSelected && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Tread Base Riser Bar */}
-                <div className="px-4 py-2.5 bg-stone-50 border-t border-ink/8 flex items-center justify-between text-[11px] font-mono text-ink/60">
-                  <span className="font-semibold text-blue-700 flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-blue-600 stroke-[2.5]" />
-                    3 Foundation Steps
-                  </span>
-                  <span className="text-ink/40">➔ +3.0m Riser</span>
-                </div>
-              </div>
-
-              {/* -------------------- FLIGHT 2: BRAND IDENTITY -------------------- */}
-              <div className="rounded-2xl border border-purple-200/80 bg-white shadow-xs overflow-hidden flex flex-col justify-between transition-all hover:border-purple-300 lg:-translate-y-2">
-                {/* Physical Step Tread Lip */}
-                <div className="h-1.5 bg-purple-600 w-full" />
-                
-                <div className="p-4 sm:p-5">
-                  {/* Flight Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-ink/8">
-                    <div>
-                      <span className="text-[10px] font-mono uppercase font-bold text-purple-600 tracking-wider block">
-                        Flight 02 · +3.0m Elevation
-                      </span>
-                      <h3 className="text-sm font-bold text-ink font-display mt-0.5">
-                        Brand Soul Flight
-                      </h3>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold border border-purple-200/70">
-                      Q04–Q05
-                    </span>
-                  </div>
-
-                  {/* Open Step Treads */}
-                  <div className="divide-y divide-ink/5 mt-1">
-                    {STAIRCASE_QUESTIONS.filter(q => q.level === 2).map((q) => {
-                      const Icon = q.icon;
-                      const isSelected = activeStairStep === q.step;
-                      return (
-                        <button
-                          key={q.step}
-                          type="button"
-                          onClick={() => setActiveStairStep(q.step)}
-                          className={`w-full text-left py-3 px-2 sm:px-3 rounded-lg transition-all flex items-center gap-3 cursor-pointer select-none ${
-                            isSelected
-                              ? 'bg-purple-50/90 text-ink ring-1 ring-purple-300/60 shadow-2xs'
-                              : 'hover:bg-stone-50 text-ink/80 hover:text-ink'
-                          }`}
-                        >
-                          <span className={`font-mono text-[11px] font-bold shrink-0 ${isSelected ? 'text-purple-700' : 'text-ink/40'}`}>
-                            0{q.step}
-                          </span>
-                          <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-                            isSelected ? 'bg-purple-600 text-white shadow-2xs' : 'bg-stone-100 text-ink/60'
-                          }`}>
-                            <Icon className="w-3.5 h-3.5 stroke-[1.75]" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="text-xs font-bold text-ink truncate">{q.title}</span>
-                              <span className={`font-mono text-[10px] ${isSelected ? 'text-purple-700 font-bold' : 'text-ink/40'}`}>{q.qNum}</span>
-                            </div>
-                            <p className="text-[11px] text-ink/60 truncate mt-0.5">{q.subtitle}</p>
-                          </div>
-                          {isSelected && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Micro Architectural Tone Note */}
-                  <div className="mt-3 pt-2.5 border-t border-dashed border-purple-100 text-center text-[11px] font-medium text-purple-900/80">
-                    <span className="font-mono text-[10px] uppercase text-purple-600 block font-bold">Vibe Direction</span>
-                    <span>Calm · Bold · Warm · Product</span>
-                  </div>
-                </div>
-
-                {/* Tread Base Riser Bar */}
-                <div className="px-4 py-2.5 bg-stone-50 border-t border-ink/8 flex items-center justify-between text-[11px] font-mono text-ink/60">
-                  <span className="font-semibold text-purple-700 flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-purple-600 stroke-[2.5]" />
-                    2 Identity Steps
-                  </span>
-                  <span className="text-ink/40">➔ +3.5m Riser</span>
-                </div>
-              </div>
-
-              {/* -------------------- FLIGHT 3: DESIGN ENGINE -------------------- */}
-              <div className="rounded-2xl border border-amber-200/80 bg-white shadow-xs overflow-hidden flex flex-col justify-between transition-all hover:border-amber-300 lg:-translate-y-4">
-                {/* Physical Step Tread Lip */}
-                <div className="h-1.5 bg-amber-600 w-full" />
-                
-                <div className="p-4 sm:p-5">
-                  {/* Flight Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-ink/8">
-                    <div>
-                      <span className="text-[10px] font-mono uppercase font-bold text-amber-600 tracking-wider block">
-                        Flight 03 · +6.5m Elevation
-                      </span>
-                      <h3 className="text-sm font-bold text-ink font-display mt-0.5">
-                        Tokens & Style Flight
-                      </h3>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200/70">
-                      Q06–Q09
-                    </span>
-                  </div>
-
-                  {/* Open Step Treads */}
-                  <div className="divide-y divide-ink/5 mt-1">
-                    {STAIRCASE_QUESTIONS.filter(q => q.level === 3).map((q) => {
-                      const Icon = q.icon;
-                      const isSelected = activeStairStep === q.step;
-                      return (
-                        <button
-                          key={q.step}
-                          type="button"
-                          onClick={() => setActiveStairStep(q.step)}
-                          className={`w-full text-left py-3 px-2 sm:px-3 rounded-lg transition-all flex items-center gap-3 cursor-pointer select-none ${
-                            isSelected
-                              ? 'bg-amber-50/90 text-ink ring-1 ring-amber-300/60 shadow-2xs'
-                              : 'hover:bg-stone-50 text-ink/80 hover:text-ink'
-                          }`}
-                        >
-                          <span className={`font-mono text-[11px] font-bold shrink-0 ${isSelected ? 'text-amber-700' : 'text-ink/40'}`}>
-                            0{q.step}
-                          </span>
-                          <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-                            isSelected ? 'bg-amber-600 text-white shadow-2xs' : 'bg-stone-100 text-ink/60'
-                          }`}>
-                            <Icon className="w-3.5 h-3.5 stroke-[1.75]" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="text-xs font-bold text-ink truncate">{q.title}</span>
-                              <span className={`font-mono text-[10px] ${isSelected ? 'text-amber-700 font-bold' : 'text-ink/40'}`}>{q.qNum}</span>
-                            </div>
-                            <p className="text-[11px] text-ink/60 truncate mt-0.5">{q.subtitle}</p>
-                          </div>
-                          {isSelected && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Tread Base Riser Bar */}
-                <div className="px-4 py-2.5 bg-stone-50 border-t border-ink/8 flex items-center justify-between text-[11px] font-mono text-ink/60">
-                  <span className="font-semibold text-amber-700 flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-amber-600 stroke-[2.5]" />
-                    4 Token Steps
-                  </span>
-                  <span className="text-ink/40">➔ +3.5m Riser</span>
-                </div>
-              </div>
-
-              {/* -------------------- FLIGHT 4: THE SUMMIT PLATFORM -------------------- */}
-              <div className="rounded-2xl border-2 border-emerald-400 bg-white shadow-md overflow-hidden flex flex-col justify-between transition-all hover:border-emerald-500 lg:-translate-y-6 relative">
-                {/* Physical Step Tread Lip (Glowing Summit Emerald) */}
-                <div className="h-2 bg-emerald-500 w-full shadow-xs shadow-emerald-400/50" />
-                
-                <div className="p-4 sm:p-5">
-                  {/* Flight Header with Summit Crown */}
-                  <div className="flex items-center justify-between pb-3 border-b border-ink/8">
-                    <div>
-                      <span className="text-[10px] font-mono uppercase font-bold text-emerald-600 tracking-wider flex items-center gap-1">
-                        <Flag className="w-3 h-3 text-emerald-600" />
-                        Flight 04 · The Summit (+10.0m)
-                      </span>
-                      <h3 className="text-sm font-bold text-ink font-display mt-0.5">
-                        Launch Flight
-                      </h3>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-300">
-                      Q10–Q14
-                    </span>
-                  </div>
-
-                  {/* Open Step Treads */}
-                  <div className="divide-y divide-ink/5 mt-1">
-                    {STAIRCASE_QUESTIONS.filter(q => q.level === 4).map((q) => {
-                      const Icon = q.icon;
-                      const isSelected = activeStairStep === q.step;
-                      return (
-                        <button
-                          key={q.step}
-                          type="button"
-                          onClick={() => setActiveStairStep(q.step)}
-                          className={`w-full text-left py-2.5 px-2 sm:px-3 rounded-lg transition-all flex items-center gap-3 cursor-pointer select-none ${
-                            isSelected
-                              ? 'bg-emerald-50/90 text-ink ring-1 ring-emerald-300/60 shadow-2xs'
-                              : 'hover:bg-stone-50 text-ink/80 hover:text-ink'
-                          }`}
-                        >
-                          <span className={`font-mono text-[11px] font-bold shrink-0 ${isSelected ? 'text-emerald-700' : 'text-ink/40'}`}>
-                            {q.step}
-                          </span>
-                          <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-                            isSelected ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-stone-100 text-ink/60'
-                          }`}>
-                            <Icon className="w-3.5 h-3.5 stroke-[1.75]" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="text-xs font-bold text-ink truncate">{q.title}</span>
-                              <span className={`font-mono text-[10px] ${isSelected ? 'text-emerald-700 font-bold' : 'text-ink/40'}`}>{q.qNum}</span>
-                            </div>
-                            <p className="text-[11px] text-ink/60 truncate mt-0.5">{q.subtitle}</p>
-                          </div>
-                          {isSelected && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Tread Base Riser Bar */}
-                <div className="px-4 py-2.5 bg-emerald-50/80 border-t border-emerald-100 flex items-center justify-between text-[11px] font-mono text-emerald-800 font-bold">
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    100% Launch Ready
-                  </span>
-                  <span className="text-emerald-700 font-mono text-[10px]">Summit Crest</span>
-                </div>
-              </div>
-
-            </div>
-
-            {/* ==================== ACTIVE STEP LIVE INSPECTOR CONSOLE ==================== */}
-            {(() => {
-              const activeQ = STAIRCASE_QUESTIONS.find(q => q.step === activeStairStep) || STAIRCASE_QUESTIONS[0];
-              const ActiveIcon = activeQ.icon;
-              return (
-                <div className="mt-8 rounded-2xl bg-stone-50/80 border border-ink/10 p-5 sm:p-6 transition-all duration-200">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                    {/* Left: Active Question Spotlight */}
-                    <div className="flex items-start sm:items-center gap-4 flex-1">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-t ${activeQ.levelGradient} text-white flex items-center justify-center shrink-0 shadow-sm`}>
-                        <ActiveIcon className="w-6 h-6 stroke-[1.75]" />
+                    {/* Top Floating Badges */}
+                    <div className="relative z-10 p-5 sm:p-6 flex items-center justify-between pointer-events-none">
+                      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-ink/10 shadow-xs text-xs font-mono font-bold text-ink">
+                        <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: activeFlightData.dotColor }} />
+                        <span>Flight {activeFlightData.numStr} · {activeFlightData.elevation}</span>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className={`text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full ${activeQ.levelLightBg} ${activeQ.levelText} border ${activeQ.levelBorder}`}>
-                            Step {activeQ.step} of 14 · {activeQ.levelName}
-                          </span>
-                          <span className="text-[11px] font-mono text-ink/50">
-                            Elevation: {activeQ.elevation}
-                          </span>
-                          <span className="text-[10px] font-mono text-ink/40">
-                            Est: ~{activeQ.timeEstimate}
-                          </span>
-                        </div>
-                        
-                        <h4 className="text-base sm:text-lg font-bold text-ink font-display mt-1">
-                          {activeQ.qNum}: {activeQ.title}
-                        </h4>
-                        <p className="text-xs sm:text-sm text-ink/70 mt-0.5 max-w-xl">
-                          {activeQ.simpleExplanation}
-                        </p>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-ink/10 shadow-xs text-[11px] font-mono text-ink/70 font-semibold">
+                        <span>~{activeFlightData.timeEstimate} total</span>
+                      </div>
+                    </div>
 
-                        {/* Live Interactive Blueprint Chips */}
-                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                          <span className="text-[10px] font-mono uppercase text-ink/45 font-bold mr-1">
-                            Live Decision Output:
-                          </span>
-                          {activeQ.previewChips.map((chip, idx) => (
-                            <span
-                              key={idx}
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold border transition-colors ${
-                                chip.active
-                                  ? `${activeQ.levelLightBg} ${activeQ.levelText} ${activeQ.levelBorder} shadow-2xs`
-                                  : 'bg-white text-ink/65 border-ink/10'
+                    {/* Active Flight Image with Smooth Crossfade Animation */}
+                    <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-10 pointer-events-none">
+                      <AnimatePresence mode="wait">
+                        <motion.img
+                          key={activeFlightData.id}
+                          src={activeFlightData.image}
+                          alt={activeFlightData.title}
+                          initial={{ opacity: 0, scale: 0.94, y: 12 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 1.02, y: -12 }}
+                          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                          className="w-full h-full object-contain drop-shadow-2xl select-none"
+                        />
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Bottom Gradient Overlay & Flight Indicator Controls */}
+                    <div className="relative z-10 p-6 sm:p-8 bg-gradient-to-t from-stone-950/90 via-stone-950/40 to-transparent flex items-end justify-between text-white">
+                      <div>
+                        <div className="font-display text-6xl sm:text-7xl lg:text-8xl font-extrabold leading-[0.85] tracking-tight text-white/95">
+                          {activeFlightData.numStr}
+                        </div>
+                        <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/70 mt-2">
+                          {activeFlightData.title} · {activeFlightData.stepRange}
+                        </div>
+                      </div>
+
+                      {/* 4-Flight Dash Bar Indicators */}
+                      <div className="flex items-center gap-2 pointer-events-auto">
+                        {STAIRWAY_FLIGHTS.map((flight) => {
+                          const isActive = flight.id === activeFlight;
+                          return (
+                            <button
+                              key={flight.id}
+                              type="button"
+                              onClick={() => setActiveFlight(flight.id)}
+                              aria-label={`Jump to Flight ${flight.numStr}`}
+                              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                                isActive
+                                  ? 'w-10 sm:w-12 bg-white shadow-xs'
+                                  : 'w-2.5 sm:w-3 bg-white/40 hover:bg-white/70'
                               }`}
-                            >
-                              {chip.colorDot && (
-                                <span
-                                  className="w-2.5 h-2.5 rounded-full shrink-0 border border-ink/15"
-                                  style={{ backgroundColor: chip.colorDot }}
-                                />
-                              )}
-                              {chip.label}
-                            </span>
-                          ))}
-                        </div>
+                            />
+                          );
+                        })}
                       </div>
                     </div>
-
-                    {/* Right: Step Steppers + Launch Button */}
-                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0 self-end sm:self-auto">
-                      {/* Step Backwards */}
-                      <button
-                        type="button"
-                        onClick={() => setActiveStairStep(prev => Math.max(1, prev - 1))}
-                        disabled={activeStairStep === 1}
-                        className="px-3.5 py-2.5 rounded-xl border border-ink/15 bg-white text-ink text-xs font-bold font-mono hover:bg-stone-100 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5" />
-                        <span>Prev</span>
-                      </button>
-
-                      {/* Step Forwards */}
-                      <button
-                        type="button"
-                        onClick={() => setActiveStairStep(prev => Math.min(14, prev + 1))}
-                        disabled={activeStairStep === 14}
-                        className="px-3.5 py-2.5 rounded-xl border border-ink/15 bg-white text-ink text-xs font-bold font-mono hover:bg-stone-100 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                      >
-                        <span>Next</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Primary CTA Button (font-sansation font-bold) */}
-                      <button
-                        type="button"
-                        onClick={onStartNew}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-clay hover:bg-clay-deep text-white text-sm font-sansation font-bold shadow-md shadow-clay/25 hover:shadow-lg hover:shadow-clay/35 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer select-none"
-                      >
-                        <Sparkles className="w-4 h-4 text-white/90 animate-pulse" />
-                        <span>Start Step 1 (Question 1)</span>
-                        <ArrowRight className="w-4 h-4 transition-transform duration-200 hover:translate-x-0.5" />
-                      </button>
-                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
+            </div>
+
+            {/* Right Column: 4 Vertical Flight Progression Cards */}
+            <div className="lg:col-span-6 relative border-l border-ink/15 pl-7 sm:pl-10 space-y-4 sm:space-y-6">
+              {STAIRWAY_FLIGHTS.map((flight) => {
+                const isActive = flight.id === activeFlight;
+                return (
+                  <div
+                    key={flight.id}
+                    onClick={() => setActiveFlight(flight.id)}
+                    className={`relative py-4 sm:py-6 transition-all duration-300 select-none ${
+                      isActive ? 'opacity-100' : 'opacity-45 hover:opacity-85 cursor-pointer'
+                    }`}
+                  >
+                    {/* Active Gradient Accent Bar along the vertical continuous line */}
+                    {isActive && (
+                      <motion.span
+                        layoutId="activeFlightLineIndicator"
+                        className="absolute left-[-29px] sm:left-[-41px] top-0 bottom-0 w-[3px] rounded-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-sm"
+                        transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                      />
+                    )}
+
+                    {/* Flight Number & Level Badge Header */}
+                    <div className="flex items-center gap-3 mb-2.5">
+                      <span className={`font-mono text-sm sm:text-base font-bold ${isActive ? 'text-clay' : 'text-ink/40'}`}>
+                        {flight.numStr}
+                      </span>
+                      <span
+                        className={`text-xs font-bold font-mono px-3 py-0.5 rounded-full border transition-all ${
+                          isActive
+                            ? 'bg-clay-wash text-clay border-clay/20 shadow-2xs'
+                            : 'bg-stone-100 text-ink/60 border-ink/10'
+                        }`}
+                      >
+                        {flight.badge}
+                      </span>
+                      <span className="text-[11px] font-mono text-ink/40">
+                        Elevation: {flight.elevation}
+                      </span>
+                    </div>
+
+                    {/* Flight Main Heading */}
+                    <h3 className="font-display text-2xl sm:text-3xl lg:text-[40px] font-bold text-ink leading-[1.08] tracking-tight">
+                      {flight.title}
+                    </h3>
+
+                    {/* Flight Description */}
+                    <p className="mt-2.5 text-[15px] sm:text-base leading-relaxed text-ink/75 max-w-lg">
+                      {flight.description}
+                    </p>
+
+                    {/* Active Flight Expanded Questions Details */}
+                    {isActive && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        className="mt-5 space-y-2.5 pt-2"
+                      >
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-ink/45 font-bold">
+                          Guided Flight Decisions ({flight.questions.length} questions):
+                        </div>
+                        <div className="grid gap-2">
+                          {flight.questions.map((q) => {
+                            const Icon = q.icon;
+                            return (
+                              <div
+                                key={q.step}
+                                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-stone-50/90 border border-ink/8 hover:border-ink/20 hover:bg-white transition-all shadow-2xs group"
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="w-8 h-8 rounded-lg bg-white border border-ink/10 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform text-clay">
+                                    <Icon className="w-4 h-4 stroke-[1.8]" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-mono text-[10px] font-bold text-clay bg-clay-wash px-1.5 py-0.5 rounded border border-clay/15">
+                                        {q.qNum}
+                                      </span>
+                                      <span className="text-xs sm:text-sm font-bold text-ink truncate">
+                                        {q.title}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-ink/55 truncate mt-0.5">
+                                      {q.subtitle}
+                                    </p>
+                                  </div>
+                                </div>
+                                <span className="font-mono text-[10px] sm:text-[11px] text-ink/65 bg-white px-2.5 py-1 rounded-md border border-ink/10 shrink-0 shadow-2xs">
+                                  {q.keyDecision}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* CTA button for this flight */}
+                        <div className="pt-2 flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onStartNew();
+                            }}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-clay hover:bg-clay-deep text-white text-xs font-bold font-sansation shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Start {flight.title} (Question {flight.startStep})</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
           </div>
         </div>
       </section>
+
 
       {/* ============================ EXPORTS ============================ */}
       <section id="exports" className="border-b border-rule">
