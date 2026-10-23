@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "figma": {
+      "command": "node",
+      "args": [
+        "figma-developer-mcp",
+        "--stdio",
+        "--no-telemetry"
+      ],
+      "env": {
+        "FIGMA_API_KEY": "${FIGMA_API_KEY}",
+        "FRAMELINK_TELEMETRY": "off",
+        "DO_NOT_TRACK": "1"
+      }
+    },
+    "seo": {
+      "command": "node",
+      "args": [
+        "mcp-seo"
+      ]
+    }
+  }
+}

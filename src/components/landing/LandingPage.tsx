@@ -40,6 +40,7 @@ import { LiveWebsitePreview } from '../preview/LiveWebsitePreview';
 import { ALL_SHOWCASE_PRESETS, ShowcasePreset } from '../../data/showcasePresets';
 import { WIZARD_STEPS } from '../common/WizardNav';
 import { importProjectFromJson } from '../../utils/storage';
+import { Interactive3DCanvas } from '../common/Interactive3DCanvas';
 
 interface LandingPageProps {
   onStartNew: () => void;
@@ -506,6 +507,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [activeStairStep, setActiveStairStep] = useState<number>(1);
+  const [architectureTab, setArchitectureTab] = useState<'tokens' | '3d'>('tokens');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -682,81 +684,142 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   className="absolute -bottom-16 -left-16 w-48 h-48 bg-gradient-to-tr from-blue-400/15 via-clay/10 to-transparent rounded-full blur-3xl pointer-events-none"
                 />
 
-                {/* Card Title & Value Proposition */}
-                <div className="relative">
-                  <h3 className="font-display text-lg sm:text-xl font-bold text-ink tracking-tight">
-                    What You Decide
-                  </h3>
-                  <p className="mt-1 text-xs text-ink/55 leading-relaxed">
-                    Six core dimensions locked down into your design system tokens in plain English.
-                  </p>
+                {/* Card Title & Value Proposition + 3D Mode Switcher */}
+                <div className="relative flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-ink tracking-tight">
+                      What You Decide
+                    </h3>
+                    <p className="mt-1 text-xs text-ink/55 leading-relaxed">
+                      Six core dimensions in tokens & real-time 3D spatial models.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 p-1 bg-stone-100 rounded-lg border border-rule/60 text-[11px] font-semibold shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setArchitectureTab('tokens')}
+                      className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                        architectureTab === 'tokens'
+                          ? 'bg-white text-ink shadow-2xs font-bold'
+                          : 'text-ink/60 hover:text-ink'
+                      }`}
+                    >
+                      Tokens
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setArchitectureTab('3d')}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                        architectureTab === '3d'
+                          ? 'bg-white text-ink shadow-2xs font-bold'
+                          : 'text-ink/60 hover:text-ink'
+                      }`}
+                      title="Explore in real-time interactive 3D WebGL space"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-clay animate-pulse" />
+                      <span>3D Space</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Decision Dimension Rows */}
-                <div className="relative mt-4 space-y-2">
-                  {DECISIONS.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <div
-                        key={item.id}
-                        className="group relative flex items-center justify-between gap-3 p-2.5 rounded-xl border border-rule/70 bg-white/70 hover:bg-white hover:border-ink/20 hover:shadow-xs transition-all duration-200"
-                      >
-                        {/* Left: Icon + Category + Subtitle */}
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div
-                            className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.accent} border flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform`}
-                          >
-                            <Icon className={`w-4 h-4 ${item.iconColor}`} />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-xs sm:text-sm font-semibold text-ink tracking-tight block">
-                              {item.label}
-                            </span>
-                            <p className="text-[11px] text-ink/50 truncate">
-                              {item.title}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Right: Visual Element & Badge */}
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {item.id === 'colour' && (
-                            <div className="flex items-center -space-x-1 mr-1">
-                              {[
-                                activeSample.colorPalette.primary,
-                                activeSample.colorPalette.secondary,
-                                activeSample.colorPalette.accent,
-                                activeSample.colorPalette.textPrimary,
-                                activeSample.colorPalette.surface
-                              ].map((hex, i) => (
-                                <span
-                                  key={i}
-                                  className="w-3.5 h-3.5 rounded-full ring-1 ring-white shadow-2xs"
-                                  style={{ backgroundColor: hex }}
-                                  title={hex}
-                                />
-                              ))}
-                            </div>
-                          )}
-                          {item.id === 'type' && (
-                            <span className="px-1.5 py-0.5 rounded bg-ink/5 font-mono text-[10px] font-bold text-ink/80 mr-1 max-w-[120px] truncate" title={`${activeSample.typography.headingFont} / ${activeSample.typography.bodyFont}`}>
-                              {activeSample.typography.headingFont.split(' ')[0]}
-                            </span>
-                          )}
-                          {item.id === 'accessibility' && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-mono font-medium border border-emerald-200/60 mr-1">
-                              <Check className="w-2.5 h-2.5 text-emerald-600 stroke-[3]" />
-                              AA Pass
-                            </span>
-                          )}
-                          <span className="font-mono text-[10px] sm:text-[11px] text-ink/50 bg-stone-100/80 px-2 py-0.5 rounded-md border border-rule/60">
-                            {item.badge}
-                          </span>
-                        </div>
+                {architectureTab === '3d' ? (
+                  <div className="relative mt-4 h-[330px] rounded-xl border border-ink/10 bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950 overflow-hidden flex flex-col justify-between p-3.5 shadow-inner">
+                    <Interactive3DCanvas
+                      primaryColor={activeSample.colorPalette.primary}
+                      accentColor={activeSample.colorPalette.accent}
+                      className="absolute inset-0"
+                    />
+                    <div className="relative z-10 flex items-center justify-between pointer-events-none">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-white/80 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/15">
+                        Interactive 3D WebGL
+                      </span>
+                      <span className="text-[10px] font-mono text-white/70 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded border border-white/10">
+                        Move cursor to tilt
+                      </span>
+                    </div>
+                    <div className="relative z-10 flex items-center justify-between pointer-events-none bg-black/35 backdrop-blur-md px-3 py-2 rounded-lg border border-white/10">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full ring-2 ring-white/20 shadow-xs"
+                          style={{ backgroundColor: activeSample.colorPalette.primary }}
+                        />
+                        <span className="text-xs font-semibold text-white/95">
+                          {activePreset.label} · 3D Knot Mesh
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <span className="text-[10px] font-mono text-white/60">
+                        Smooth 60 FPS
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Decision Dimension Rows */
+                  <div className="relative mt-4 space-y-2">
+                    {DECISIONS.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <div
+                          key={item.id}
+                          className="group relative flex items-center justify-between gap-3 p-2.5 rounded-xl border border-rule/70 bg-white/70 hover:bg-white hover:border-ink/20 hover:shadow-xs transition-all duration-200"
+                        >
+                          {/* Left: Icon + Category + Subtitle */}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.accent} border flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform`}
+                            >
+                              <Icon className={`w-4 h-4 ${item.iconColor}`} />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-xs sm:text-sm font-semibold text-ink tracking-tight block">
+                                {item.label}
+                              </span>
+                              <p className="text-[11px] text-ink/50 truncate">
+                                {item.title}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Right: Visual Element & Badge */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {item.id === 'colour' && (
+                              <div className="flex items-center -space-x-1 mr-1">
+                                {[
+                                  activeSample.colorPalette.primary,
+                                  activeSample.colorPalette.secondary,
+                                  activeSample.colorPalette.accent,
+                                  activeSample.colorPalette.textPrimary,
+                                  activeSample.colorPalette.surface
+                                ].map((hex, i) => (
+                                  <span
+                                    key={i}
+                                    className="w-3.5 h-3.5 rounded-full ring-1 ring-white shadow-2xs"
+                                    style={{ backgroundColor: hex }}
+                                    title={hex}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                            {item.id === 'type' && (
+                              <span className="px-1.5 py-0.5 rounded bg-ink/5 font-mono text-[10px] font-bold text-ink/80 mr-1 max-w-[120px] truncate" title={`${activeSample.typography.headingFont} / ${activeSample.typography.bodyFont}`}>
+                                {activeSample.typography.headingFont.split(' ')[0]}
+                              </span>
+                            )}
+                            {item.id === 'accessibility' && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-mono font-medium border border-emerald-200/60 mr-1">
+                                <Check className="w-2.5 h-2.5 text-emerald-600 stroke-[3]" />
+                                AA Pass
+                              </span>
+                            )}
+                            <span className="font-mono text-[10px] sm:text-[11px] text-ink/50 bg-stone-100/80 px-2 py-0.5 rounded-md border border-rule/60">
+                              {item.badge}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
               </div>
             </Reveal>
           </div>
