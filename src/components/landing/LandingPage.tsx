@@ -1345,25 +1345,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             );
                           })}
                         </div>
-
-                        {/* Start Flight Action Button */}
-                        <div className="mt-3.5 flex items-center justify-between gap-3 pt-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStartNew();
-                            }}
-                            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-clay hover:bg-clay-deep text-white text-xs font-bold font-sansation shadow-sm hover:shadow transition-all cursor-pointer active:scale-[0.98]"
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>Start {flight.title} (Question {flight.startStep})</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
-                          <span className="text-[11px] font-mono text-ink/45 hidden sm:inline">
-                            Flight {flight.numStr} of 04 · Ready to configure
-                          </span>
-                        </div>
                       </motion.div>
                     )}
                   </div>
