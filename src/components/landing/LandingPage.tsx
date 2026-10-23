@@ -1219,17 +1219,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     {/* Ambient studio soft radial lighting */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.95),rgba(230,238,245,0.45))] pointer-events-none" />
 
-                    {/* Top Floating Badges */}
-                    <div className="relative z-10 p-5 flex items-center justify-between pointer-events-none">
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-ink/10 shadow-xs text-xs font-mono font-bold text-ink">
-                        <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: activeFlightData.dotColor }} />
-                        <span>Flight {activeFlightData.numStr} · {activeFlightData.elevation}</span>
-                      </div>
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-ink/10 shadow-xs text-[11px] font-mono text-ink/70 font-semibold">
-                        <span>~{activeFlightData.timeEstimate} total</span>
-                      </div>
-                    </div>
-
                     {/* Active Flight Image with Smooth Crossfade Animation */}
                     <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-10 pointer-events-none">
                       <AnimatePresence mode="wait">
@@ -1261,8 +1250,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             {activeFlightData.numStr}
                           </motion.div>
                         </AnimatePresence>
-                        <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.2em] text-white/70 mt-2 font-medium">
-                          {activeFlightData.title} · {activeFlightData.stepRange}
+                        <div className="text-xs sm:text-sm font-display font-semibold tracking-wide text-white/90 mt-2">
+                          {activeFlightData.title}
                         </div>
                       </div>
 
