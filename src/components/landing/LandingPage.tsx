@@ -536,29 +536,69 @@ const STAIRWAY_FLIGHTS: StairwayFlight[] = [
 
 const DELIVERABLES = [
   {
+    id: 'pdf-spec',
+    numStr: '01',
     kicker: 'PDF · 4 pages',
     title: 'Design System Specification',
+    category: 'Specification',
+    detail: '4 Pages · WCAG 2.1 AA Audit',
+    year: '2025',
+    format: 'PDF Vector Document',
     body: 'A typeset document with exact hex values, shade ramps, the type hierarchy, spacing rules and a WCAG AA contrast audit.',
+    badge: 'Standard Handoff',
+    specimens: ['Color Ramps & Contrast', 'Typography Scale Ratio', 'Border Radii & Shadows', 'Spacing 4px Baseline'],
   },
   {
+    id: 'png-board',
+    numStr: '02',
     kicker: 'PNG · 1600 x 1000',
     title: 'Visual Design Board',
+    category: 'Visual Board',
+    detail: '1600 × 1000 High-Res',
+    year: '2025',
+    format: 'PNG High-Res Board',
     body: 'A single shareable board with your palette, type pairing and every button and card state side by side.',
+    badge: 'Figma & Pitch Ready',
+    specimens: ['Light / Dark Switcher', 'Component Sandbox States', 'Interactive Hover States', 'Hero Layout Specimens'],
   },
   {
+    id: 'ai-prompt',
+    numStr: '03',
     kicker: 'Markdown',
     title: 'AI Website-Builder Prompt',
+    category: 'AI System Prompt',
+    detail: 'Cursor · Claude · v0 · ChatGPT',
+    year: '2025',
+    format: 'Markdown Prompt File',
     body: 'A system prompt for Claude, ChatGPT, Cursor or v0 that holds the build to your tokens instead of inventing new styles.',
+    badge: 'LLM Orchestration',
+    specimens: ['Token Strictness Guardrails', 'Component Hierarchy', 'Context Window Injection', 'Deterministic Theming'],
   },
   {
+    id: 'tokens-pkg',
+    numStr: '04',
     kicker: 'ZIP · 4 files',
     title: 'Developer Token Package',
+    category: 'Token Package',
+    detail: 'JSON + CSS + Tailwind + TS',
+    year: '2025',
+    format: 'Multi-Format Token ZIP',
     body: 'JSON design tokens, CSS custom properties, a Tailwind theme config and TypeScript constants.',
+    badge: 'Engineers & Monorepo',
+    specimens: ['tokens.json (W3C standard)', 'theme.css (Variables)', 'tailwind.config.ts', 'design-tokens.ts'],
   },
   {
+    id: 'nextjs-starter',
+    numStr: '05',
     kicker: 'ZIP · Next.js 15',
     title: 'Next.js Project Starter',
+    category: 'Next.js Starter',
+    detail: 'App Router · React 19',
+    year: '2025',
+    format: 'Production Next.js Template',
     body: 'A complete App Router project, with layout, page, globals and Tailwind config, pre-loaded with your system.',
+    badge: 'Turnkey Launch',
+    specimens: ['Next.js 15 App Router', 'React 19 Concurrent Mode', 'Zero-CSS-Debt Config', 'Production SEO Ready'],
   },
 ];
 
@@ -598,6 +638,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [activeStairStep, setActiveStairStep] = useState<number>(1);
   const [activeFlight, setActiveFlight] = useState<number>(1);
   const [isFlightSectionHovered, setIsFlightSectionHovered] = useState(false);
+  const [hoveredDeliverableId, setHoveredDeliverableId] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [architectureTab, setArchitectureTab] = useState<'tokens' | '3d'>('tokens');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -1356,44 +1398,164 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* ============================ EXPORTS ============================ */}
-      <section id="exports" className="border-b border-rule">
-        <div className="mx-auto max-w-7xl px-6 py-12 lg:py-20">
-          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
-            <Reveal className="lg:col-span-4">
-              <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-ink/45">
-                  What you export
-                </p>
-                <h2 className="mt-4 font-display text-[clamp(1.7rem,3.3vw,2.4rem)] font-semibold leading-[1.1] tracking-[-0.015em] text-ink text-balance">
-                  Five formats, one token set.
-                </h2>
-                <p className="mt-4 text-[15px] leading-relaxed text-ink/60">
-                  Everything is generated from the same decisions, so the specification, the code
-                  and the rendered site can never disagree.
+      {/* ============================ DELIVERABLES INDEX (INFINITE AUTOMATION PROJECT INDEX STYLE) ============================ */}
+      <section
+        id="exports"
+        className="border-b border-rule bg-white relative py-20 lg:py-28"
+        onMouseMove={(e) => {
+          setMousePos({ x: e.clientX, y: e.clientY });
+        }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          {/* Section Introduction: Editorial Context */}
+          <div className="mb-14 lg:mb-16 max-w-3xl">
+            <Reveal>
+              <div className="inline-flex items-center gap-2 mb-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-clay" />
+                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-clay font-bold">
+                  WHAT YOU EXPORT
                 </p>
               </div>
-            </Reveal>
-
-            <Reveal className="lg:col-span-8" delay={0.05}>
-              <div className="border-t border-ink">
-                {DELIVERABLES.map((item) => (
-                  <div
-                    key={item.title}
-                    className="grid gap-x-8 gap-y-1 border-b border-rule py-5 sm:grid-cols-[150px_1fr]"
-                  >
-                    <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-clay">
-                      {item.kicker}
-                    </span>
-                    <div>
-                      <h3 className="text-sm font-semibold text-ink">{item.title}</h3>
-                      <p className="mt-1 text-sm leading-relaxed text-ink/60">{item.body}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h2 className="font-display text-[clamp(2.2rem,4.2vw,3.4rem)] font-bold leading-[1.06] tracking-[-0.03em] text-ink text-balance">
+                Five formats, one token set.
+              </h2>
+              <p className="mt-4 text-base sm:text-lg leading-relaxed text-ink/65 max-w-2xl font-light">
+                Everything is generated from the same decisions, so the specification, the code
+                and the rendered site can never disagree.
+              </p>
             </Reveal>
           </div>
+
+          {/* Table Header Row: Exact Infinite Automation Project Index Layout */}
+          <Reveal delay={0.05}>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-5 border-b border-ink/80">
+              <div className="flex items-baseline gap-2.5">
+                <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-ink">
+                  Deliverables index
+                </h3>
+                <span className="font-display text-xl sm:text-2xl font-normal text-ink/40">
+                  (5)
+                </span>
+              </div>
+              <p className="text-xs sm:text-[13px] text-ink/50 font-normal">
+                Hover to preview · click to open
+              </p>
+            </div>
+          </Reveal>
+
+          {/* List: Exact IA Micro-Animations and Micro-Interactions */}
+          <div className="group/list relative">
+            {DELIVERABLES.map((item) => {
+              return (
+                <div
+                  key={item.id}
+                  onMouseEnter={() => setHoveredDeliverableId(item.id)}
+                  onMouseLeave={() => setHoveredDeliverableId(null)}
+                  onClick={onStartNew}
+                  className="group relative flex items-center justify-between py-6 sm:py-7 lg:py-8 border-b border-rule/75 cursor-pointer select-none transition-opacity duration-400 group-hover/list:opacity-35 hover:!opacity-100"
+                >
+                  {/* Left: 01-05 number + title */}
+                  <div className="flex items-center gap-6 sm:gap-10 min-w-0 flex-1 pr-4">
+                    <span className="font-mono text-sm sm:text-base font-bold text-clay shrink-0">
+                      {item.numStr}
+                    </span>
+                    <div className="min-w-0">
+                      <h4 className="font-display text-xl sm:text-2xl lg:text-[32px] font-bold text-ink leading-tight tracking-[-0.03em] transition-transform duration-600 ease-[0.22,1,0.36,1] group-hover:translate-x-3 truncate">
+                        {item.title}
+                      </h4>
+                      <p className="mt-1 text-xs sm:text-sm text-ink/50 truncate max-w-xl hidden sm:block">
+                        {item.body}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Middle Metadata: Category & Detail / Year */}
+                  <div className="hidden md:flex items-center gap-8 lg:gap-16 shrink-0 text-left">
+                    <span className="text-sm font-medium text-ink/65 min-w-[130px]">
+                      {item.category}
+                    </span>
+                    <span className="text-sm font-mono text-ink/50 min-w-[80px]">
+                      {item.year || '2025'}
+                    </span>
+                  </div>
+
+                  {/* Right: Circular Arrow Button that rotates -45deg and fills with gradient on hover */}
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-ink/20 flex items-center justify-center text-ink/75 group-hover:bg-gradient-to-r group-hover:from-clay group-hover:via-rose-600 group-hover:to-indigo-600 group-hover:border-transparent group-hover:text-white group-hover:-rotate-45 transition-all duration-450 ease-[0.22,1,0.36,1] shadow-2xs shrink-0 ml-4">
+                    <ArrowRight className="w-4 h-4 stroke-[2.2] transition-transform duration-300" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Floating Hover Specimen Preview Window Following Cursor */}
+          <AnimatePresence>
+            {hoveredDeliverableId && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 12 }}
+                transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                style={{
+                  position: 'fixed',
+                  left: mousePos.x + 28,
+                  top: mousePos.y - 130,
+                  pointerEvents: 'none',
+                  zIndex: 60,
+                }}
+                className="hidden lg:block w-[360px] rounded-2xl bg-white/95 backdrop-blur-xl border border-ink/15 shadow-2xl p-5 overflow-hidden"
+              >
+                {(() => {
+                  const item = DELIVERABLES.find((d) => d.id === hoveredDeliverableId);
+                  if (!item) return null;
+                  return (
+                    <div>
+                      <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-rule">
+                        <span className="font-mono text-[11px] uppercase font-bold text-clay tracking-wider">
+                          Deliverable {item.numStr} · {item.category}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-[10px] font-mono text-emerald-600 font-bold uppercase">Ready</span>
+                        </div>
+                      </div>
+
+                      <div className="font-display text-base font-bold text-ink">
+                        {item.title}
+                      </div>
+                      <p className="mt-1.5 text-xs text-ink/65 leading-relaxed">
+                        {item.body}
+                      </p>
+
+                      {/* Specimen pill checklist */}
+                      <div className="mt-3.5 space-y-1.5">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-ink/40 font-semibold">
+                          Includes in package
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(item.specimens || [item.detail]).map((spec, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded-md bg-stone-100 text-[10px] font-mono text-ink/75 border border-ink/8"
+                            >
+                              ✓ {spec}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-2.5 border-t border-rule/60 flex items-center justify-between text-[11px] font-mono">
+                        <span className="text-ink/50">{item.detail}</span>
+                        <span className="text-clay font-bold flex items-center gap-1">
+                          Click to open →
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
 
