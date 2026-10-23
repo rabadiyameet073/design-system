@@ -1,0 +1,6 @@
+{
+  "name": "Design System Studio",
+  "description": "Founder-first, no-code website design system creator that turns business ideas into complete, production-ready design systems, visual boards, and developer tokens.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
