@@ -1551,18 +1551,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </span>
                 </h2>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="hidden lg:flex items-center gap-2 font-mono text-xs px-3.5 py-1.5 rounded-full bg-stone-100/90 border border-rule/80 shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-clay animate-pulse" />
-                  <span className="text-ink/60">Flight:</span>
-                  <span className="font-bold text-ink">0{activeFlight} / 04</span>
-                  <span className="text-ink/30">·</span>
-                  <span className="text-clay font-semibold">14 Decisions</span>
-                </div>
-                <p className="max-w-xs text-xs text-ink/60 font-light hidden xl:block leading-relaxed">
-                  One connected system across strategy, typography, tokens, and code. Four ascending flights from idea to production tokens.
-                </p>
-              </div>
+              <p className="max-w-md text-xs sm:text-sm text-ink/60 font-light hidden lg:block leading-relaxed">
+                One connected system across strategy, typography, tokens, and code. Four ascending flights from idea to production tokens.
+              </p>
             </div>
           </Reveal>
 
@@ -1626,26 +1617,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     {/* Architectural Grid Lines */}
                     <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000004_1px,transparent_1px),linear-gradient(to_bottom,#00000004_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
-                    {/* Top Floating Glass HUD */}
-                    <div className="relative z-20 p-5 sm:p-6 flex items-center justify-between gap-3 pointer-events-none">
-                      {/* Flight Live Badge */}
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-ink/10 shadow-xs">
-                        <span className={`w-2 h-2 rounded-full ${flightTheme.dotColor} animate-pulse`} />
-                        <span className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink">
-                          Flight 0{activeFlightData.id} <span className="text-ink/40 font-normal">/ 04</span>
-                        </span>
-                      </div>
 
-                      {/* Elevation HUD Tag */}
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md border border-ink/10 shadow-xs">
-                        <span className="font-mono text-[10px] font-medium text-ink/50 uppercase tracking-widest">
-                          Elevation
-                        </span>
-                        <span className="font-mono text-[11px] font-bold text-ink">
-                          {activeFlightData.elevation}
-                        </span>
-                      </div>
-                    </div>
 
                     {/* Active Flight 3D Image Stage with Micro-Floating Animation */}
                     <div className="absolute inset-0 flex items-center justify-center p-8 sm:p-14 pointer-events-none">
@@ -1715,27 +1687,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         </div>
                       </div>
 
-                      {/* Interactive 4-Flight Pill Indicator Bar */}
-                      <div className="flex items-center gap-1.5 bg-stone-900/60 backdrop-blur-md p-1.5 rounded-full border border-white/15">
-                        {STAIRWAY_FLIGHTS.map((flight) => {
-                          const isActive = flight.id === activeFlight;
-                          return (
-                            <button
-                              key={flight.id}
-                              type="button"
-                              onClick={() => scrollToFlightCard(flight.id)}
-                              aria-label={`Switch to Flight ${flight.numStr}`}
-                              className={`h-7 rounded-full transition-all duration-300 cursor-pointer flex items-center justify-center font-mono text-[11px] font-bold ${
-                                isActive
-                                  ? 'px-3 bg-white text-stone-950 shadow-md scale-105'
-                                  : 'w-7 bg-white/20 hover:bg-white/40 text-white/80 hover:text-white'
-                              }`}
-                            >
-                              {isActive ? `0${flight.id}` : flight.id}
-                            </button>
-                          );
-                        })}
-                      </div>
+
                     </div>
                   </motion.div>
                 );
@@ -1810,14 +1762,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           <span className="text-[11px] font-mono text-ink/45 hidden sm:inline flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-clay/50" />
                             Elevation: {flight.elevation}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 font-mono text-[11px]">
-                          <span className="text-ink/60 bg-stone-100/90 px-2.5 py-1 rounded-lg border border-rule/80">
-                            {flight.timeEstimate}
-                          </span>
-                          <span className="font-bold text-clay bg-clay-wash px-2.5 py-1 rounded-lg border border-clay/20">
-                            {flight.stepRange.split('·')[1]?.trim() || ''}
                           </span>
                         </div>
                       </div>
