@@ -643,15 +643,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [architectureTab, setArchitectureTab] = useState<'tokens' | '3d'>('tokens');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const stepsSectionRef = useRef<HTMLElement>(null);
   const rightColumnRef = useRef<HTMLDivElement>(null);
+  const activeFlightRef = useRef<number>(1);
+  const isWheelLockedRef = useRef<boolean>(false);
+  const wasSectionInViewRef = useRef<boolean>(false);
+  const wheelCooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Right-side scroll tracking: updates active flight and left image as user scrolls right side
+  useEffect(() => {
+    activeFlightRef.current = activeFlight;
+  }, [activeFlight]);
+
+  // Center the target flight card inside the right column without affecting window scroll
+  const scrollToFlightCard = (flightId: number) => {
+    setActiveFlight(flightId);
+    activeFlightRef.current = flightId;
+    const container = rightColumnRef.current;
+    const el = document.getElementById(`flight-card-${flightId}`);
+    if (container && el) {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const offsetFromContainerTop = elRect.top - containerRect.top;
+      const targetScrollTop = container.scrollTop + offsetFromContainerTop;
+      container.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  // Right-side scroll tracking: updates active flight when manually scrolled/dragged
   const handleRightColumnScroll = () => {
+    if (isWheelLockedRef.current) return;
     const container = rightColumnRef.current;
     if (!container) return;
 
     const containerRect = container.getBoundingClientRect();
-    const containerCenter = containerRect.top + containerRect.height / 2;
 
     let bestFlight = 1;
     let bestDistance = Infinity;
@@ -660,8 +687,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       const el = document.getElementById(`flight-card-${id}`);
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const cardCenter = rect.top + rect.height / 2;
-      const dist = Math.abs(cardCenter - containerCenter);
+      const dist = Math.abs(rect.top - containerRect.top);
 
       if (dist < bestDistance) {
         bestDistance = dist;
@@ -669,18 +695,189 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       }
     });
 
-    if (bestFlight !== activeFlight) {
+    if (bestFlight !== activeFlightRef.current) {
       setActiveFlight(bestFlight);
+      activeFlightRef.current = bestFlight;
     }
   };
 
-  const scrollToFlightCard = (flightId: number) => {
-    setActiveFlight(flightId);
-    const el = document.getElementById(`flight-card-${flightId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  };
+  // Section-wide wheel interceptor: Mouse wheel anywhere inside #steps (left card, right column, header)
+  // steps through all 4 flights before releasing page scroll to next section (#exports) or previous section (#live-render).
+  useEffect(() => {
+    const section = stepsSectionRef.current;
+    if (!section) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Ignore tiny subpixel jitter
+      if (Math.abs(e.deltaY) < 14) return;
+
+      const rect = section.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      const headerH = 72;
+
+      // Section is considered active in viewport when its top is under or at the sticky header
+      // and its bottom occupies substantial space
+      const isSectionInActiveView = rect.top <= headerH + 25 && rect.bottom >= windowH * 0.45;
+
+      if (!isSectionInActiveView) {
+        wasSectionInViewRef.current = false;
+        return;
+      }
+
+      const isScrollingDown = e.deltaY > 0;
+
+      // First entry into the active section:
+      if (!wasSectionInViewRef.current) {
+        wasSectionInViewRef.current = true;
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Pin/align section neatly below sticky header
+        if (Math.abs(rect.top - headerH) > 6 && rect.top > 0) {
+          window.scrollTo({
+            top: window.scrollY + (rect.top - headerH),
+            behavior: 'smooth',
+          });
+        }
+
+        if (isScrollingDown) {
+          if (activeFlightRef.current !== 1) {
+            activeFlightRef.current = 1;
+            setActiveFlight(1);
+            scrollToFlightCard(1);
+          }
+        } else {
+          if (activeFlightRef.current !== 4) {
+            activeFlightRef.current = 4;
+            setActiveFlight(4);
+            scrollToFlightCard(4);
+          }
+        }
+
+        isWheelLockedRef.current = true;
+        if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
+        wheelCooldownTimerRef.current = setTimeout(() => {
+          isWheelLockedRef.current = false;
+        }, 400);
+        return;
+      }
+
+      const currentFlight = activeFlightRef.current;
+
+      // CASE 1: SCROLLING DOWN (Flight 1 -> 2 -> 3 -> 4 -> Next Section)
+      if (isScrollingDown) {
+        if (currentFlight < 4) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (isWheelLockedRef.current) return;
+
+          // Keep section locked in viewport
+          if (Math.abs(rect.top - headerH) > 6 && rect.top > 0) {
+            window.scrollTo({
+              top: window.scrollY + (rect.top - headerH),
+              behavior: 'smooth',
+            });
+          }
+
+          isWheelLockedRef.current = true;
+          const nextFlight = currentFlight + 1;
+          activeFlightRef.current = nextFlight;
+          setActiveFlight(nextFlight);
+          scrollToFlightCard(nextFlight);
+
+          if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
+          wheelCooldownTimerRef.current = setTimeout(() => {
+            isWheelLockedRef.current = false;
+          }, 550);
+          return;
+        }
+
+        // On Flight 4:
+        // Swallow remaining momentum of the 3->4 transition so Flight 4 is clearly seen
+        if (isWheelLockedRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        // User is on Flight 4 and intentionally scrolls down again: navigate to next section (#exports)
+        e.preventDefault();
+        e.stopPropagation();
+        isWheelLockedRef.current = true;
+        const nextSection = document.getElementById('exports');
+        if (nextSection) {
+          nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
+        wheelCooldownTimerRef.current = setTimeout(() => {
+          isWheelLockedRef.current = false;
+        }, 850);
+        return;
+      }
+
+      // CASE 2: SCROLLING UP (Flight 4 -> 3 -> 2 -> 1 -> Prev Section)
+      if (!isScrollingDown) {
+        if (currentFlight > 1) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (isWheelLockedRef.current) return;
+
+          // Keep section locked in viewport
+          if (Math.abs(rect.top - headerH) > 6 && rect.top > 0) {
+            window.scrollTo({
+              top: window.scrollY + (rect.top - headerH),
+              behavior: 'smooth',
+            });
+          }
+
+          isWheelLockedRef.current = true;
+          const prevFlight = currentFlight - 1;
+          activeFlightRef.current = prevFlight;
+          setActiveFlight(prevFlight);
+          scrollToFlightCard(prevFlight);
+
+          if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
+          wheelCooldownTimerRef.current = setTimeout(() => {
+            isWheelLockedRef.current = false;
+          }, 550);
+          return;
+        }
+
+        // On Flight 1:
+        // Swallow remaining momentum
+        if (isWheelLockedRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        // User is on Flight 1 and scrolls up again: navigate to previous section (#live-render)
+        e.preventDefault();
+        e.stopPropagation();
+        isWheelLockedRef.current = true;
+        const prevSection = document.getElementById('live-render');
+        if (prevSection) {
+          prevSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
+        wheelCooldownTimerRef.current = setTimeout(() => {
+          isWheelLockedRef.current = false;
+        }, 850);
+        return;
+      }
+    };
+
+    section.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      section.removeEventListener('wheel', handleWheel);
+      if (wheelCooldownTimerRef.current) {
+        clearTimeout(wheelCooldownTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -999,7 +1196,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* =========================== LIVE RENDER =========================== */}
-      <section id="live-render" className="border-b border-rule">
+      <section id="live-render" className="border-b border-rule scroll-mt-18">
         <div className="mx-auto max-w-7xl px-6 py-12 lg:py-20">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <Reveal>
@@ -1208,10 +1405,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* =========================== ARCHITECTURAL 14-QUESTION STAIRCASE (100VH WHITE BG & RIGHT-SIDE SCROLL) =========================== */}
+      {/* =========================== ARCHITECTURAL 14-QUESTION STAIRCASE (100VH WHITE BG & SCROLL CHOREOGRAPHY) =========================== */}
       <section
         id="steps"
-        className="relative bg-white text-ink border-b border-rule w-full h-screen min-h-[660px] max-h-[960px] lg:h-screen flex flex-col justify-between py-6 sm:py-8 lg:py-10 overflow-hidden"
+        ref={stepsSectionRef}
+        className="relative bg-white text-ink border-b border-rule w-full h-screen min-h-[660px] max-h-[960px] lg:h-screen flex flex-col justify-between py-6 sm:py-8 lg:py-10 overflow-hidden scroll-mt-18"
       >
         <div className="mx-auto max-w-7xl px-6 w-full h-full flex flex-col justify-between">
           {/* Header Row: Compact Luxury Header */}
@@ -1412,7 +1610,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ============================ DELIVERABLES INDEX (INFINITE AUTOMATION PROJECT INDEX STYLE) ============================ */}
       <section
         id="exports"
-        className="border-b border-rule bg-white relative py-20 lg:py-28"
+        className="border-b border-rule bg-white relative py-20 lg:py-28 scroll-mt-18"
         onMouseMove={(e) => {
           setMousePos({ x: e.clientX, y: e.clientY });
         }}
