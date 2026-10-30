@@ -65,3 +65,4 @@ describe('Token Reducer & History Stack', () => {
     expect(stateRedo.future.length).toBe(0);
   });
 });
+

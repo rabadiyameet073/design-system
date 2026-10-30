@@ -215,3 +215,4 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     issues
   };
 }
+

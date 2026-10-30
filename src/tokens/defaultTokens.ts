@@ -161,3 +161,7 @@ export function createDefaultTokens(
     }
   };
 }
+
+export const DEFAULT_DESIGN_TOKENS = createDefaultTokens();
+
+

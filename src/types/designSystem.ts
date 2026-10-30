@@ -1,3 +1,5 @@
+import { DesignTokens } from '../tokens/types';
+
 export interface ColorShades {
   50: string;
   100: string;
@@ -127,8 +129,9 @@ export interface DesignProject {
   name: string;
   createdAt: number;
   updatedAt: number;
-  currentStep: number; // 1 to 14
+  currentStep: number; // 1 to 11
   completedSteps: number[];
+  tokens: DesignTokens;
   websiteType: {
     id: string;
     name: string;
@@ -137,6 +140,10 @@ export interface DesignProject {
     characteristics: string[];
   };
   business: BusinessDetails;
+  businessDiscovery?: {
+    primaryOffering?: string;
+    targetAudience?: string;
+  };
   brandPersonality: BrandPersonality;
   visualDirection: VisualDirection;
   colorPalette: ColorPaletteConfig;

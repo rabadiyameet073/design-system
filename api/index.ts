@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 
 export interface UserSession {
   id: string;
@@ -47,6 +49,58 @@ router.get('/health', (req, res) => {
     authType: 'Google Identity Services / OAuth 2.0 (RFC 6749)',
     environment: process.env.NODE_ENV || 'development'
   });
+});
+
+let cachedFonts: any[] | null = null;
+
+// Fonts API endpoint (Google Fonts developer proxy with snapshot fallback)
+router.get('/fonts', async (req, res) => {
+  try {
+    const key = process.env.GOOGLE_FONTS_API_KEY;
+    if (key && !cachedFonts) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const r = await fetch(
+        `https://www.googleapis.com/webfonts/v1/webfonts?key=${key}&sort=popularity`,
+        { signal: controller.signal }
+      );
+      clearTimeout(timeoutId);
+      if (r.ok) {
+        const data = (await r.json()) as any;
+        cachedFonts = data.items.slice(0, 400).map((f: any, i: number) => ({
+          family: f.family,
+          category: f.category,
+          variants: f.variants || ['400', '700'],
+          subsets: f.subsets || ['latin'],
+          popularityRank: i + 1,
+          variable: !!f.axes,
+          axes: f.axes,
+          source: 'google'
+        }));
+      }
+    }
+
+    if (cachedFonts && cachedFonts.length > 0) {
+      res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
+      return res.json(cachedFonts);
+    }
+  } catch (e) {
+    // fallback to local snapshot
+  }
+
+  try {
+    const snapshotPath = path.resolve(process.cwd(), 'src', 'data', 'fonts.snapshot.json');
+    if (fs.existsSync(snapshotPath)) {
+      const raw = fs.readFileSync(snapshotPath, 'utf8');
+      const parsed = JSON.parse(raw);
+      res.setHeader('Cache-Control', 's-maxage=3600');
+      return res.json(parsed);
+    }
+  } catch (err) {
+    console.error('Error reading fonts snapshot:', err);
+  }
+
+  res.json([]);
 });
 
 // Real-Time OAuth Client Configuration

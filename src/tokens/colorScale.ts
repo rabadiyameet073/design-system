@@ -149,3 +149,4 @@ export function generateAllColorPrimitives(
     info: generateFunctionalScale(FUNCTIONAL_HUES.info)
   };
 }
+

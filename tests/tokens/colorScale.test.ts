@@ -41,3 +41,4 @@ describe('OKLCH Color Scale Generator', () => {
     expect(all.info).toBeDefined();
   });
 });
+

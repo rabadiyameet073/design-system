@@ -3,6 +3,7 @@ import { COLOR_PALETTES } from './palettes';
 import { TYPOGRAPHY_PAIRINGS } from './typographyPairs';
 import { VISUAL_DIRECTIONS } from './visualDirections';
 import { WEBSITE_TYPES } from './websiteTypes';
+import { DEFAULT_DESIGN_TOKENS, createDefaultTokens } from '../tokens/defaultTokens';
 
 export const SAMPLE_PROJECT_CERAMICS: DesignProject = {
   id: 'project_artisan_ceramics',
@@ -10,8 +11,9 @@ export const SAMPLE_PROJECT_CERAMICS: DesignProject = {
   name: 'Komorebi Studio & Ceramics',
   createdAt: Date.now() - 86400000 * 2,
   updatedAt: Date.now() - 3600000 * 4,
-  currentStep: 13,
-  completedSteps: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+  currentStep: 1,
+  completedSteps: [1],
+  tokens: DEFAULT_DESIGN_TOKENS,
   websiteType: {
     id: 'ecommerce',
     name: 'Online Store & E-commerce',
@@ -95,8 +97,9 @@ export const SAMPLE_PROJECT_SAAS: DesignProject = {
   name: 'Synapse Data Flow',
   createdAt: Date.now() - 86400000 * 5,
   updatedAt: Date.now() - 3600000 * 12,
-  currentStep: 13,
-  completedSteps: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+  currentStep: 1,
+  completedSteps: [1],
+  tokens: createDefaultTokens('saas', 'dashboard-app', 'Synapse Data Flow', '#4F46E5'),
   websiteType: {
     id: 'saas-product',
     name: 'SaaS Product',
@@ -188,6 +191,7 @@ export function createNewProject(name: string = 'Untitled Website', typeId: stri
     updatedAt: Date.now(),
     currentStep: 1,
     completedSteps: [1],
+    tokens: createDefaultTokens('commerce', typeId, name, selectedPalette.primary),
     websiteType: {
       id: selectedType.id,
       name: selectedType.name,

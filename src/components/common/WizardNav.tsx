@@ -1,23 +1,20 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Check, RotateCcw } from 'lucide-react';
 import { motion } from 'motion/react';
-import { WizardStepId, WizardStepMeta } from '../../types/designSystem';
+import { WizardStepMeta } from '../../types/designSystem';
 
 export const WIZARD_STEPS: WizardStepMeta[] = [
-  { number: 1, title: 'Project Setup', subtitle: 'Name and initial goal', category: 'Foundation', estimatedMinutes: 1 },
-  { number: 2, title: 'Website Type', subtitle: 'Choose your website genre', category: 'Foundation', estimatedMinutes: 2 },
-  { number: 3, title: 'Business Discovery', subtitle: 'Audience and offerings', category: 'Foundation', estimatedMinutes: 2 },
-  { number: 4, title: 'Brand Personality', subtitle: 'How your brand should feel', category: 'Identity', estimatedMinutes: 2 },
-  { number: 5, title: 'Visual Direction', subtitle: 'Aesthetic mood and tone', category: 'Identity', estimatedMinutes: 2 },
-  { number: 6, title: 'Color Studio', subtitle: 'Palette and semantic colors', category: 'Style', estimatedMinutes: 3 },
-  { number: 7, title: 'Typography Studio', subtitle: 'Fonts and scale hierarchy', category: 'Style', estimatedMinutes: 3 },
-  { number: 8, title: 'Website Imagery', subtitle: 'Photography and visual assets', category: 'Style', estimatedMinutes: 2 },
-  { number: 9, title: 'Layout & Spacing', subtitle: 'Density and structure', category: 'Structure', estimatedMinutes: 2 },
-  { number: 10, title: 'Website Components', subtitle: 'Buttons, cards, and patterns', category: 'Components', estimatedMinutes: 3 },
-  { number: 11, title: 'Mobile & Responsive', subtitle: 'Phone, tablet, and desktop', category: 'Responsive', estimatedMinutes: 2 },
-  { number: 12, title: 'Themes & Accessibility', subtitle: 'Dark mode & WCAG contrast', category: 'Quality', estimatedMinutes: 2 },
-  { number: 13, title: 'Final Design Review', subtitle: 'Holistic system inspection', category: 'Review', estimatedMinutes: 2 },
-  { number: 14, title: 'Export Center', subtitle: 'Download PDF, code, & prompt', category: 'Export', estimatedMinutes: 1 }
+  { number: 1, title: 'Category & Genre', subtitle: 'Template opens immediately', category: 'Foundation', estimatedMinutes: 1 },
+  { number: 2, title: 'Project Scope', subtitle: 'Brand, audience & scripts', category: 'Foundation', estimatedMinutes: 2 },
+  { number: 3, title: 'Brand Personality', subtitle: 'Temperament dials & presets', category: 'Identity', estimatedMinutes: 2 },
+  { number: 4, title: 'Visual Direction', subtitle: 'Aesthetic mood and tone', category: 'Identity', estimatedMinutes: 2 },
+  { number: 5, title: 'Color Studio', subtitle: 'OKLCH scales & semantic mapping', category: 'Style', estimatedMinutes: 3 },
+  { number: 6, title: 'Typography Studio', subtitle: 'Font API, pairing & fluid scale', category: 'Style', estimatedMinutes: 3 },
+  { number: 7, title: 'Shape & Spacing', subtitle: 'Radius, density & elevation', category: 'Structure', estimatedMinutes: 2 },
+  { number: 8, title: 'Website Components', subtitle: 'Button states, cards & inputs', category: 'Components', estimatedMinutes: 2 },
+  { number: 9, title: 'Imagery & Motion', subtitle: 'Photo filters, icons & springs', category: 'Motion', estimatedMinutes: 2 },
+  { number: 10, title: 'Review & Audit', subtitle: 'WCAG 2.2 AA table & auto-fix', category: 'Quality', estimatedMinutes: 2 },
+  { number: 11, title: 'Export Center', subtitle: '10 formats & starter ZIP', category: 'Export', estimatedMinutes: 1 }
 ];
 
 interface WizardNavProps {
@@ -81,7 +78,7 @@ export const WizardNav: React.FC<WizardNavProps> = ({
             </div>
           </div>
 
-          {/* Center: Quick step pill list (scrollable on medium screens) */}
+          {/* Center: Quick step pill list */}
           <div className="hidden lg:flex items-center gap-1.5 overflow-x-auto py-1">
             {WIZARD_STEPS.map(step => {
               const isCurrent = step.number === currentStep;
@@ -91,7 +88,7 @@ export const WizardNav: React.FC<WizardNavProps> = ({
                 <button
                   key={step.number}
                   onClick={() => onSelectStep(step.number)}
-                  className={`w-7 h-7 rounded text-xs font-medium transition-colors flex items-center justify-center shrink-0 ${
+                  className={`w-7 h-7 rounded text-xs font-medium transition-colors flex items-center justify-center shrink-0 cursor-pointer ${
                     isCurrent
                       ? 'bg-neutral-900 text-white shadow-xs'
                       : isCompleted
@@ -101,7 +98,7 @@ export const WizardNav: React.FC<WizardNavProps> = ({
                   title={`${step.number}. ${step.title}`}
                 >
                   {isCompleted && !isCurrent ? (
-                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
                   ) : (
                     step.number
                   )}
@@ -110,55 +107,39 @@ export const WizardNav: React.FC<WizardNavProps> = ({
             })}
           </div>
 
-          {/* Right: Actions (Back, Reset, Continue) */}
-          <div className="flex items-center gap-2.5 shrink-0 self-end md:self-auto">
+          {/* Right: Step Action Buttons */}
+          <div className="flex items-center gap-2 self-end md:self-auto">
             {onResetStep && (
               <button
-                type="button"
                 onClick={onResetStep}
-                className="p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-50 rounded-lg transition-colors"
-                title="Reset this step to defaults"
+                className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
+                title="Reset step to defaults"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset</span>
               </button>
             )}
 
-            {onSkip && currentStep < 13 && (
+            {currentStep > 1 && (
               <button
-                type="button"
-                onClick={onSkip}
-                className="px-3 py-2 text-xs font-medium text-neutral-500 hover:text-neutral-900 transition-colors"
-                title="Skip to next step with recommended defaults"
+                onClick={onBack}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
               >
-                Skip step
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Back</span>
               </button>
             )}
 
             <button
-              type="button"
-              onClick={onBack}
-              disabled={currentStep === 1}
-              className={`flex items-center gap-1 px-3.5 py-2 text-xs font-medium rounded-lg border transition-colors ${
-                currentStep === 1
-                  ? 'text-neutral-300 border-neutral-200 cursor-not-allowed'
-                  : 'text-neutral-700 border-neutral-200 hover:bg-neutral-50'
-              }`}
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span>Back</span>
-            </button>
-
-            <button
-              type="button"
               onClick={onNext}
               disabled={!canContinue}
-              className={`flex items-center gap-1 px-4 py-2 text-xs font-semibold rounded-lg text-white transition-all shadow-xs ${
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer ${
                 canContinue
-                  ? 'bg-neutral-900 hover:bg-neutral-800 active:scale-[0.99]'
-                  : 'bg-neutral-300 cursor-not-allowed'
+                  ? 'bg-neutral-900 text-white hover:bg-neutral-800'
+                  : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
               }`}
             >
-              <span>{continueLabel}</span>
+              <span>{currentStep === WIZARD_STEPS.length ? 'Finish & Export' : continueLabel}</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>

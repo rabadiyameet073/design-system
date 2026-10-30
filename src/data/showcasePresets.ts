@@ -4,6 +4,7 @@ import { TYPOGRAPHY_PAIRINGS } from './typographyPairs';
 import { VISUAL_DIRECTIONS } from './visualDirections';
 import { WEBSITE_TYPES, WebsiteTypeDefinition } from './websiteTypes';
 import { SAMPLE_PROJECT_CERAMICS, SAMPLE_PROJECT_SAAS } from './sampleProjects';
+import { createDefaultTokens } from '../tokens/defaultTokens';
 
 export interface ShowcasePreset {
   id: string; // websiteType.id
@@ -390,8 +391,9 @@ export function buildShowcaseProject(typeDef: WebsiteTypeDefinition): DesignProj
     name: profile.brandName,
     createdAt: Date.now() - 86400000 * 3,
     updatedAt: Date.now() - 3600000 * 2,
-    currentStep: 13,
-    completedSteps: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+    currentStep: 1,
+    completedSteps: [1],
+    tokens: createDefaultTokens('commerce', typeDef.id, profile.brandName, selectedPalette.primary),
     websiteType: {
       id: typeDef.id,
       name: typeDef.name,

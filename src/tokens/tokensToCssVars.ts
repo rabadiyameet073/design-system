@@ -118,3 +118,4 @@ export function generateCssRuleString(
   const lines = Object.entries(vars).map(([k, v]) => `  ${k}: ${v};`);
   return `${selector} {\n${lines.join('\n')}\n}`;
 }
+

@@ -89,3 +89,4 @@ export function createDarkSemanticColors(
     statusInfoFg: info[100]
   };
 }
+

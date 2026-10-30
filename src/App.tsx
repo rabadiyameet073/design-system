@@ -5,27 +5,23 @@ import { WizardNav } from './components/common/WizardNav';
 import { LandingPage } from './components/landing/LandingPage';
 import { ProjectDashboard } from './components/dashboard/ProjectDashboard';
 import { WorkspaceView } from './components/workspace/WorkspaceView';
-import { LiveWebsitePreview } from './components/preview/LiveWebsitePreview';
 import { StepTransition } from './components/common/StepTransition';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/auth-context';
 import { OAuthModal } from './components/auth/OAuthModal';
 
-// Step components
-import { Step1ProjectInit } from './components/wizard/Step1ProjectInit';
-import { Step2WebsiteType } from './components/wizard/Step2WebsiteType';
-import { Step3BusinessDiscovery } from './components/wizard/Step3BusinessDiscovery';
-import { Step4BrandPersonality } from './components/wizard/Step4BrandPersonality';
+// 11-Step Modular Wizard Components
+import { Step1CategoryGenre } from './components/wizard/Step1CategoryGenre';
+import { Step2ProjectBusiness } from './components/wizard/Step2ProjectBusiness';
+import { Step3BrandPersonality } from './components/wizard/Step3BrandPersonality';
 import { Step5VisualDirection } from './components/wizard/Step5VisualDirection';
 import { Step6ColorStudio } from './components/wizard/Step6ColorStudio';
-import { Step7TypographyStudio } from './components/wizard/Step7TypographyStudio';
-import { Step8ImageryStudio } from './components/wizard/Step8ImageryStudio';
+import { Step6TypographyStudio } from './components/wizard/Step6TypographyStudio';
 import { Step9LayoutSpacing } from './components/wizard/Step9LayoutSpacing';
 import { Step10ComponentsStudio } from './components/wizard/Step10ComponentsStudio';
-import { Step11MobileResponsive } from './components/wizard/Step11MobileResponsive';
-import { Step12ThemesAccessibility } from './components/wizard/Step12ThemesAccessibility';
-import { Step13FinalReview } from './components/wizard/Step13FinalReview';
-import { Step14ExportCenter } from './components/wizard/Step14ExportCenter';
+import { Step8ImageryStudio } from './components/wizard/Step8ImageryStudio';
+import { Step10ReviewAudit } from './components/wizard/Step10ReviewAudit';
+import { Step11ExportCenter } from './components/wizard/Step11ExportCenter';
 import { WizardWorkspaceStage } from './components/wizard/WizardWorkspaceStage';
 
 import { DesignProject } from './types/designSystem';
@@ -50,6 +46,12 @@ function MainStudio() {
   const [isPreviewDrawerOpen, setIsPreviewDrawerOpen] = useState(false);
   const [isAutosaving, setIsAutosaving] = useState(false);
 
+  // Draft preview and undo/redo state
+  const [draftProject, setDraftProject] = useState<Partial<DesignProject> | null>(null);
+  const [draftLabel, setDraftLabel] = useState<string | null>(null);
+  const [history, setHistory] = useState<DesignProject[]>([]);
+  const [future, setFuture] = useState<DesignProject[]>([]);
+
   // Initialize projects on load
   useEffect(() => {
     const loadedProjects = getStoredProjects();
@@ -65,13 +67,11 @@ function MainStudio() {
   useEffect(() => {
     if (!user) return;
 
-    // Sync local projects to cloud on sign-in
     const currentLocals = getStoredProjects();
     syncLocalProjectsToCloud(user.id, currentLocals).catch(e => {
       console.warn('Initial cloud sync notice:', e);
     });
 
-    // Subscribe to real-time changes across tabs & cloud store
     const unsubscribe = subscribeToUserProjects(
       user.id,
       (cloudProjects) => {
@@ -111,6 +111,10 @@ function MainStudio() {
     setProjects(prevProjects => {
       const updated = prevProjects.map(p => {
         if (p.id === activeProject.id) {
+          // Push to undo history before mutation
+          setHistory(h => [...h.slice(-15), p]);
+          setFuture([]); // clear redo on new change
+
           const next = { ...p, ...updates, updatedAt: Date.now() };
           saveProject(next);
           if (user) {
@@ -130,9 +134,50 @@ function MainStudio() {
     }, 400);
   }, [activeProject.id, user]);
 
+  // Draft Preview Handlers
+  const handlePreviewDraft = useCallback((draft: Partial<DesignProject>, label: string) => {
+    setDraftProject(draft);
+    setDraftLabel(label);
+  }, []);
+
+  const handleClearDraft = useCallback(() => {
+    setDraftProject(null);
+    setDraftLabel(null);
+  }, []);
+
+  const handleApplyDraft = useCallback(() => {
+    if (draftProject) {
+      handleUpdateActiveProject(draftProject);
+      setDraftProject(null);
+      setDraftLabel(null);
+    }
+  }, [draftProject, handleUpdateActiveProject]);
+
+  // Undo / Redo Handlers
+  const handleUndo = useCallback(() => {
+    if (history.length > 0) {
+      const prev = history[history.length - 1];
+      setFuture(f => [activeProject, ...f]);
+      setHistory(h => h.slice(0, h.length - 1));
+      saveProject(prev);
+      setProjects(list => list.map(p => p.id === prev.id ? prev : p));
+    }
+  }, [history, activeProject]);
+
+  const handleRedo = useCallback(() => {
+    if (future.length > 0) {
+      const next = future[0];
+      setHistory(h => [...h, activeProject]);
+      setFuture(f => f.slice(1));
+      saveProject(next);
+      setProjects(list => list.map(p => p.id === next.id ? next : p));
+    }
+  }, [future, activeProject]);
+
   // Step Navigation handlers
   const handleNextStep = () => {
-    if (activeProject.currentStep < 14) {
+    handleClearDraft();
+    if (activeProject.currentStep < 11) {
       const nextStep = activeProject.currentStep + 1;
       const completed = Array.from(new Set([...activeProject.completedSteps, activeProject.currentStep]));
       handleUpdateActiveProject({
@@ -145,6 +190,7 @@ function MainStudio() {
   };
 
   const handleBackStep = () => {
+    handleClearDraft();
     if (activeProject.currentStep > 1) {
       handleUpdateActiveProject({
         currentStep: activeProject.currentStep - 1
@@ -153,6 +199,7 @@ function MainStudio() {
   };
 
   const handleSelectStep = (stepNumber: number) => {
+    handleClearDraft();
     handleUpdateActiveProject({
       currentStep: stepNumber
     });
@@ -161,34 +208,27 @@ function MainStudio() {
   const handleResetCurrentStep = () => {
     if (window.confirm('Reset this step to recommended defaults?')) {
       const fresh = createNewProject(activeProject.name, activeProject.websiteType.id);
-      // Reset only fields belonging to current step
       switch (activeProject.currentStep) {
-        case 4:
-          handleUpdateActiveProject({ brandPersonality: fresh.brandPersonality });
+        case 3:
+          handleUpdateActiveProject({ brandPersonality: fresh.brandPersonality, tokens: { ...activeProject.tokens, meta: { ...activeProject.tokens.meta, personality: fresh.tokens.meta.personality } } });
           break;
-        case 5:
+        case 4:
           handleUpdateActiveProject({ visualDirection: fresh.visualDirection });
           break;
+        case 5:
+          handleUpdateActiveProject({ colorPalette: fresh.colorPalette, tokens: { ...activeProject.tokens, color: fresh.tokens.color } });
+          break;
         case 6:
-          handleUpdateActiveProject({ colorPalette: fresh.colorPalette });
+          handleUpdateActiveProject({ typography: fresh.typography, tokens: { ...activeProject.tokens, typography: fresh.tokens.typography } });
           break;
         case 7:
-          handleUpdateActiveProject({ typography: fresh.typography });
-          break;
-        case 8:
-          handleUpdateActiveProject({ imagery: fresh.imagery });
-          break;
-        case 9:
           handleUpdateActiveProject({ layout: fresh.layout });
           break;
-        case 10:
+        case 8:
           handleUpdateActiveProject({ components: fresh.components });
           break;
-        case 11:
-          handleUpdateActiveProject({ responsive: fresh.responsive });
-          break;
-        case 12:
-          handleUpdateActiveProject({ accessibility: fresh.accessibility });
+        case 9:
+          handleUpdateActiveProject({ imagery: fresh.imagery });
           break;
         default:
           break;
@@ -197,7 +237,7 @@ function MainStudio() {
   };
 
   const handleStartNewProject = () => {
-    const newProj = createNewProject('My New Website', 'ecommerce');
+    const newProj = createNewProject('My New Website', 'ceramics-atelier');
     saveProject(newProj);
     refreshProjectsList();
     setActiveId(newProj.id);
@@ -227,56 +267,114 @@ function MainStudio() {
     setView('workspace');
   };
 
+  // Compute effective project with draft preview overlay
+  const effectiveProject: DesignProject = draftProject
+    ? {
+        ...activeProject,
+        ...draftProject,
+        tokens: draftProject.tokens ? { ...activeProject.tokens, ...draftProject.tokens } : activeProject.tokens
+      }
+    : activeProject;
+
   const renderWizardStep = () => {
     switch (activeProject.currentStep) {
       case 1:
-        return <Step1ProjectInit project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step1CategoryGenre
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+            onPreviewDraft={handlePreviewDraft}
+            onClearDraft={handleClearDraft}
+          />
+        );
       case 2:
-        return <Step2WebsiteType project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step2ProjectBusiness
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+          />
+        );
       case 3:
-        return <Step3BusinessDiscovery project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step3BrandPersonality
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+            onPreviewDraft={handlePreviewDraft}
+            onClearDraft={handleClearDraft}
+          />
+        );
       case 4:
-        return <Step4BrandPersonality project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step5VisualDirection
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+          />
+        );
       case 5:
-        return <Step5VisualDirection project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step6ColorStudio
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+          />
+        );
       case 6:
-        return <Step6ColorStudio project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step6TypographyStudio
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+            onPreviewDraft={handlePreviewDraft}
+            onClearDraft={handleClearDraft}
+          />
+        );
       case 7:
-        return <Step7TypographyStudio project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step9LayoutSpacing
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+          />
+        );
       case 8:
-        return <Step8ImageryStudio project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step10ComponentsStudio
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+          />
+        );
       case 9:
-        return <Step9LayoutSpacing project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step8ImageryStudio
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+          />
+        );
       case 10:
-        return <Step10ComponentsStudio project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step10ReviewAudit
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+          />
+        );
       case 11:
         return (
-          <Step11MobileResponsive
-            project={activeProject}
+          <Step11ExportCenter
+            project={effectiveProject}
             onChange={handleUpdateActiveProject}
-            onOpenLivePreview={() => setIsPreviewDrawerOpen(true)}
           />
         );
-      case 12:
-        return <Step12ThemesAccessibility project={activeProject} onChange={handleUpdateActiveProject} />;
-      case 13:
-        return (
-          <Step13FinalReview
-            project={activeProject}
-            onJumpToStep={handleSelectStep}
-            onProceedToExport={() => handleSelectStep(14)}
-          />
-        );
-      case 14:
-        return <Step14ExportCenter project={activeProject} onJumpToStep={handleSelectStep} />;
       default:
-        return <Step1ProjectInit project={activeProject} onChange={handleUpdateActiveProject} />;
+        return (
+          <Step1CategoryGenre
+            project={effectiveProject}
+            onChange={handleUpdateActiveProject}
+            onPreviewDraft={handlePreviewDraft}
+            onClearDraft={handleClearDraft}
+          />
+        );
     }
   };
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 flex flex-col font-sans">
-      {/* 3-Zone Contract Header with OAuth 2.0 Identity Status */}
       <Header
         currentView={view}
         onNavigate={v => setView(v)}
@@ -320,7 +418,6 @@ function MainStudio() {
 
       {view === 'wizard' && (
         <div className="flex-1 flex flex-col">
-          {/* Multi-step progress navbar */}
           <WizardNav
             currentStep={activeProject.currentStep}
             completedSteps={activeProject.completedSteps || [1]}
@@ -331,19 +428,25 @@ function MainStudio() {
             onResetStep={handleResetCurrentStep}
             isAutosaving={isAutosaving}
             continueLabel={
-              activeProject.currentStep === 13
+              activeProject.currentStep === 10
                 ? 'Proceed to Export'
-                : activeProject.currentStep === 14
-                ? 'Finished'
+                : activeProject.currentStep === 11
+                ? 'Finish'
                 : 'Continue'
             }
           />
 
-          {/* Wizard stage: Split screen with active category, genre, and real-time reactive live website preview */}
           <WizardWorkspaceStage
-            project={activeProject}
+            project={effectiveProject}
             currentStep={activeProject.currentStep}
-            totalSteps={14}
+            totalSteps={11}
+            draftLabel={draftLabel}
+            onApplyDraft={handleApplyDraft}
+            onDiscardDraft={handleClearDraft}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={history.length > 0}
+            canRedo={future.length > 0}
           >
             <AnimatePresence mode="wait">
               <StepTransition stepKey={activeProject.currentStep}>
@@ -354,7 +457,6 @@ function MainStudio() {
         </div>
       )}
 
-      {/* OAuth 2.0 Sign-In Modal */}
       <OAuthModal />
     </div>
   );

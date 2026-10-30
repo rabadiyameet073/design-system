@@ -42,3 +42,4 @@ describe('WCAG 2.2 Contrast Engine', () => {
     expect(darkAudit.totalCount).toBeGreaterThanOrEqual(8);
   });
 });
+
