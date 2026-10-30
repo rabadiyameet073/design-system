@@ -177,7 +177,7 @@ export const OAuthModal: React.FC = () => {
                 type="button"
                 onClick={() => loginWithGoogle()}
                 disabled={isLoading}
-                className="w-full flex items-stretch rounded-xl bg-white hover:bg-neutral-50 active:bg-neutral-100 text-neutral-800 text-xs sm:text-sm font-semibold border border-neutral-300 shadow-2xs hover:border-neutral-400 hover:shadow-xs transition-all disabled:opacity-50 cursor-pointer overflow-hidden group font-sansation"
+                className="w-full flex items-stretch rounded-xl bg-white hover:bg-neutral-50 active:bg-neutral-100 text-neutral-800 text-xs sm:text-sm font-semibold border border-neutral-300 shadow-2xs hover:border-neutral-400 hover:shadow-xs transition-all disabled:opacity-50 cursor-pointer overflow-hidden group font-sans"
               >
                 {isLoading ? (
                   <div className="w-full flex items-center justify-center gap-2 py-3 px-4">

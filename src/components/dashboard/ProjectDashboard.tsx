@@ -121,7 +121,7 @@ export const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
 
           <button
             onClick={() => setShowNewModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white transition-all shadow-xs font-sansation tracking-wide"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white transition-all shadow-xs font-sans tracking-wide"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>New Design System</span>

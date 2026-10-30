@@ -43,7 +43,7 @@ export interface TypographyConfig {
   bodyFont: string;
   monoFont: string;
   scaleRatio: number; // e.g. 1.25 (Major Third), 1.333 (Perfect Fourth)
-  headingWeight: '500' | '600' | '700' | '800';
+  headingWeight: '400' | '500' | '600' | '700' | '800';
   bodyWeight: '400' | '500';
   lineHeight: 'tight' | 'normal' | 'relaxed';
   letterSpacingDisplay: 'tight' | 'normal' | 'wide';

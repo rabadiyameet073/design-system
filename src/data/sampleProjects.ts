@@ -39,13 +39,13 @@ export const SAMPLE_PROJECT_CERAMICS: DesignProject = {
   visualDirection: VISUAL_DIRECTIONS[1], // Minimal Editorial
   colorPalette: COLOR_PALETTES[0], // Artisan Terracotta
   typography: {
-    pairingId: TYPOGRAPHY_PAIRINGS[2].id, // Fraunces + DM Sans
-    name: TYPOGRAPHY_PAIRINGS[2].name,
-    displayFont: TYPOGRAPHY_PAIRINGS[2].displayFont,
-    headingFont: TYPOGRAPHY_PAIRINGS[2].headingFont,
-    bodyFont: TYPOGRAPHY_PAIRINGS[2].bodyFont,
-    monoFont: TYPOGRAPHY_PAIRINGS[2].monoFont,
-    scaleRatio: 1.25,
+    pairingId: TYPOGRAPHY_PAIRINGS[0].id, // Cormorant Garamond + Lato (Luxury & Premium)
+    name: TYPOGRAPHY_PAIRINGS[0].name,
+    displayFont: TYPOGRAPHY_PAIRINGS[0].displayFont,
+    headingFont: TYPOGRAPHY_PAIRINGS[0].headingFont,
+    bodyFont: TYPOGRAPHY_PAIRINGS[0].bodyFont,
+    monoFont: TYPOGRAPHY_PAIRINGS[0].monoFont,
+    scaleRatio: 1.333,
     headingWeight: '600',
     bodyWeight: '400',
     lineHeight: 'normal',
@@ -124,14 +124,14 @@ export const SAMPLE_PROJECT_SAAS: DesignProject = {
   visualDirection: VISUAL_DIRECTIONS[0], // Modern Product-Led
   colorPalette: COLOR_PALETTES[4], // Modern Indigo & Steel
   typography: {
-    pairingId: TYPOGRAPHY_PAIRINGS[0].id,
-    name: TYPOGRAPHY_PAIRINGS[0].name,
-    displayFont: TYPOGRAPHY_PAIRINGS[0].displayFont,
-    headingFont: TYPOGRAPHY_PAIRINGS[0].headingFont,
-    bodyFont: TYPOGRAPHY_PAIRINGS[0].bodyFont,
-    monoFont: TYPOGRAPHY_PAIRINGS[0].monoFont,
+    pairingId: TYPOGRAPHY_PAIRINGS[4].id, // Plus Jakarta Sans + Inter (Minimal & Product-Led)
+    name: TYPOGRAPHY_PAIRINGS[4].name,
+    displayFont: TYPOGRAPHY_PAIRINGS[4].displayFont,
+    headingFont: TYPOGRAPHY_PAIRINGS[4].headingFont,
+    bodyFont: TYPOGRAPHY_PAIRINGS[4].bodyFont,
+    monoFont: TYPOGRAPHY_PAIRINGS[4].monoFont,
     scaleRatio: 1.25,
-    headingWeight: '600',
+    headingWeight: '700',
     bodyWeight: '400',
     lineHeight: 'normal',
     letterSpacingDisplay: 'tight'

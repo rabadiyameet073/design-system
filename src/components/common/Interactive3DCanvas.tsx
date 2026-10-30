@@ -154,11 +154,11 @@ export const Interactive3DCanvas: React.FC<Interactive3DCanvasProps> = ({
     resizeObserver.observe(container);
 
     // 7. Render Loop
-    let clock = new THREE.Clock();
+    const startTime = performance.now();
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
-      const elapsedTime = clock.getElapsedTime();
+      const elapsedTime = (performance.now() - startTime) * 0.001;
 
       // Smooth lerp mouse parallax
       currentX += (targetX - currentX) * 0.05;

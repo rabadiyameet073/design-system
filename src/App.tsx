@@ -26,6 +26,7 @@ import { Step11MobileResponsive } from './components/wizard/Step11MobileResponsi
 import { Step12ThemesAccessibility } from './components/wizard/Step12ThemesAccessibility';
 import { Step13FinalReview } from './components/wizard/Step13FinalReview';
 import { Step14ExportCenter } from './components/wizard/Step14ExportCenter';
+import { WizardWorkspaceStage } from './components/wizard/WizardWorkspaceStage';
 
 import { DesignProject } from './types/designSystem';
 import {
@@ -338,43 +339,18 @@ function MainStudio() {
             }
           />
 
-          {/* Wizard stage: Split screen when Preview Drawer is toggled, or single focused stage */}
-          <div className="flex-1 flex overflow-hidden">
-            {/* Step Decision Form with smooth page transitions */}
-            <main className="flex-1 overflow-y-auto px-6 pb-20">
-              <AnimatePresence mode="wait">
-                <StepTransition stepKey={activeProject.currentStep}>
-                  {renderWizardStep()}
-                </StepTransition>
-              </AnimatePresence>
-            </main>
-
-            {/* Collapsible Split Live Preview Drawer with slide motion */}
-            <AnimatePresence>
-              {isPreviewDrawerOpen && (
-                <motion.aside
-                  initial={{ opacity: 0, x: 80 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 80 }}
-                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  className="w-full lg:w-[480px] xl:w-[560px] border-l border-neutral-200 bg-neutral-900 p-4 shrink-0 hidden md:flex flex-col shadow-lg"
-                >
-                  <div className="flex items-center justify-between pb-3 mb-2 border-b border-neutral-800">
-                    <span className="text-xs font-bold text-neutral-300">Live Website Preview</span>
-                    <button
-                      onClick={() => setIsPreviewDrawerOpen(false)}
-                      className="text-xs text-neutral-400 hover:text-white"
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <div className="flex-1 min-h-[500px]">
-                    <LiveWebsitePreview project={activeProject} initialViewport="desktop" isEmbedded />
-                  </div>
-                </motion.aside>
-              )}
+          {/* Wizard stage: Split screen with active category, genre, and real-time reactive live website preview */}
+          <WizardWorkspaceStage
+            project={activeProject}
+            currentStep={activeProject.currentStep}
+            totalSteps={14}
+          >
+            <AnimatePresence mode="wait">
+              <StepTransition stepKey={activeProject.currentStep}>
+                {renderWizardStep()}
+              </StepTransition>
             </AnimatePresence>
-          </div>
+          </WizardWorkspaceStage>
         </div>
       )}
 

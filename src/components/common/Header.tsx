@@ -21,12 +21,14 @@ export const Header: React.FC<HeaderProps> = ({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const navLink = (active: boolean) =>
-    `relative whitespace-nowrap shrink-0 transition-colors font-michroma tracking-wider uppercase text-xs sm:text-[13px] ${
-      active ? 'text-ink font-bold' : 'text-ink/65 hover:text-ink'
+    `relative whitespace-nowrap shrink-0 transition-all font-sans text-xs sm:text-[13px] font-semibold tracking-wide ${
+      active
+        ? 'text-ink font-bold after:absolute after:-bottom-5 after:left-0 after:right-0 after:h-[2px] after:bg-clay after:rounded-full'
+        : 'text-ink/65 hover:text-ink hover:-translate-y-0.5'
     }`;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-rule font-zen">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-rule font-sans shadow-2xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-4 sm:gap-6">
         {/* Zone 1: brand logo */}
         <button
@@ -41,8 +43,8 @@ export const Header: React.FC<HeaderProps> = ({
           />
         </button>
 
-        {/* Zone 2: text navigation links — Michroma font by Vernon Adams */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8 font-michroma">
+        {/* Zone 2: text navigation links — Luxury Editorial font */}
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8 font-sans">
           <button
             onClick={() => onNavigate('landing')}
             className={navLink(currentView === 'landing')}
@@ -156,7 +158,7 @@ export const Header: React.FC<HeaderProps> = ({
             /* Split-Chamber Google Sign In Button */
             <button
               onClick={() => setIsOAuthModalOpen(true)}
-              className="group flex items-stretch rounded-xl bg-white hover:bg-stone-50 text-ink border border-ink/20 hover:border-ink/40 shadow-2xs hover:shadow-xs transition-all active:scale-[0.98] overflow-hidden shrink-0 cursor-pointer text-xs font-bold font-sansation"
+              className="group flex items-stretch rounded-xl bg-white hover:bg-stone-50 text-ink border border-ink/20 hover:border-ink/40 shadow-2xs hover:shadow-xs transition-all active:scale-[0.98] overflow-hidden shrink-0 cursor-pointer text-xs font-bold font-sans"
               title="Sign in with Google in real-time"
             >
               {/* Left Chamber: Google 4-Color SVG */}
@@ -226,7 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
             /* Split-Chamber "Create Design System" with + SVG */
             <button
               onClick={() => onNavigate('wizard')}
-              className="group flex items-stretch rounded-xl bg-clay hover:bg-clay-deep text-white shadow-sm hover:shadow-md transition-all active:scale-[0.98] overflow-hidden shrink-0 cursor-pointer text-xs font-bold font-sansation"
+              className="group flex items-stretch rounded-xl bg-clay hover:bg-clay-deep text-white shadow-sm hover:shadow-md transition-all active:scale-[0.98] overflow-hidden shrink-0 cursor-pointer text-xs font-bold font-sans"
               title="Create a new website design system"
             >
               {/* Left Chamber: + SVG */}
@@ -253,7 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
             /* Split-Chamber "Review & Export" with Export SVG */
             <button
               onClick={() => onNavigate('workspace')}
-              className="group flex items-stretch rounded-xl bg-clay hover:bg-clay-deep text-white shadow-sm hover:shadow-md transition-all active:scale-[0.98] overflow-hidden shrink-0 cursor-pointer text-xs font-bold font-sansation"
+              className="group flex items-stretch rounded-xl bg-clay hover:bg-clay-deep text-white shadow-sm hover:shadow-md transition-all active:scale-[0.98] overflow-hidden shrink-0 cursor-pointer text-xs font-bold font-sans"
             >
               <div className="flex items-center justify-center px-3 py-2 bg-black/10 group-hover:bg-black/15 border-r border-white/25 transition-colors">
                 <svg

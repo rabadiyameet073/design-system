@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import {
   ArrowRight,
+  ArrowUp,
   ChevronDown,
   Palette,
   Type,
@@ -41,6 +42,8 @@ import { ALL_SHOWCASE_PRESETS, ShowcasePreset } from '../../data/showcasePresets
 import { WIZARD_STEPS } from '../common/WizardNav';
 import { importProjectFromJson } from '../../utils/storage';
 import { Interactive3DCanvas } from '../common/Interactive3DCanvas';
+import { DesignSystemAnatomy } from './DesignSystemAnatomy';
+import { StudioFooter } from './StudioFooter';
 
 interface LandingPageProps {
   onStartNew: () => void;
@@ -110,429 +113,6 @@ const DECISIONS = [
 ];
 
 
-
-interface StairQuestion {
-  step: number;
-  qNum: string;
-  level: number;
-  levelName: string;
-  levelBadge: string;
-  shortTag: string;
-  title: string;
-  subtitle: string;
-  simpleExplanation: string;
-  keyDecision: string;
-  previewChips: { label: string; active?: boolean; colorDot?: string }[];
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  levelColor: string;
-  levelGradient: string;
-  levelLightBg: string;
-  levelBorder: string;
-  levelText: string;
-  treadColor: string;
-  elevation: string;
-  timeEstimate: string;
-}
-
-const STAIRCASE_QUESTIONS: StairQuestion[] = [
-  {
-    step: 1,
-    qNum: 'Q01',
-    level: 1,
-    levelName: 'Level 1: Foundation',
-    levelBadge: 'Ground Floor',
-    shortTag: 'Setup',
-    title: 'Project Setup',
-    subtitle: 'Name and initial goal',
-    simpleExplanation: 'Give your website a memorable name and define its primary business purpose.',
-    keyDecision: 'Project Scope & Identity',
-    previewChips: [{ label: 'Brand Name: Studio', active: true }, { label: 'Goal: High-Conversion', active: false }],
-    icon: FileText,
-    levelColor: 'bg-blue-600',
-    levelGradient: 'from-blue-700 via-blue-600 to-blue-500',
-    levelLightBg: 'bg-blue-50/50 hover:bg-blue-100/60',
-    levelBorder: 'border-blue-200',
-    levelText: 'text-blue-700',
-    treadColor: 'bg-blue-500',
-    elevation: '0.0m',
-    timeEstimate: '1 min',
-  },
-  {
-    step: 2,
-    qNum: 'Q02',
-    level: 1,
-    levelName: 'Level 1: Foundation',
-    levelBadge: 'Ground Floor',
-    shortTag: 'Type',
-    title: 'Website Type',
-    subtitle: '32 industry genres',
-    simpleExplanation: 'Choose what kind of site you need—from Store and SaaS to Agency and Portfolio.',
-    keyDecision: 'Site Architecture (32 Genres)',
-    previewChips: [{ label: 'Store / Shop', active: true }, { label: 'SaaS App' }, { label: 'Portfolio' }, { label: '+29 Genres' }],
-    icon: LayoutGrid,
-    levelColor: 'bg-blue-600',
-    levelGradient: 'from-blue-700 via-blue-600 to-blue-500',
-    levelLightBg: 'bg-blue-50/50 hover:bg-blue-100/60',
-    levelBorder: 'border-blue-200',
-    levelText: 'text-blue-700',
-    treadColor: 'bg-blue-500',
-    elevation: '0.8m',
-    timeEstimate: '2 min',
-  },
-  {
-    step: 3,
-    qNum: 'Q03',
-    level: 1,
-    levelName: 'Level 1: Foundation',
-    levelBadge: 'Ground Floor',
-    shortTag: 'Audience',
-    title: 'Business Discovery',
-    subtitle: 'Audience & offerings',
-    simpleExplanation: 'Define who visits your website and the core products or services you provide.',
-    keyDecision: 'Customer Persona & Value',
-    previewChips: [{ label: 'Target Customers', active: true }, { label: 'Core Services' }, { label: 'Trust Badges' }],
-    icon: Users,
-    levelColor: 'bg-blue-600',
-    levelGradient: 'from-blue-700 via-blue-600 to-blue-500',
-    levelLightBg: 'bg-blue-50/50 hover:bg-blue-100/60',
-    levelBorder: 'border-blue-200',
-    levelText: 'text-blue-700',
-    treadColor: 'bg-blue-500',
-    elevation: '1.6m',
-    timeEstimate: '2 min',
-  },
-  {
-    step: 4,
-    qNum: 'Q04',
-    level: 2,
-    levelName: 'Level 2: Identity',
-    levelBadge: 'Brand Soul',
-    shortTag: 'Mood',
-    title: 'Brand Personality',
-    subtitle: 'Mood & energy',
-    simpleExplanation: 'Select the personality traits: Clean & Minimal, Bold Commercial, or Warm Editorial.',
-    keyDecision: 'Brand Emotional Energy',
-    previewChips: [{ label: 'Clean & Minimal', active: true }, { label: 'Bold Commercial' }, { label: 'Warm Editorial' }],
-    icon: Sparkles,
-    levelColor: 'bg-purple-600',
-    levelGradient: 'from-purple-700 via-purple-600 to-purple-500',
-    levelLightBg: 'bg-purple-50/50 hover:bg-purple-100/60',
-    levelBorder: 'border-purple-200',
-    levelText: 'text-purple-700',
-    treadColor: 'bg-purple-500',
-    elevation: '2.8m',
-    timeEstimate: '2 min',
-  },
-  {
-    step: 5,
-    qNum: 'Q05',
-    level: 2,
-    levelName: 'Level 2: Identity',
-    levelBadge: 'Brand Soul',
-    shortTag: 'Style',
-    title: 'Visual Direction',
-    subtitle: 'Aesthetic tone',
-    simpleExplanation: 'Set the visual tone: Modern Product, Luxury Editorial, or Friendly Consumer.',
-    keyDecision: 'Stylistic Guardrails',
-    previewChips: [{ label: 'Modern Product', active: true }, { label: 'Luxury Editorial' }, { label: 'Consumer Friendly' }],
-    icon: Compass,
-    levelColor: 'bg-purple-600',
-    levelGradient: 'from-purple-700 via-purple-600 to-purple-500',
-    levelLightBg: 'bg-purple-50/50 hover:bg-purple-100/60',
-    levelBorder: 'border-purple-200',
-    levelText: 'text-purple-700',
-    treadColor: 'bg-purple-500',
-    elevation: '3.6m',
-    timeEstimate: '2 min',
-  },
-  {
-    step: 6,
-    qNum: 'Q06',
-    level: 3,
-    levelName: 'Level 3: Tokens',
-    levelBadge: 'Style & Pieces',
-    shortTag: 'Colors',
-    title: 'Color Studio',
-    subtitle: '14 curated palettes',
-    simpleExplanation: 'Choose brand primary, secondary, and accent colors with auto-generated 50 to 900 ramps.',
-    keyDecision: 'Tested 50-to-900 Color Ramps',
-    previewChips: [{ label: 'Primary #B7410E', active: true, colorDot: '#b7410e' }, { label: 'Ink #0A0A0A', active: false, colorDot: '#0a0a0a' }, { label: 'Accent #3B82F6', active: false, colorDot: '#3b82f6' }],
-    icon: Palette,
-    levelColor: 'bg-amber-600',
-    levelGradient: 'from-amber-700 via-amber-600 to-amber-500',
-    levelLightBg: 'bg-amber-50/50 hover:bg-amber-100/60',
-    levelBorder: 'border-amber-200',
-    levelText: 'text-amber-700',
-    treadColor: 'bg-amber-500',
-    elevation: '4.8m',
-    timeEstimate: '3 min',
-  },
-  {
-    step: 7,
-    qNum: 'Q07',
-    level: 3,
-    levelName: 'Level 3: Tokens',
-    levelBadge: 'Style & Pieces',
-    shortTag: 'Fonts',
-    title: 'Typography Studio',
-    subtitle: 'Modular font scales',
-    simpleExplanation: 'Pair Google fonts for headings and body text using mathematical typographic ratios.',
-    keyDecision: 'Modular Font Pairing Hierarchy',
-    previewChips: [{ label: 'Heading: Michroma', active: true }, { label: 'Body: Sansation / Inter' }, { label: '1.25 Modular Scale' }],
-    icon: Type,
-    levelColor: 'bg-amber-600',
-    levelGradient: 'from-amber-700 via-amber-600 to-amber-500',
-    levelLightBg: 'bg-amber-50/50 hover:bg-amber-100/60',
-    levelBorder: 'border-amber-200',
-    levelText: 'text-amber-700',
-    treadColor: 'bg-amber-500',
-    elevation: '5.6m',
-    timeEstimate: '3 min',
-  },
-  {
-    step: 8,
-    qNum: 'Q08',
-    level: 3,
-    levelName: 'Level 3: Tokens',
-    levelBadge: 'Style & Pieces',
-    shortTag: 'Photos',
-    title: 'Website Imagery',
-    subtitle: 'Photo rules & corners',
-    simpleExplanation: 'Establish image aspect ratios, color grading filters, and corner border radiuses.',
-    keyDecision: 'Photography Aspect & Radii',
-    previewChips: [{ label: '16:9 Landscape', active: true }, { label: '12px Corner Radius' }, { label: 'Natural Warm Grading' }],
-    icon: ImageIcon,
-    levelColor: 'bg-amber-600',
-    levelGradient: 'from-amber-700 via-amber-600 to-amber-500',
-    levelLightBg: 'bg-amber-50/50 hover:bg-amber-100/60',
-    levelBorder: 'border-amber-200',
-    levelText: 'text-amber-700',
-    treadColor: 'bg-amber-500',
-    elevation: '6.4m',
-    timeEstimate: '2 min',
-  },
-  {
-    step: 9,
-    qNum: 'Q09',
-    level: 3,
-    levelName: 'Level 3: Tokens',
-    levelBadge: 'Style & Pieces',
-    shortTag: 'Grid',
-    title: 'Layout & Spacing',
-    subtitle: '8pt rhythmic grid',
-    simpleExplanation: 'Configure whitespace density, card padding, and page container maximum widths.',
-    keyDecision: '8pt Rhythmic Spacing Grid',
-    previewChips: [{ label: '8pt Base Grid', active: true }, { label: '1280px Max Container' }, { label: 'Balanced Density' }],
-    icon: Sliders,
-    levelColor: 'bg-amber-600',
-    levelGradient: 'from-amber-700 via-amber-600 to-amber-500',
-    levelLightBg: 'bg-amber-50/50 hover:bg-amber-100/60',
-    levelBorder: 'border-amber-200',
-    levelText: 'text-amber-700',
-    treadColor: 'bg-amber-500',
-    elevation: '7.2m',
-    timeEstimate: '2 min',
-  },
-  {
-    step: 10,
-    qNum: 'Q10',
-    level: 4,
-    levelName: 'Level 4: Launch',
-    levelBadge: 'The Summit',
-    shortTag: 'UI Kit',
-    title: 'UI Components',
-    subtitle: 'Buttons, cards & nav',
-    simpleExplanation: 'Review pre-assembled buttons, badges, navbars, and interactive cards in real time.',
-    keyDecision: 'Production UI Component Library',
-    previewChips: [{ label: 'Buttons (Solid/Ghost)', active: true }, { label: 'Glass Cards' }, { label: 'Header Navigation' }, { label: 'Form Inputs' }],
-    icon: Layers,
-    levelColor: 'bg-emerald-600',
-    levelGradient: 'from-emerald-700 via-emerald-600 to-emerald-500',
-    levelLightBg: 'bg-emerald-50/50 hover:bg-emerald-100/60',
-    levelBorder: 'border-emerald-200',
-    levelText: 'text-emerald-700',
-    treadColor: 'bg-emerald-500',
-    elevation: '8.2m',
-    timeEstimate: '3 min',
-  },
-  {
-    step: 11,
-    qNum: 'Q11',
-    level: 4,
-    levelName: 'Level 4: Launch',
-    levelBadge: 'The Summit',
-    shortTag: 'Mobile',
-    title: 'Screen Testing',
-    subtitle: 'Phone, tablet & desktop',
-    simpleExplanation: 'Ensure fluid responsiveness across mobile screens, iPads, and desktop displays.',
-    keyDecision: 'Fluid Multi-Device Responsive',
-    previewChips: [{ label: 'Mobile (390px)', active: true }, { label: 'Tablet (768px)' }, { label: 'Desktop (1440px)' }],
-    icon: Smartphone,
-    levelColor: 'bg-emerald-600',
-    levelGradient: 'from-emerald-700 via-emerald-600 to-emerald-500',
-    levelLightBg: 'bg-emerald-50/50 hover:bg-emerald-100/60',
-    levelBorder: 'border-emerald-200',
-    levelText: 'text-emerald-700',
-    treadColor: 'bg-emerald-500',
-    elevation: '9.0m',
-    timeEstimate: '2 min',
-  },
-  {
-    step: 12,
-    qNum: 'Q12',
-    level: 4,
-    levelName: 'Level 4: Launch',
-    levelBadge: 'The Summit',
-    shortTag: 'Themes',
-    title: 'Themes & Contrast',
-    subtitle: 'Dark mode & WCAG AA',
-    simpleExplanation: 'Audit accessibility contrast ratios and generate synchronized light/dark themes.',
-    keyDecision: 'WCAG 2.1 AA Contrast Verified',
-    previewChips: [{ label: 'Dark Mode Synced', active: true }, { label: 'WCAG AA 7.2:1 Pass' }, { label: 'Readable Body Copy' }],
-    icon: ShieldCheck,
-    levelColor: 'bg-emerald-600',
-    levelGradient: 'from-emerald-700 via-emerald-600 to-emerald-500',
-    levelLightBg: 'bg-emerald-50/50 hover:bg-emerald-100/60',
-    levelBorder: 'border-emerald-200',
-    levelText: 'text-emerald-700',
-    treadColor: 'bg-emerald-500',
-    elevation: '9.8m',
-    timeEstimate: '2 min',
-  },
-  {
-    step: 13,
-    qNum: 'Q13',
-    level: 4,
-    levelName: 'Level 4: Launch',
-    levelBadge: 'The Summit',
-    shortTag: 'Review',
-    title: 'Design Review',
-    subtitle: 'Interactive live sandbox',
-    simpleExplanation: 'Browse your generated website in an interactive sandbox with real navigation and forms.',
-    keyDecision: 'Interactive Real-Time Preview',
-    previewChips: [{ label: 'Live Website Sandbox', active: true }, { label: 'Simulate Clicks' }, { label: 'Inspect Styles' }],
-    icon: Monitor,
-    levelColor: 'bg-emerald-600',
-    levelGradient: 'from-emerald-700 via-emerald-600 to-emerald-500',
-    levelLightBg: 'bg-emerald-50/50 hover:bg-emerald-100/60',
-    levelBorder: 'border-emerald-200',
-    levelText: 'text-emerald-700',
-    treadColor: 'bg-emerald-500',
-    elevation: '10.5m',
-    timeEstimate: '2 min',
-  },
-  {
-    step: 14,
-    qNum: 'Q14',
-    level: 4,
-    levelName: 'Level 4: Launch',
-    levelBadge: 'The Summit',
-    shortTag: 'Launch',
-    title: 'Export Center',
-    subtitle: 'Code, tokens & PDF',
-    simpleExplanation: 'Export your production-ready Next.js 15 starter, JSON tokens, and PDF guide.',
-    keyDecision: 'Five Deliverable Formats',
-    previewChips: [{ label: 'Next.js 15 Starter', active: true }, { label: 'tokens.json' }, { label: 'PDF Spec (4pg)' }, { label: 'AI Prompt' }],
-    icon: Download,
-    levelColor: 'bg-emerald-600',
-    levelGradient: 'from-emerald-700 via-emerald-600 to-emerald-500',
-    levelLightBg: 'bg-emerald-50/50 hover:bg-emerald-100/60',
-    levelBorder: 'border-emerald-200',
-    levelText: 'text-emerald-700',
-    treadColor: 'bg-emerald-500',
-    elevation: '11.2m · Summit',
-    timeEstimate: '1 min',
-  },
-];
-
-interface StairwayFlight {
-  id: number;
-  numStr: string;
-  badge: string;
-  elevation: string;
-  timeEstimate: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  image: string;
-  gradient: string;
-  accentColor: string;
-  dotColor: string;
-  stepRange: string;
-  startStep: number;
-  questions: StairQuestion[];
-}
-
-const STAIRWAY_FLIGHTS: StairwayFlight[] = [
-  {
-    id: 1,
-    numStr: '01',
-    badge: 'Ground Floor',
-    elevation: '0.0m',
-    timeEstimate: '6 min',
-    title: 'Foundation Flight',
-    subtitle: 'Project identity, website genre & market audience',
-    description: 'Set the architectural bedrock of your product. Establish your brand naming, select from 32 proven industry website genres, and define your core target audience positioning.',
-    image: '/images/stairway/flight_1_foundation.jpg',
-    gradient: 'from-blue-600 to-indigo-600',
-    accentColor: 'text-blue-600',
-    dotColor: '#2563eb',
-    stepRange: 'Q01–Q03 · 3 Decisions',
-    startStep: 1,
-    questions: STAIRCASE_QUESTIONS.filter(q => q.level === 1)
-  },
-  {
-    id: 2,
-    numStr: '02',
-    badge: 'Brand Soul',
-    elevation: '+3.0m Riser',
-    timeEstimate: '5 min',
-    title: 'Brand Soul Flight',
-    subtitle: 'Energy, emotional tone & visual direction',
-    description: 'Determine how your website feels in the first 50 milliseconds. Calibrate brand energy, temperament, and visual style from minimal editorial to bold modernist.',
-    image: '/images/stairway/flight_2_brandsoul.jpg',
-    gradient: 'from-purple-600 to-violet-600',
-    accentColor: 'text-purple-600',
-    dotColor: '#9333ea',
-    stepRange: 'Q04–Q05 · 2 Decisions',
-    startStep: 4,
-    questions: STAIRCASE_QUESTIONS.filter(q => q.level === 2)
-  },
-  {
-    id: 3,
-    numStr: '03',
-    badge: 'Design Engine',
-    elevation: '+6.5m Engine',
-    timeEstimate: '9 min',
-    title: 'Tokens & Style Flight',
-    subtitle: 'Color palettes, typography scales & 8pt rhythmic grid',
-    description: 'Synthesize brand soul into mathematical design tokens: 14 harmonious color palettes, verified contrast ratios, bespoke typography pairings, and 8pt rhythmic spatial grids.',
-    image: '/images/stairway/flight_3_tokens.jpg',
-    gradient: 'from-amber-600 to-orange-600',
-    accentColor: 'text-amber-600',
-    dotColor: '#d97706',
-    stepRange: 'Q06–Q09 · 4 Decisions',
-    startStep: 6,
-    questions: STAIRCASE_QUESTIONS.filter(q => q.level === 3)
-  },
-  {
-    id: 4,
-    numStr: '04',
-    badge: 'The Summit',
-    elevation: '+10.0m Summit',
-    timeEstimate: '10 min',
-    title: 'Summit & Launch Flight',
-    subtitle: 'Production UI kit, mobile testing & multi-format code export',
-    description: 'Assemble production UI components, test across phone/tablet/desktop, audit dark mode contrast, review in an interactive live sandbox, and export code in 5 formats.',
-    image: '/images/stairway/flight_4_summit.jpg',
-    gradient: 'from-emerald-600 to-teal-600',
-    accentColor: 'text-emerald-600',
-    dotColor: '#059669',
-    stepRange: 'Q10–Q14 · 5 Decisions',
-    startStep: 10,
-    questions: STAIRCASE_QUESTIONS.filter(q => q.level === 4)
-  }
-];
 
 const DELIVERABLES = [
   {
@@ -606,21 +186,26 @@ const DELIVERABLES = [
 /*  Motion helper                                                      */
 /* ------------------------------------------------------------------ */
 
-const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({
+const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number; reduceMotion?: boolean }> = ({
   children,
   className,
   delay = 0,
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.2 }}
-    transition={{ duration: 0.55, delay, ease: [0.16, 1, 0.3, 1] }}
-    className={className}
-  >
-    {children}
-  </motion.div>
-);
+  reduceMotion = false,
+}) => {
+  if (reduceMotion) return <div className={className}>{children}</div>;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.55, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 /* ------------------------------------------------------------------ */
 /*  Landing page                                                       */
@@ -635,332 +220,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [activeStairStep, setActiveStairStep] = useState<number>(1);
-  const [activeFlight, setActiveFlight] = useState<number>(1);
-  const [isFlightSectionHovered, setIsFlightSectionHovered] = useState(false);
   const [hoveredDeliverableId, setHoveredDeliverableId] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [leftCardTilt, setLeftCardTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [leftCardGlow, setLeftCardGlow] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
   const [architectureTab, setArchitectureTab] = useState<'tokens' | '3d'>('tokens');
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const handleLeftCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;
-    const py = (e.clientY - rect.top) / rect.height;
-    setLeftCardTilt({
-      x: (py - 0.5) * -7,
-      y: (px - 0.5) * 7,
-    });
-    setLeftCardGlow({
-      x: px * 100,
-      y: py * 100,
-    });
-  };
-
-  const handleLeftCardMouseLeave = () => {
-    setLeftCardTilt({ x: 0, y: 0 });
-    setLeftCardGlow({ x: 50, y: 50 });
-  };
-
-  const stepsSectionRef = useRef<HTMLElement>(null);
-  const rightColumnRef = useRef<HTMLDivElement>(null);
-  const activeFlightRef = useRef<number>(1);
-  const isWheelLockedRef = useRef<boolean>(false);
-  const wasSectionInViewRef = useRef<boolean>(false);
-  const wheelCooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    activeFlightRef.current = activeFlight;
-  }, [activeFlight]);
-
-  // Center the target flight card inside the right column without affecting window scroll
-  const scrollToFlightCard = (flightId: number) => {
-    setActiveFlight(flightId);
-    activeFlightRef.current = flightId;
-    const container = rightColumnRef.current;
-    const el = document.getElementById(`flight-card-${flightId}`);
-    if (container && el) {
-      if (flightId === 4) {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth',
-        });
-      } else {
-        const containerRect = container.getBoundingClientRect();
-        const elRect = el.getBoundingClientRect();
-        const offsetFromContainerTop = elRect.top - containerRect.top;
-        const targetScrollTop = container.scrollTop + offsetFromContainerTop;
-        container.scrollTo({
-          top: Math.max(0, targetScrollTop),
-          behavior: 'smooth',
-        });
-      }
-    }
-  };
-
-  // Right-side scroll tracking: updates active flight when manually scrolled/dragged
-  const handleRightColumnScroll = () => {
-    if (isWheelLockedRef.current) return;
-    const container = rightColumnRef.current;
-    if (!container) return;
-
-    if (container.scrollHeight - container.scrollTop - container.clientHeight < 30) {
-      if (activeFlightRef.current !== 4) {
-        setActiveFlight(4);
-        activeFlightRef.current = 4;
-      }
-      return;
-    }
-
-    const containerRect = container.getBoundingClientRect();
-
-    let bestFlight = 1;
-    let bestDistance = Infinity;
-
-    [1, 2, 3, 4].forEach((id) => {
-      const el = document.getElementById(`flight-card-${id}`);
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const dist = Math.abs(rect.top - containerRect.top);
-
-      if (dist < bestDistance) {
-        bestDistance = dist;
-        bestFlight = id;
-      }
-    });
-
-    if (bestFlight !== activeFlightRef.current) {
-      setActiveFlight(bestFlight);
-      activeFlightRef.current = bestFlight;
-    }
-  };
-
-  // Master Window-Level Section Travel Lock:
-  // Fast, responsive (220ms) lock that guarantees complete section travel
-  // from upper, downer, or anywhere on screen with zero lag or scroll friction.
-  useEffect(() => {
-    const handleGlobalWheel = (e: WheelEvent) => {
-      // Responsive threshold for mouse wheel & trackpad
-      if (Math.abs(e.deltaY) < 10) return;
-
-      const section = stepsSectionRef.current;
-      if (!section) return;
-
-      const rect = section.getBoundingClientRect();
-      const windowH = window.innerHeight;
-      const headerEl = document.querySelector('header');
-      const headerH = headerEl ? headerEl.getBoundingClientRect().height : 72;
-
-      const isScrollingDown = e.deltaY > 0;
-      const currentFlight = activeFlightRef.current;
-      const topOffsetFromHeader = rect.top - headerH;
-
-      // -----------------------------------------------------------------
-      // REGION 1: UPPER REGION (Above #steps, e.g. in #live-render)
-      // -----------------------------------------------------------------
-      if (topOffsetFromHeader > 40) {
-        // Allow normal page scroll down until #steps reaches lower viewport
-        if (rect.top > windowH * 0.78) return;
-
-        // Catch scroll before jumping over #steps: snap flush to #steps at Flight 1
-        if (isScrollingDown) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          if (isWheelLockedRef.current) return;
-
-          isWheelLockedRef.current = true;
-          const targetY = window.scrollY + topOffsetFromHeader;
-          window.scrollTo({ top: targetY, behavior: 'smooth' });
-
-          if (activeFlightRef.current !== 1) {
-            activeFlightRef.current = 1;
-            setActiveFlight(1);
-            scrollToFlightCard(1);
-          }
-
-          if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
-          wheelCooldownTimerRef.current = setTimeout(() => {
-            isWheelLockedRef.current = false;
-          }, 280);
-          return;
-        }
-        return;
-      }
-
-      // -----------------------------------------------------------------
-      // REGION 2: DOWNER REGION (Below #steps, e.g. in #exports)
-      // -----------------------------------------------------------------
-      if (rect.bottom < headerH + 25) {
-        // Allow normal page scroll up until #steps enters view
-        if (rect.bottom < -windowH * 0.5) return;
-
-        // Catch scroll before jumping over #steps: snap flush to #steps at Flight 4
-        if (!isScrollingDown) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          if (isWheelLockedRef.current) return;
-
-          isWheelLockedRef.current = true;
-          const targetY = window.scrollY + topOffsetFromHeader;
-          window.scrollTo({ top: targetY, behavior: 'smooth' });
-
-          if (activeFlightRef.current !== 4) {
-            activeFlightRef.current = 4;
-            setActiveFlight(4);
-            scrollToFlightCard(4);
-          }
-
-          if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
-          wheelCooldownTimerRef.current = setTimeout(() => {
-            isWheelLockedRef.current = false;
-          }, 280);
-          return;
-        }
-        return;
-      }
-
-      // -----------------------------------------------------------------
-      // REGION 3: INSIDE #steps (Framed in viewport)
-      // -----------------------------------------------------------------
-      // Lock page scroll to guarantee travel through all 4 flights
-      e.preventDefault();
-      e.stopPropagation();
-
-      // SUB-CASE 3A: SCROLLING DOWN (Flight 1 -> 2 -> 3 -> 4 -> Next Section)
-      if (isScrollingDown) {
-        if (currentFlight < 4) {
-          if (isWheelLockedRef.current) return;
-
-          isWheelLockedRef.current = true;
-          const nextFlight = currentFlight + 1;
-          activeFlightRef.current = nextFlight;
-          setActiveFlight(nextFlight);
-          scrollToFlightCard(nextFlight);
-
-          if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
-          wheelCooldownTimerRef.current = setTimeout(() => {
-            isWheelLockedRef.current = false;
-          }, 220);
-          return;
-        }
-
-        // On Flight 4: All flights traveled!
-        if (isWheelLockedRef.current) return;
-
-        // Advance smoothly to next section (#exports)
-        isWheelLockedRef.current = true;
-        const nextSection = document.getElementById('exports');
-        if (nextSection) {
-          nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
-        wheelCooldownTimerRef.current = setTimeout(() => {
-          isWheelLockedRef.current = false;
-        }, 450);
-        return;
-      }
-
-      // SUB-CASE 3B: SCROLLING UP (Flight 4 -> 3 -> 2 -> 1 -> Previous Section)
-      if (!isScrollingDown) {
-        if (currentFlight > 1) {
-          if (isWheelLockedRef.current) return;
-
-          isWheelLockedRef.current = true;
-          const prevFlight = currentFlight - 1;
-          activeFlightRef.current = prevFlight;
-          setActiveFlight(prevFlight);
-          scrollToFlightCard(prevFlight);
-
-          if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
-          wheelCooldownTimerRef.current = setTimeout(() => {
-            isWheelLockedRef.current = false;
-          }, 220);
-          return;
-        }
-
-        // On Flight 1: All flights traveled backward!
-        if (isWheelLockedRef.current) return;
-
-        // Advance smoothly to previous section (#live-render)
-        isWheelLockedRef.current = true;
-        const prevSection = document.getElementById('live-render');
-        if (prevSection) {
-          prevSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        if (wheelCooldownTimerRef.current) clearTimeout(wheelCooldownTimerRef.current);
-        wheelCooldownTimerRef.current = setTimeout(() => {
-          isWheelLockedRef.current = false;
-        }, 450);
-        return;
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-        return;
-      }
-
-      const isDown = e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ';
-      const isUp = e.key === 'ArrowUp' || e.key === 'PageUp';
-      if (!isDown && !isUp) return;
-
-      const section = stepsSectionRef.current;
-      if (!section) return;
-
-      const rect = section.getBoundingClientRect();
-      const headerEl = document.querySelector('header');
-      const headerH = headerEl ? headerEl.getBoundingClientRect().height : 72;
-      const topOffsetFromHeader = rect.top - headerH;
-
-      const isInside =
-        Math.abs(topOffsetFromHeader) <= 60 ||
-        (rect.top <= headerH && rect.bottom >= window.innerHeight * 0.5);
-
-      if (!isInside) return;
-
-      const currentFlight = activeFlightRef.current;
-
-      if (isDown) {
-        if (currentFlight < 4) {
-          e.preventDefault();
-          const next = currentFlight + 1;
-          activeFlightRef.current = next;
-          setActiveFlight(next);
-          scrollToFlightCard(next);
-        } else {
-          e.preventDefault();
-          document.getElementById('exports')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      } else if (isUp) {
-        if (currentFlight > 1) {
-          e.preventDefault();
-          const prev = currentFlight - 1;
-          activeFlightRef.current = prev;
-          setActiveFlight(prev);
-          scrollToFlightCard(prev);
-        } else {
-          e.preventDefault();
-          document.getElementById('live-render')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }
-    };
-
-    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('wheel', handleGlobalWheel);
-      window.removeEventListener('keydown', handleKeyDown);
-      if (wheelCooldownTimerRef.current) {
-        clearTimeout(wheelCooldownTimerRef.current);
-      }
-    };
-  }, []);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1023,7 +287,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   });
 
   return (
-    <div className="min-h-screen bg-paper font-dm text-ink antialiased">
+    <div className="min-h-screen bg-paper font-sans text-ink antialiased">
       {/* =============================== HERO =============================== */}
       <section className="border-b border-rule">
         <div className="mx-auto max-w-7xl px-6 pt-14 pb-12 lg:pt-24 lg:pb-20">
@@ -1051,14 +315,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
               </div>
 
-              {/* Main Headline */}
-              <h1 className="mt-5 font-display text-[clamp(2.1rem,4.6vw,3.8rem)] font-bold leading-[1.08] tracking-[-0.025em] text-ink text-balance">
-                Every great website starts with a <span className="text-transparent bg-clip-text bg-gradient-to-r from-clay via-rose-600 to-indigo-600">great design system</span>.
+              {/* Main Headline — Luxury Bold & Editorial Italic Contrast */}
+              <h1 className="mt-5 font-sans text-[clamp(2.3rem,4.8vw,4rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-ink text-balance">
+                Every great website starts with an{' '}
+                <span className="font-luxury italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-clay via-rose-600 to-indigo-600">
+                  editorial design system
+                </span>.
               </h1>
 
-              {/* Subtitle in small font */}
-              <p className="mt-4 max-w-xl text-[15px] sm:text-base leading-relaxed text-ink/70 text-pretty">
-                Decide in just 14 questions.
+              {/* Subtitle in refined prose */}
+              <p className="mt-4 max-w-xl text-base sm:text-lg leading-relaxed text-ink/75 font-normal text-pretty">
+                Transform your brand vision into mathematical design tokens, accessible components, and production-ready code in 14 guided decisions.
               </p>
 
               {/* Value Highlight Pills */}
@@ -1081,7 +348,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <button
                   onClick={onStartNew}
-                  className="group relative inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-clay via-clay to-clay-deep px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-clay/25 hover:shadow-xl hover:shadow-clay/35 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer overflow-hidden font-sansation tracking-wide"
+                  className="group relative inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-clay via-clay to-clay-deep px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-clay/25 hover:shadow-xl hover:shadow-clay/35 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer overflow-hidden font-sans tracking-wide"
                 >
                   <Sparkles className="w-4 h-4 text-white/90 animate-pulse" />
                   <span>Start designing</span>
@@ -1090,7 +357,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                 {/* Secondary Action: Split-Chamber Import JSON / Tokens Button */}
                 <label
-                  className="group relative inline-flex items-stretch rounded-xl border border-ink/20 bg-white/95 hover:bg-stone-50 text-ink shadow-2xs hover:shadow-xs hover:border-ink/35 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden font-sansation text-sm font-bold shrink-0"
+                  className="group relative inline-flex items-stretch rounded-xl border border-ink/20 bg-white/95 hover:bg-stone-50 text-ink shadow-2xs hover:shadow-xs hover:border-ink/35 transition-all duration-200 active:scale-[0.98] cursor-pointer overflow-hidden font-sans text-sm font-bold shrink-0"
                   title="Upload an existing Design System JSON tokens package"
                 >
                   {/* Left Chamber: Upload SVG */}
@@ -1317,7 +584,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                   {/* Brand & Type Label */}
                   <div className="flex items-center gap-1.5 text-left max-w-[140px] sm:max-w-[200px] truncate">
-                    <span className="text-xs sm:text-sm font-bold font-sansation text-ink tracking-tight truncate">
+                    <span className="text-xs sm:text-sm font-bold font-sans text-ink tracking-tight truncate">
                       {activePreset.label}
                     </span>
                   </div>
@@ -1455,7 +722,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <button
                 type="button"
                 onClick={onStartNew}
-                className="group relative inline-flex items-center gap-2 px-5 py-2 sm:py-2.5 rounded-full bg-clay hover:bg-clay-deep text-white text-xs sm:text-sm font-bold font-sansation shadow-md shadow-clay/25 hover:shadow-lg hover:shadow-clay/35 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer select-none shrink-0"
+                className="group relative inline-flex items-center gap-2 px-5 py-2 sm:py-2.5 rounded-full bg-clay hover:bg-clay-deep text-white text-xs sm:text-sm font-bold font-sans shadow-md shadow-clay/25 hover:shadow-lg hover:shadow-clay/35 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer select-none shrink-0"
                 title="Create your own custom website design system"
               >
                 <Sparkles className="w-3.5 h-3.5 text-white/90 animate-pulse" />
@@ -1488,326 +755,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* =========================== ARCHITECTURAL 14-QUESTION STAIRCASE (100VH WHITE BG & SCROLL CHOREOGRAPHY) =========================== */}
-      <section
-        id="steps"
-        ref={stepsSectionRef}
-        className="relative bg-white text-ink border-b border-rule w-full h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] max-h-[920px] flex flex-col justify-between py-3 sm:py-4 lg:py-4.5 overflow-hidden scroll-mt-18"
-      >
-        {/* Dynamic Studio Ambient Lighting & Architectural Grid */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:48px_48px]" />
-          <motion.div
-            animate={{
-              background: activeFlight === 1
-                ? 'radial-gradient(750px circle at 15% 40%, rgba(37,99,235,0.06), transparent 70%)'
-                : activeFlight === 2
-                ? 'radial-gradient(750px circle at 15% 40%, rgba(147,51,234,0.07), transparent 70%)'
-                : activeFlight === 3
-                ? 'radial-gradient(750px circle at 15% 40%, rgba(217,119,6,0.06), transparent 70%)'
-                : 'radial-gradient(750px circle at 15% 40%, rgba(5,150,105,0.07), transparent 70%)'
-            }}
-            transition={{ duration: 0.8 }}
-            className="absolute inset-0"
-          />
-        </div>
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 w-full h-full flex flex-col justify-between relative z-10">
-          {/* Header Row: Compact Luxury Editorial Header */}
-          <Reveal>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 pb-2.5 sm:pb-3 border-b border-rule/80 shrink-0">
-              <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 font-mono text-[10px] sm:text-[11px] uppercase font-bold tracking-[0.2em] text-clay mb-1">
-                  <span className="w-2 h-2 rounded-full bg-gradient-to-r from-clay via-rose-500 to-indigo-600 shadow-2xs" />
-                  <span>The 14-Step Stairway Architecture</span>
-                </div>
-                <h2 className="font-display text-xl sm:text-2xl lg:text-[28px] font-bold tracking-tight text-ink leading-tight">
-                  Climb the 14-step staircase to your{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-clay via-rose-600 to-indigo-600">
-                    finished website.
-                  </span>
-                </h2>
-              </div>
-              <p className="max-w-md text-xs text-ink/60 font-light hidden lg:block leading-relaxed">
-                One connected system across strategy, typography, tokens, and code. Four ascending flights from idea to production tokens.
-              </p>
-            </div>
-          </Reveal>
-
-          {/* 2-Column Section: Left Image Showcase + Right Scrollable Column */}
-          <div className="flex-1 mt-3 sm:mt-4 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch min-h-0 relative">
-            
-            {/* Left Column: Visual Showcase Card with 3D Parallax & Odometer Roll */}
-            <div className="lg:col-span-5 h-full min-h-0 flex flex-col">
-              {(() => {
-                const activeFlightData = STAIRWAY_FLIGHTS.find((f) => f.id === activeFlight) || STAIRWAY_FLIGHTS[0];
-                
-                const flightTheme = {
-                  1: {
-                    aura: 'radial-gradient(400px circle at 50% 38%, rgba(37,99,235,0.12), transparent 70%)',
-                    dotColor: 'bg-blue-500',
-                  },
-                  2: {
-                    aura: 'radial-gradient(400px circle at 50% 38%, rgba(147,51,234,0.14), transparent 70%)',
-                    dotColor: 'bg-purple-500',
-                  },
-                  3: {
-                    aura: 'radial-gradient(400px circle at 50% 38%, rgba(217,119,6,0.14), transparent 70%)',
-                    dotColor: 'bg-amber-500',
-                  },
-                  4: {
-                    aura: 'radial-gradient(400px circle at 50% 38%, rgba(5,150,105,0.14), transparent 70%)',
-                    dotColor: 'bg-emerald-500',
-                  },
-                }[activeFlight as 1 | 2 | 3 | 4] || {
-                  aura: 'radial-gradient(400px circle at 50% 38%, rgba(217,85,43,0.12), transparent 70%)',
-                  dotColor: 'bg-clay',
-                };
-
-                return (
-                  <motion.div
-                    onMouseMove={handleLeftCardMouseMove}
-                    onMouseLeave={handleLeftCardMouseLeave}
-                    animate={{
-                      rotateX: leftCardTilt.x,
-                      rotateY: leftCardTilt.y,
-                    }}
-                    transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                    style={{ perspective: 1000, transformStyle: 'preserve-3d' }}
-                    className="relative w-full h-full min-h-[260px] rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-b from-[#FDFEFE] via-[#F6F8FB] to-[#EDF2F7] border border-ink/10 shadow-xl shadow-ink/[0.05] flex flex-col justify-between select-none group"
-                  >
-                    {/* Dynamic Studio Ambient Lighting */}
-                    <motion.div
-                      animate={{ background: flightTheme.aura }}
-                      transition={{ duration: 0.6 }}
-                      className="absolute inset-0 pointer-events-none"
-                    />
-
-                    {/* Specular Glass Sheen following cursor */}
-                    <div
-                      className="absolute inset-0 pointer-events-none opacity-50 transition-opacity duration-300 group-hover:opacity-90"
-                      style={{
-                        background: `radial-gradient(circle 350px at ${leftCardGlow.x}% ${leftCardGlow.y}%, rgba(255,255,255,0.7), transparent 70%)`,
-                      }}
-                    />
-
-                    {/* Architectural Grid Lines */}
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000004_1px,transparent_1px),linear-gradient(to_bottom,#00000004_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-
-                    {/* Active Flight 3D Image Stage with Micro-Floating Animation */}
-                    <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-10 pointer-events-none">
-                      {/* Soft floor reflection pedestal shadow */}
-                      <div className="absolute bottom-20 w-40 sm:w-52 h-3.5 rounded-full bg-stone-950/15 blur-lg" />
-
-                      <AnimatePresence>
-                        <motion.div
-                          key={activeFlightData.id}
-                          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                          animate={{
-                            opacity: 1,
-                            scale: 1,
-                            y: [0, -5, 0],
-                          }}
-                          exit={{ opacity: 0, scale: 1.04, y: -10 }}
-                          transition={{
-                            opacity: { duration: 0.22, ease: 'easeOut' },
-                            scale: { type: 'spring', stiffness: 350, damping: 26 },
-                            y: {
-                              repeat: Infinity,
-                              duration: 4.5,
-                              ease: 'easeInOut',
-                            },
-                          }}
-                          className="w-full h-full flex items-center justify-center select-none"
-                        >
-                          <img
-                            src={activeFlightData.image}
-                            alt={activeFlightData.title}
-                            className="w-full h-full max-h-[74%] object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.14)] select-none pointer-events-none"
-                          />
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-
-                    {/* Bottom Editorial Dark Gradient Mask */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/30 to-transparent pointer-events-none" />
-
-                    {/* Bottom Row: Big Odometer Number & Flight Info */}
-                    <div className="relative z-20 p-4 sm:p-5 lg:p-6 flex items-end justify-between text-white pointer-events-auto mt-auto">
-                      <div>
-                        {/* Odometer Rolling Flight Number */}
-                        <div className="overflow-hidden h-[54px] sm:h-[64px] lg:h-[72px] flex items-center relative">
-                          <AnimatePresence>
-                            <motion.div
-                              key={activeFlightData.numStr}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -20 }}
-                              transition={{ type: 'spring', stiffness: 380, damping: 26 }}
-                              className="font-display text-5xl sm:text-6xl lg:text-7xl font-black leading-none tracking-tight text-white drop-shadow-lg"
-                            >
-                              {activeFlightData.numStr}
-                            </motion.div>
-                          </AnimatePresence>
-                        </div>
-
-                        {/* Flight Title and Subtitle */}
-                        <div className="mt-1">
-                          <div className="text-sm sm:text-base font-display font-bold tracking-tight text-white">
-                            {activeFlightData.title}
-                          </div>
-                          <div className="text-xs text-white/70 font-light mt-0.5 max-w-[220px] sm:max-w-xs truncate">
-                            {activeFlightData.subtitle}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })()}
-            </div>
-
-            {/* Right Column: Architectural Flight Cards with Interactive Spinal Progress */}
-            <div className="lg:col-span-7 h-full min-h-0 flex flex-col relative">
-              {/* Architectural Vertical Progress Spine along the separator */}
-              <div className="absolute left-0 top-3 bottom-3 w-[2px] bg-rule/50 hidden lg:block pointer-events-none">
-                <motion.div
-                  className="w-[3px] -left-[0.5px] relative rounded-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-[0_0_10px_rgba(217,85,43,0.4)]"
-                  animate={{ height: `${Math.max(15, (activeFlight / 4) * 100)}%` }}
-                  transition={{ type: 'spring', stiffness: 220, damping: 24 }}
-                />
-              </div>
-
-              <div
-                ref={rightColumnRef}
-                onScroll={handleRightColumnScroll}
-                className="h-full overflow-y-auto pr-2 sm:pr-4 space-y-4 sm:space-y-6 relative border-l border-rule/80 pl-4 sm:pl-8 pb-3 pt-1"
-                style={{ scrollbarWidth: 'thin' }}
-              >
-                {STAIRWAY_FLIGHTS.map((flight) => {
-                  const isActive = flight.id === activeFlight;
-                  return (
-                    <div
-                      key={flight.id}
-                      id={`flight-card-${flight.id}`}
-                      onClick={() => scrollToFlightCard(flight.id)}
-                      className={`snap-start min-h-full flex flex-col justify-between p-4 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl border transition-all duration-300 cursor-pointer select-none relative overflow-hidden ${
-                        isActive
-                          ? 'bg-gradient-to-br from-white via-[#FCFDFE] to-stone-50/90 border-2 border-clay/35 shadow-xl shadow-clay/[0.08] ring-1 ring-clay/20'
-                          : 'bg-white/70 hover:bg-white border border-ink/10 hover:border-ink/20 shadow-2xs opacity-50 hover:opacity-85'
-                      }`}
-                    >
-                      {/* Active Ambient Radial Light in top corner */}
-                      {isActive && (
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(circle_at_100%_0%,rgba(217,85,43,0.06),transparent_70%)] pointer-events-none rounded-2xl sm:rounded-3xl" />
-                      )}
-
-                      {/* Active Accent Bar on left edge of the card */}
-                      {isActive && (
-                        <motion.span
-                          layoutId="activeFlightAccentBarWhite"
-                          className="absolute -left-[18px] sm:-left-[34px] top-5 bottom-5 w-1.5 rounded-full bg-gradient-to-b from-clay via-rose-500 to-indigo-600 shadow-md shadow-clay/30"
-                          transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-                        />
-                      )}
-
-                      <div>
-                        {/* Flight Header Row */}
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2.5">
-                            <span
-                              className={`font-mono text-xs font-black w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center transition-all ${
-                                isActive
-                                  ? 'bg-clay text-white shadow-xs'
-                                  : 'bg-stone-100 text-ink/45 border border-ink/10'
-                              }`}
-                            >
-                              {flight.numStr}
-                            </span>
-                            <span
-                              className={`text-[11px] sm:text-xs font-bold font-mono px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border transition-all ${
-                                isActive
-                                  ? 'bg-clay-wash text-clay border-clay/30 shadow-2xs'
-                                  : 'bg-stone-100 text-ink/60 border-ink/10'
-                              }`}
-                            >
-                              {flight.badge}
-                            </span>
-                            <span className="text-[11px] font-mono text-ink/45 hidden sm:inline flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-clay/50" />
-                              Elevation: {flight.elevation}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Flight Title & Subtitle */}
-                        <div className="mt-2.5 sm:mt-3">
-                          <h3 className={`font-display text-xl sm:text-2xl lg:text-[26px] font-bold tracking-tight leading-tight transition-colors ${isActive ? 'text-ink' : 'text-ink/75'}`}>
-                            {flight.title}
-                          </h3>
-                          <div className={`text-[11px] font-mono uppercase tracking-widest mt-0.5 transition-colors ${isActive ? 'text-clay font-bold' : 'text-ink/40'}`}>
-                            {flight.subtitle}
-                          </div>
-                        </div>
-
-                        {/* Flight Description */}
-                        <p className="mt-1.5 sm:mt-2 text-xs sm:text-[13px] leading-relaxed text-ink/75 font-light line-clamp-2 sm:line-clamp-3">
-                          {flight.description}
-                        </p>
-
-                        {/* Question Decisions Chips */}
-                        <div className="mt-2.5 sm:mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
-                          {flight.questions.map((q, qIdx) => {
-                            const Icon = q.icon;
-                            return (
-                              <motion.div
-                                key={q.step}
-                                initial={isActive ? { opacity: 0, y: 5 } : false}
-                                animate={isActive ? { opacity: 1, y: 0 } : false}
-                                transition={{ delay: qIdx * 0.03, duration: 0.18 }}
-                                whileHover={{ y: -1, scale: 1.01 }}
-                                className={`group/chip flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all duration-200 cursor-default ${
-                                  isActive
-                                    ? 'bg-white border border-clay/25 shadow-2xs hover:border-clay/50 hover:shadow-xs'
-                                    : 'bg-stone-50/80 border border-ink/10 hover:border-ink/20'
-                                }`}
-                              >
-                                <div
-                                  className={`w-4 h-4 sm:w-5 sm:h-5 rounded-md flex items-center justify-center shrink-0 transition-colors ${
-                                    isActive ? 'bg-clay/10 text-clay' : 'bg-stone-200/60 text-ink/50'
-                                  }`}
-                                >
-                                  <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2]" />
-                                </div>
-                                <span className={`font-mono font-bold text-[11px] sm:text-xs ${isActive ? 'text-clay' : 'text-ink/50'}`}>
-                                  {q.qNum}
-                                </span>
-                                <span className="font-semibold text-ink text-[11px] sm:text-xs truncate">{q.title}</span>
-                              </motion.div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Active Status Footer Indicator */}
-                      <div className={`mt-3 pt-2.5 border-t border-rule/50 flex items-center justify-between text-[11px] font-mono transition-opacity ${isActive ? 'opacity-100' : 'opacity-0'}`}>
-                        <span className="text-ink/50 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                          <span>Active Architecture Flight</span>
-                        </span>
-                        <span className="text-clay font-bold flex items-center gap-1">
-                          {flight.id < 4 ? `Scroll down for Flight 0${flight.id + 1} →` : 'Summit reached · Scroll for Deliverables ↓'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
+      {/* ======================= THE 4 PILLARS: DESIGN SYSTEM ANATOMY ======================= */}
+      <DesignSystemAnatomy onStartNew={onStartNew} />
 
       {/* ============================ DELIVERABLES INDEX (INFINITE AUTOMATION PROJECT INDEX STYLE) ============================ */}
       <section
@@ -1971,52 +921,73 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* ============================== CTA ============================== */}
-      <section className="bg-clay">
-        <div className="mx-auto max-w-7xl px-6 py-14 lg:py-20">
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 className="font-display text-[clamp(1.9rem,3.6vw,2.75rem)] font-semibold leading-[1.05] tracking-[-0.02em] text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#B33912] via-clay to-[#8C2809] text-white py-16 sm:py-20 lg:py-24 border-b border-rule">
+        {/* Ambient Grid & Specular Lighting */}
+        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+          <div className="absolute -top-32 right-10 w-[500px] h-[500px] rounded-full bg-white/10 blur-3xl pointer-events-none" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10">
+            <div className="max-w-2xl">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 shadow-xs mb-4">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-white">
+                  Zero Setup Required • Runs Offline In Browser
+                </span>
+              </div>
+
+              <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold leading-[1.08] tracking-tight text-white text-balance">
                 Ready when you are.
               </h2>
-              <p className="mt-3 max-w-md text-sm leading-relaxed text-white/80">
-                About thirty minutes, no sign-up, and everything saves to your browser as you go.
+              <p className="mt-4 text-base sm:text-lg text-white/85 font-light leading-relaxed max-w-xl text-pretty">
+                About thirty minutes, zero signup walls, and every single decision saves automatically to your browser as you build.
               </p>
+
+              {/* Guarantees */}
+              <div className="mt-6 flex flex-wrap items-center gap-4 text-xs font-mono text-white/80">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                  <span>100% Client-Side Private</span>
+                </span>
+                <span className="text-white/30">•</span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                  <span>Tailwind 4 & CSS Ready</span>
+                </span>
+                <span className="text-white/30">•</span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                  <span>WCAG 2.1 AA Verified</span>
+                </span>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 shrink-0">
               <button
                 onClick={onStartNew}
-                className="group inline-flex items-center gap-2.5 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-ink transition-colors hover:bg-white/90 active:scale-[0.99] font-sansation shadow-sm"
+                className="group relative inline-flex items-center justify-center gap-3 rounded-xl bg-white px-7 py-4 text-sm font-bold text-ink shadow-xl hover:bg-stone-50 hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer font-sans"
               >
-                Create my design system
-                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                <Sparkles className="w-4 h-4 text-clay" />
+                <span>Create my design system</span>
+                <ArrowRight className="h-4 w-4 text-ink transition-transform duration-300 group-hover:translate-x-1" />
               </button>
+
               <button
                 onClick={() => onExploreSample(activeSample)}
-                className="inline-flex items-center gap-2 rounded-md border border-white/50 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 backdrop-blur-md px-6 py-4 text-sm font-semibold text-white transition-all hover:border-white/70 active:scale-[0.98] cursor-pointer"
               >
-                Open the live demo
+                <span>Open sample demo</span>
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ============================= FOOTER ============================= */}
-      <footer className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center">
-            <img
-              src="/logo.png"
-              alt="Design System Studio"
-              className="h-10 sm:h-12 w-auto object-contain mix-blend-multiply select-none"
-            />
-          </div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink/40">
-            Runs locally in your browser
-          </p>
-        </div>
-      </footer>
+      {/* ============================= STUDIO EDITORIAL FOOTER ============================= */}
+      <StudioFooter onStartNew={onStartNew} onExploreSample={() => onExploreSample(activeSample)} />
     </div>
   );
 };
