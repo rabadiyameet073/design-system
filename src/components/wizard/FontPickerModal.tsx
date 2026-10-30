@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Search, X, Check, Filter, Sparkles, Globe, Sliders } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Search, X, Check, Filter, Sparkles, Globe, Sliders, ArrowUpDown } from 'lucide-react';
 import { FontMeta } from '../../utils/typeScale';
+import fontsSnapshot from '../../data/fonts.snapshot.json';
 
 interface FontPickerModalProps {
   isOpen: boolean;
@@ -10,6 +11,117 @@ interface FontPickerModalProps {
   roleName: string;
   allowedScripts?: string[];
 }
+
+// Track loaded font link elements to avoid duplicate DOM entries
+const loadedFontTags = new Set<string>();
+
+const LazyFontRow: React.FC<{
+  font: FontMeta;
+  isSelected: boolean;
+  previewText: string;
+  onSelect: () => void;
+}> = ({ font, isSelected, previewText, onSelect }) => {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+  const [isFontLoaded, setIsFontLoaded] = useState(false);
+
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setIsInView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '120px' }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Lazy-load glyph-subsetted CSS via Google Fonts &text=
+  useEffect(() => {
+    if (!isInView || typeof document === 'undefined') return;
+
+    const sampleString = `${font.family} ${previewText}`;
+    const fontId = `dss-font-preview-${font.family.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+
+    if (!loadedFontTags.has(fontId)) {
+      loadedFontTags.add(fontId);
+      const link = document.createElement('link');
+      link.id = fontId;
+      link.rel = 'stylesheet';
+      const encodedFamily = encodeURIComponent(font.family).replace(/%20/g, '+');
+      const encodedText = encodeURIComponent(sampleString);
+      link.href = `https://fonts.googleapis.com/css2?family=${encodedFamily}&text=${encodedText}&display=swap`;
+      link.onload = () => setIsFontLoaded(true);
+      document.head.appendChild(link);
+    } else {
+      setIsFontLoaded(true);
+    }
+  }, [isInView, font.family, previewText]);
+
+  return (
+    <div
+      ref={rowRef}
+      onClick={onSelect}
+      className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+        isSelected
+          ? 'bg-neutral-900 text-white border-neutral-900 shadow-md ring-2 ring-neutral-900/10'
+          : 'bg-white hover:bg-neutral-50 hover:border-neutral-300 border-neutral-200 text-neutral-800'
+      }`}
+    >
+      <div className="space-y-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-sm tracking-tight">{font.family}</span>
+          <span
+            className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${
+              isSelected ? 'bg-white/10 text-neutral-300' : 'bg-neutral-100 text-neutral-600'
+            }`}
+          >
+            {font.category}
+          </span>
+          {font.variable && (
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+              Variable
+            </span>
+          )}
+          {font.popularityRank && font.popularityRank <= 50 && (
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
+              Top #{font.popularityRank}
+            </span>
+          )}
+        </div>
+        <div
+          className={`text-sm truncate max-w-xl transition-opacity duration-200 ${
+            isSelected ? 'text-neutral-200' : 'text-neutral-700'
+          } ${isFontLoaded ? 'opacity-100' : 'opacity-85'}`}
+          style={{ fontFamily: `"${font.family}", system-ui, sans-serif` }}
+        >
+          {previewText}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 shrink-0">
+        <span className={`text-[11px] font-mono ${isSelected ? 'text-neutral-400' : 'text-neutral-500'}`}>
+          {font.variants.length} styles
+        </span>
+        {isSelected && (
+          <span className="p-1 rounded-full bg-emerald-500 text-white">
+            <Check className="w-3.5 h-3.5" />
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const FontPickerModal: React.FC<FontPickerModalProps> = ({
   isOpen,
@@ -23,8 +135,11 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedScript, setSelectedScript] = useState<string>('all');
+  const [selectedScript, setSelectedScript] = useState<string>(
+    allowedScripts.find(s => s !== 'latin') || 'all'
+  );
   const [variableOnly, setVariableOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<'popularity' | 'alpha'>('popularity');
   const [previewText, setPreviewText] = useState('Sphinx of black quartz, judge my vow.');
 
   useEffect(() => {
@@ -38,18 +153,13 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
         setLoading(false);
       })
       .catch(() => {
-        // Fallback to static snapshot if needed
-        import('../../data/fonts.snapshot.json')
-          .then(mod => {
-            setFonts((mod.default || mod) as unknown as FontMeta[]);
-            setLoading(false);
-          })
-          .catch(() => setLoading(false));
+        setFonts(fontsSnapshot as unknown as FontMeta[]);
+        setLoading(false);
       });
   }, [isOpen]);
 
   const filteredFonts = useMemo(() => {
-    return fonts.filter(font => {
+    let result = fonts.filter(font => {
       // Category filter
       if (selectedCategory !== 'all' && font.category !== selectedCategory) {
         return false;
@@ -74,7 +184,15 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
 
       return true;
     });
-  }, [fonts, search, selectedCategory, selectedScript, variableOnly]);
+
+    if (sortBy === 'alpha') {
+      result = [...result].sort((a, b) => a.family.localeCompare(b.family));
+    } else {
+      result = [...result].sort((a, b) => (a.popularityRank || 999) - (b.popularityRank || 999));
+    }
+
+    return result;
+  }, [fonts, search, selectedCategory, selectedScript, variableOnly, sortBy]);
 
   if (!isOpen) return null;
 
@@ -88,7 +206,7 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
               Font Catalog · Choosing for {roleName.toUpperCase()}
             </div>
             <h2 className="text-lg font-bold text-neutral-900">
-              Select Web Font
+              Select Verified Web Font
             </h2>
           </div>
           <button
@@ -108,7 +226,7 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search font family name (e.g. Fraunces, Inter, Poppins)..."
+                placeholder="Search font family name (e.g. Fraunces, Inter, Poppins, Lexend)..."
                 className="w-full pl-9 pr-4 py-2 text-xs bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-900"
               />
             </div>
@@ -130,7 +248,7 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium capitalize transition-colors ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium capitalize transition-colors cursor-pointer ${
                     selectedCategory === cat ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'
                   }`}
                 >
@@ -147,11 +265,21 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
             >
               <option value="all">All Scripts</option>
               <option value="latin">Latin</option>
-              <option value="devanagari">Devanagari</option>
-              <option value="gujarati">Gujarati</option>
-              <option value="arabic">Arabic</option>
+              <option value="devanagari">Devanagari (Hindi, Marathi)</option>
+              <option value="gujarati">Gujarati (ગુજરાતી)</option>
+              <option value="arabic">Arabic (العربية)</option>
               <option value="cyrillic">Cyrillic</option>
             </select>
+
+            {/* Sort Toggle */}
+            <button
+              type="button"
+              onClick={() => setSortBy(sortBy === 'popularity' ? 'alpha' : 'popularity')}
+              className="flex items-center gap-1 px-2.5 py-1 bg-white border border-neutral-200 rounded-lg text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+            >
+              <ArrowUpDown className="w-3 h-3 text-neutral-400" />
+              <span>{sortBy === 'popularity' ? 'Popularity' : 'A–Z'}</span>
+            </button>
 
             <label className="flex items-center gap-1.5 ml-auto text-[11px] text-neutral-600 cursor-pointer">
               <input
@@ -176,60 +304,21 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
               No font families found matching your criteria.
             </div>
           ) : (
-            filteredFonts.map(font => {
-              const isSelected = selectedFamily === font.family;
-              return (
-                <div
-                  key={font.family}
-                  onClick={() => {
-                    onSelectFont(font);
-                    onClose();
-                  }}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                    isSelected
-                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-md'
-                      : 'bg-white hover:bg-neutral-50 hover:border-neutral-300 border-neutral-200 text-neutral-800'
-                  }`}
-                >
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm tracking-tight">{font.family}</span>
-                      <span className={`text-[10px] uppercase font-mono px-1.5 py-0.2 rounded ${
-                        isSelected ? 'bg-white/10 text-neutral-300' : 'bg-neutral-100 text-neutral-500'
-                      }`}>
-                        {font.category}
-                      </span>
-                      {font.variable && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">
-                          Variable
-                        </span>
-                      )}
-                    </div>
-                    <div
-                      className={`text-sm truncate max-w-lg ${isSelected ? 'text-neutral-300' : 'text-neutral-600'}`}
-                      style={{ fontFamily: font.family }}
-                    >
-                      {previewText}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className={`text-[11px] font-mono ${isSelected ? 'text-neutral-400' : 'text-neutral-400'}`}>
-                      {font.variants.length} weights
-                    </span>
-                    {isSelected && (
-                      <span className="p-1 rounded-full bg-emerald-500 text-white">
-                        <Check className="w-3.5 h-3.5" />
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })
+            filteredFonts.map(font => (
+              <LazyFontRow
+                key={font.family}
+                font={font}
+                isSelected={selectedFamily === font.family}
+                previewText={previewText}
+                onSelect={() => {
+                  onSelectFont(font);
+                  onClose();
+                }}
+              />
+            ))
           )}
         </div>
       </div>
     </div>
   );
 };
-
