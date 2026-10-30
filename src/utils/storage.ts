@@ -1,5 +1,6 @@
 import { DesignProject } from '../types/designSystem';
 import { SAMPLE_PROJECT_CERAMICS, SAMPLE_PROJECT_SAAS, createNewProject } from '../data/sampleProjects';
+import { migrateTokens, importDesignTokensFromJson, TokenMigrationError } from '../tokens/migration';
 
 const STORAGE_KEY_PROJECTS = 'dss_projects_v1';
 const STORAGE_KEY_ACTIVE_ID = 'dss_active_project_id_v1';
@@ -109,14 +110,56 @@ export function exportProjectAsJson(project: DesignProject): void {
 }
 
 export function importProjectFromJson(jsonString: string): DesignProject {
-  const parsed = JSON.parse(jsonString) as DesignProject;
-  if (!parsed.name || !parsed.colorPalette || !parsed.typography) {
-    throw new Error('Invalid design system file structure');
+  // Size limit check (2 MB per Doc 05 §2)
+  if (jsonString.length > 2 * 1024 * 1024) {
+    throw new Error('Project file exceeds maximum size limit of 2 MB.');
+  }
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch {
+    throw new Error('Invalid JSON structure.');
+  }
+
+  // Case A: Standalone DesignTokens file (e.g., project.dss.json)
+  if (parsed.schemaVersion || (parsed.color && parsed.typography && !parsed.websiteType)) {
+    const tokens = migrateTokens(parsed);
+    const projectName = tokens.meta?.projectName || 'Imported Design System';
+    const genreId = tokens.meta?.genreId || 'ceramics-atelier';
+    const baseProject = createNewProject(projectName, genreId);
+
+    const project: DesignProject = {
+      ...baseProject,
+      id: `project_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      name: projectName,
+      tokens,
+      updatedAt: Date.now()
+    };
+
+    saveProject(project);
+    return project;
+  }
+
+  // Case B: Full DesignProject structure
+  if (!parsed.name && !parsed.tokens) {
+    throw new Error('Invalid design system file structure: missing name and token properties.');
+  }
+
+  // Migrate tokens inside project if present
+  let tokens = parsed.tokens;
+  try {
+    if (tokens) {
+      tokens = migrateTokens(tokens);
+    }
+  } catch (err) {
+    console.warn('Could not fully migrate nested tokens, using fallback:', err);
   }
 
   const newProject: DesignProject = {
     ...parsed,
     id: `project_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    tokens: tokens || parsed.tokens,
     updatedAt: Date.now()
   };
 

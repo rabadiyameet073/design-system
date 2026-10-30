@@ -28,12 +28,14 @@ describe('tokenExporters pure functions', () => {
     expect(css).toContain('--color-bg-default');
   });
 
-  it('generates valid DTCG JSON with $type and $value', () => {
+  it('generates valid DTCG JSON with $type and $value and aliases', () => {
     const jsonStr = exportDtcgJson(DEFAULT_DESIGN_TOKENS);
     const parsed = JSON.parse(jsonStr);
     expect(parsed.color.semantic.primary.$type).toBe('color');
     expect(parsed.color.semantic.primary.$value).toBeDefined();
+    expect(parsed.color.action.primary.$value).toBe('{color.brand.600}');
     expect(parsed.dimension.radius.md.$type).toBe('dimension');
+    expect(parsed.dimension.space[1].$value).toBe('4px');
   });
 
   it('generates valid TypeScript output', () => {

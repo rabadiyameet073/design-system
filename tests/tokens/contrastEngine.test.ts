@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { ratio, grade, nudgeToContrast, auditSemanticContrast } from '../../src/tokens/contrastEngine';
+import { ratio, grade, nudgeToContrast, auditSemanticContrast, computeApcaLc } from '../../src/tokens/contrastEngine';
 import { createDefaultTokens } from '../../src/tokens/defaultTokens';
+import { oklch } from 'culori';
 
 describe('WCAG 2.2 Contrast Engine', () => {
   it('correctly calculates known contrast ratios', () => {
@@ -30,6 +31,24 @@ describe('WCAG 2.2 Contrast Engine', () => {
     expect(fixedRatio).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('fixes failing chromatic pair to target contrast without changing hue by > 3 degrees', () => {
+    const chromaticColor = '#38BDF8'; // Light sky blue, low contrast on white
+    const bg = '#FFFFFF';
+    const initialRatio = ratio(chromaticColor, bg);
+    expect(initialRatio).toBeLessThan(4.5);
+
+    const fixed = nudgeToContrast(chromaticColor, bg, 4.5);
+    const fixedRatio = ratio(fixed, bg);
+    expect(fixedRatio).toBeGreaterThanOrEqual(4.5);
+
+    const initialHue = oklch(chromaticColor)?.h ?? 0;
+    const fixedHue = oklch(fixed)?.h ?? 0;
+    const hueDiff = Math.abs(initialHue - fixedHue);
+
+    // Hue difference must be minimal (<= 3 degrees)
+    expect(hueDiff).toBeLessThanOrEqual(3);
+  });
+
   it('runs complete audit on default semantic tokens', () => {
     const tokens = createDefaultTokens();
     const lightAudit = auditSemanticContrast(tokens.color.semantic.light);
@@ -40,6 +59,17 @@ describe('WCAG 2.2 Contrast Engine', () => {
 
     const darkAudit = auditSemanticContrast(tokens.color.semantic.dark);
     expect(darkAudit.totalCount).toBeGreaterThanOrEqual(8);
+  });
+
+  it('computes APCA Lightness Contrast (Lc) perceptual second opinion', () => {
+    const blackOnWhiteLc = computeApcaLc('#000000', '#FFFFFF');
+    expect(blackOnWhiteLc).toBeGreaterThan(95);
+
+    const whiteOnBlackLc = computeApcaLc('#FFFFFF', '#000000');
+    expect(whiteOnBlackLc).toBeLessThan(-95);
+
+    const identicalLc = computeApcaLc('#FFFFFF', '#FFFFFF');
+    expect(identicalLc).toBe(0);
   });
 });
 

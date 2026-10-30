@@ -168,15 +168,20 @@ export const Step10ReviewAudit: React.FC<Step10ReviewAuditProps> = ({ project, o
                   <div className="font-mono font-bold text-xs">
                     {issue.ratio.toFixed(2)}:1
                   </div>
-                  <span
-                    className={`inline-block px-2 py-0.2 rounded text-[10px] font-bold font-mono ${
-                      issue.passed
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {issue.grade} {issue.passed ? 'PASS' : 'WARN'}
-                  </span>
+                  <div className="flex items-center gap-1.5 justify-end">
+                    <span
+                      className={`inline-block px-2 py-0.2 rounded text-[10px] font-bold font-mono ${
+                        issue.passed
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {issue.grade} {issue.passed ? 'PASS' : 'WARN'}
+                    </span>
+                    <span className="text-[9px] text-neutral-400 font-mono hidden sm:inline" title="APCA Lightness Contrast (informational)">
+                      Lc {issue.apcaLc > 0 ? `+${issue.apcaLc}` : issue.apcaLc}
+                    </span>
+                  </div>
                 </div>
 
                 {!issue.passed && (

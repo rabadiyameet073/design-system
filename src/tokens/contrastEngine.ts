@@ -50,10 +50,14 @@ export function nudgeToContrast(fg: string, bg: string, target = 4.5): string {
       break;
     }
 
+    const origL = fgOklch.l ?? 0.5;
+    const chromaFactor = origL > 0.05 ? candidateL / origL : 1;
+    const candidateC = Math.max(0, (fgOklch.c ?? 0.1) * Math.min(1.1, chromaFactor));
+
     const candidate: Oklch = {
       mode: 'oklch',
       l: candidateL,
-      c: fgOklch.c ?? 0.1,
+      c: candidateC,
       h: fgOklch.h ?? 0
     };
 
@@ -69,12 +73,56 @@ export function nudgeToContrast(fg: string, bg: string, target = 4.5): string {
   return bgLightness > 0.5 ? '#0A0A0A' : '#FFFFFF';
 }
 
+/**
+ * Calculates APCA (Accessible Perceptual Contrast Algorithm) Lightness Contrast (Lc)
+ * value (-108 to +106) as an informational perceptual second opinion per Doc 04 §2.4.
+ */
+export function computeApcaLc(fg: string, bg: string): number {
+  try {
+    const parseRgb = (hex: string) => {
+      const clean = hex.replace('#', '');
+      const num = parseInt(clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean, 16);
+      return {
+        r: ((num >> 16) & 255) / 255,
+        g: ((num >> 8) & 255) / 255,
+        b: (num & 255) / 255
+      };
+    };
+
+    const sRgbToY = (c: { r: number; g: number; b: number }) => {
+      const r = Math.pow(c.r, 2.4);
+      const g = Math.pow(c.g, 2.4);
+      const b = Math.pow(c.b, 2.4);
+      return 0.2126729 * r + 0.7151522 * g + 0.072175 * b;
+    };
+
+    const yTxt = sRgbToY(parseRgb(fg));
+    const yBg = sRgbToY(parseRgb(bg));
+
+    if (Math.abs(yBg - yTxt) < 0.0005) return 0;
+
+    let lc = 0;
+    if (yBg > yTxt) {
+      // Dark text on light background
+      lc = (Math.pow(yBg, 0.56) - Math.pow(yTxt, 0.57)) * 1.14 * 100;
+    } else {
+      // Light text on dark background
+      lc = (Math.pow(yBg, 0.65) - Math.pow(yTxt, 0.62)) * 1.14 * 100;
+    }
+
+    return Math.round(lc * 10) / 10;
+  } catch {
+    return 0;
+  }
+}
+
 export interface A11yAuditIssue {
   id: string;
   name: string;
   fg: string;
   bg: string;
   ratio: number;
+  apcaLc: number;
   targetRatio: number;
   grade: 'AAA' | 'AA' | 'Fail';
   isLarge: boolean;
@@ -195,6 +243,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
       fg: item.fg,
       bg: item.bg,
       ratio: Math.round(r * 100) / 100,
+      apcaLc: computeApcaLc(item.fg, item.bg),
       targetRatio: item.targetRatio,
       grade: g,
       isLarge: item.isLarge,

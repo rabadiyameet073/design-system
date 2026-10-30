@@ -82,10 +82,22 @@ export function exportDtcgJson(tokens: DesignTokens): string {
     $schema: 'https://design-tokens.github.io/community-group/format/',
     color: {
       brand: {},
+      action: {
+        primary: {
+          $type: 'color',
+          $value: '{color.brand.600}',
+          $description: 'Primary interactive button and call-to-action tone'
+        },
+        primaryFg: {
+          $type: 'color',
+          $value: tokens.color.semantic.light.actionPrimaryFg,
+          $description: 'Accessible foreground on primary action'
+        }
+      },
       semantic: {
         background: {
           $type: 'color',
-          $value: tokens.color.semantic.light.bgDefault,
+          $value: '{color.neutral.50}',
           $description: 'Canvas default background tone'
         },
         surface: {
@@ -95,7 +107,7 @@ export function exportDtcgJson(tokens: DesignTokens): string {
         },
         primary: {
           $type: 'color',
-          $value: tokens.color.semantic.light.actionPrimary,
+          $value: '{color.brand.600}',
           $description: 'Primary interactive accent'
         }
       }
@@ -104,8 +116,11 @@ export function exportDtcgJson(tokens: DesignTokens): string {
       radius: {
         sm: { $type: 'dimension', $value: `${tokens.radius.sm}px` },
         md: { $type: 'dimension', $value: `${tokens.radius.md}px` },
-        lg: { $type: 'dimension', $value: `${tokens.radius.lg}px` }
-      }
+        lg: { $type: 'dimension', $value: `${tokens.radius.lg}px` },
+        xl: { $type: 'dimension', $value: `${tokens.radius.xl}px` },
+        full: { $type: 'dimension', $value: `${tokens.radius.full}px` }
+      },
+      space: {}
     },
     typography: {
       heading: {
@@ -129,6 +144,15 @@ export function exportDtcgJson(tokens: DesignTokens): string {
       };
     }
   }
+
+  // Populate space dimensions
+  tokens.space.scale.forEach((val, idx) => {
+    dtcgObj.dimension.space[idx] = {
+      $type: 'dimension',
+      $value: `${val}px`,
+      $description: `Space step ${idx} (${val}px)`
+    };
+  });
 
   return JSON.stringify(dtcgObj, null, 2);
 }
