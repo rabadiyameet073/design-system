@@ -76,3 +76,4 @@ export const ArticleBody: React.FC<ArticleBodyProps> = ({ id = 'article-body' })
     </article>
   );
 };
+

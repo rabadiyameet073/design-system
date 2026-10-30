@@ -98,3 +98,4 @@ export const FeatureGrid: React.FC<FeatureGridProps> = ({
     </section>
   );
 };
+

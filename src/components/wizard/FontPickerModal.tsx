@@ -232,3 +232,4 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
     </div>
   );
 };
+

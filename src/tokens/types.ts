@@ -138,6 +138,12 @@ export interface DesignTokens {
     category: CategoryId;
     goal: string;
     audience: string;
+    description?: string;
+    audienceAge?: '18-35' | '35-50' | '50+';
+    brandColorHex?: string;
+    inspirationUrls?: string[];
+    platformTarget?: 'web' | 'web-app';
+    frameworkTarget?: 'tailwind' | 'css' | 'shadcn';
     scripts: string[];
     darkMode: 'none' | 'auto' | 'manual';
     personality: {
@@ -217,6 +223,12 @@ export const DesignTokensSchema = z.object({
     category: CategoryIdSchema,
     goal: z.string().default(''),
     audience: z.string().default(''),
+    description: z.string().optional(),
+    audienceAge: z.enum(['18-35', '35-50', '50+']).optional(),
+    brandColorHex: z.string().optional(),
+    inspirationUrls: z.array(z.string()).optional(),
+    platformTarget: z.enum(['web', 'web-app']).optional(),
+    frameworkTarget: z.enum(['tailwind', 'css', 'shadcn']).optional(),
     scripts: z.array(z.string()).default(['latin']),
     darkMode: z.enum(['none', 'auto', 'manual']).default('auto'),
     personality: z.object({

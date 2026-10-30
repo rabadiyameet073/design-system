@@ -299,3 +299,4 @@ Generated with **Design System Studio**.
 
   return await zip.generateAsync({ type: 'blob' });
 }
+

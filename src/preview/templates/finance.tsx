@@ -46,3 +46,4 @@ export const FinanceTemplate: React.FC<TemplateProps> = ({
     </div>
   );
 };
+

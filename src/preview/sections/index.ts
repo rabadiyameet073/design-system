@@ -57,3 +57,4 @@ export {
   TypeSpecimen,
   Footer
 };
+

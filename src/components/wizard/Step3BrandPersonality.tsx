@@ -201,3 +201,4 @@ export const Step3BrandPersonality: React.FC<Step3BrandPersonalityProps> = ({
     </div>
   );
 };
+

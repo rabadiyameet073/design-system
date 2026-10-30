@@ -99,3 +99,4 @@ export const CourseCards: React.FC<CourseCardsProps> = ({ id = 'courses' }) => {
     </section>
   );
 };
+

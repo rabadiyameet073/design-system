@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
-import { Sparkles, Image, Upload, Check, Camera, Layers, Plus } from 'lucide-react';
-import { DesignProject, ImageryConfig } from '../../types/designSystem';
+import {
+  Sparkles,
+  Image as ImageIcon,
+  Check,
+  Upload,
+  Zap,
+  Activity,
+  Layers,
+  Sparkle,
+  Compass,
+  Boxes
+} from 'lucide-react';
+import { DesignProject } from '../../types/designSystem';
 
 interface Step8ImageryStudioProps {
   project: DesignProject;
@@ -8,264 +19,273 @@ interface Step8ImageryStudioProps {
 }
 
 export const Step8ImageryStudio: React.FC<Step8ImageryStudioProps> = ({ project, onChange }) => {
-  const [customStyleText, setCustomStyleText] = useState('');
-  const [isCustomStyle, setIsCustomStyle] = useState(false);
+  const currentTreatment = project.tokens?.imagery?.treatment || 'natural';
+  const currentIconLib = project.tokens?.icon?.library || 'lucide';
+  const currentIconStyle = project.tokens?.icon?.style || 'outline';
+  const currentMotionLevel = project.tokens?.motion?.level || 'subtle';
 
-  const styles: { id: ImageryConfig['style']; title: string; tech: string; desc: string }[] = [
-    {
-      id: 'photography',
-      title: 'Warm Natural Photography',
-      tech: 'documentary daylight style',
-      desc: 'Real daylight, tactile textures, and documentary warmth. Great for artisan and lifestyle.'
-    },
-    {
-      id: 'product',
-      title: 'Studio Product Photography',
-      tech: 'diffused commercial studio lighting',
-      desc: 'Clean stone and studio surfaces, crisp rim lighting, and commercial product focus.'
-    },
-    {
-      id: 'editorial',
-      title: 'Architectural & Editorial',
-      tech: 'high-contrast window shadow',
-      desc: 'Spacious framing, geometric window shadows, and sophisticated high-end aesthetic.'
-    },
-    {
-      id: 'minimal',
-      title: 'Minimal Geometric Graphics',
-      tech: 'abstract vector composition',
-      desc: 'Quiet shapes, subtle tinted containers, and calm spatial layout.'
-    },
-    {
-      id: 'text-first',
-      title: 'Typography & Text-First',
-      tech: 'zero heavy photo assets',
-      desc: 'No heavy images; your message leads with confident typographic scale.'
-    }
-  ];
-
-  const updateImagery = (key: keyof ImageryConfig, val: any) => {
+  const handleTreatmentChange = (treatment: 'natural' | 'duotone' | 'mono') => {
     onChange({
-      imagery: {
-        ...project.imagery,
-        [key]: val
+      tokens: {
+        ...project.tokens,
+        imagery: {
+          ...project.tokens.imagery,
+          treatment
+        }
       }
     });
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      updateImagery('customHeroUrl', url);
-    }
+  const handleIconLibChange = (library: 'lucide' | 'phosphor' | 'tabler') => {
+    onChange({
+      tokens: {
+        ...project.tokens,
+        icon: {
+          ...project.tokens.icon,
+          library
+        }
+      }
+    });
   };
 
-  const handleApplyCustomStyle = () => {
-    if (customStyleText.trim()) {
-      setIsCustomStyle(true);
-      updateImagery('treatment', 'clean');
-    }
+  const handleIconStyleChange = (style: 'outline' | 'filled' | 'duotone') => {
+    onChange({
+      tokens: {
+        ...project.tokens,
+        icon: {
+          ...project.tokens.icon,
+          style,
+          strokeWidth: style === 'outline' ? 2 : 1.5
+        }
+      }
+    });
+  };
+
+  const handleMotionLevelChange = (level: 'none' | 'subtle' | 'expressive') => {
+    const duration =
+      level === 'none'
+        ? { fast: 0, base: 0, slow: 0 }
+        : level === 'subtle'
+        ? { fast: 120, base: 200, slow: 320 }
+        : { fast: 150, base: 280, slow: 450 };
+
+    onChange({
+      tokens: {
+        ...project.tokens,
+        motion: {
+          ...project.tokens.motion,
+          level,
+          duration
+        }
+      }
+    });
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-8">
+    <div className="max-w-4xl mx-auto py-4 space-y-8">
       {/* Header */}
-      <div className="mb-6 text-center">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-700 text-xs font-medium mb-3">
-          <Sparkles className="w-3.5 h-3.5 text-neutral-900" />
-          <span>Step 8 of 14 · Website Imagery & Photos</span>
+      <div className="space-y-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-white text-xs font-semibold">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>Step 9 of 11 · Imagery, Icons & Motion Physics</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 mb-1">
-          How Should Photos & Images Look?
+        <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+          Visual asset treatment, icon style & animation physics
         </h1>
-        <span className="text-[11px] font-mono text-neutral-400 block mb-2">
-          technical: visual asset treatment & geometric framing
-        </span>
-        <p className="text-sm text-neutral-600 max-w-lg mx-auto leading-relaxed">
-          Decide the visual style, photo shape, and corner roundness across your website so your product photos and banners stay consistent.
+        <p className="text-sm text-neutral-600 leading-relaxed max-w-2xl">
+          Define how hero imagery, iconography, and spring physics behave across the system. Motion settings automatically respect the user's system reduced-motion preferences.
         </p>
       </div>
 
-      <div className="space-y-6">
-        {/* Style Selection Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {styles.map(s => {
-            const isSelected = !isCustomStyle && project.imagery.style === s.id;
+      {/* 1. Motion Physics Level */}
+      <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-500" />
+              <span>Motion & Micro-Interaction Physics</span>
+            </h3>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              Controls spring stiffness, transition timing, and micro-hover tactile feedback.
+            </p>
+          </div>
+          <span className="text-xs font-mono font-bold text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-full">
+            Level: {currentMotionLevel.toUpperCase()}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            {
+              id: 'none',
+              label: 'None (Instant 0ms)',
+              tech: 'prefers-reduced-motion',
+              desc: 'Instant transitions without spatial movement. Pure accessibility & low-power efficiency.'
+            },
+            {
+              id: 'subtle',
+              label: 'Subtle (120–320ms)',
+              tech: 'cubic-bezier(.2,0,0,1)',
+              desc: 'Smooth, understated ease curves. Crisp, professional and calm.'
+            },
+            {
+              id: 'expressive',
+              label: 'Expressive (Spring Physics)',
+              tech: 'stiffness: 280, damping: 22',
+              desc: 'Tactile organic springs on cards and buttons. Luxury editorial character.'
+            }
+          ].map(m => {
+            const isSelected = currentMotionLevel === m.id;
             return (
-              <div
-                key={s.id}
-                onClick={() => {
-                  setIsCustomStyle(false);
-                  updateImagery('style', s.id);
-                }}
-                className={`p-4 rounded-xl border cursor-pointer transition-all ${
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => handleMotionLevelChange(m.id as any)}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
-                    ? 'border-neutral-900 bg-white ring-2 ring-neutral-900 shadow-md'
-                    : 'border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-xs'
+                    ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
+                    : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-800'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div>
-                    <h3 className="font-semibold text-xs text-neutral-900">{s.title}</h3>
-                    <span className="text-[9px] font-mono text-neutral-400">{s.tech}</span>
-                  </div>
-                  {isSelected && (
-                    <span className="w-4 h-4 rounded-full bg-neutral-900 text-white flex items-center justify-center shrink-0">
-                      <Check className="w-2.5 h-2.5 stroke-[2.5]" />
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-neutral-500 leading-relaxed mt-1">{s.desc}</p>
-              </div>
+                <div className="text-xs font-bold mb-0.5">{m.label}</div>
+                <div className="font-mono text-[10px] opacity-60 mb-1.5">{m.tech}</div>
+                <p className={`text-[11px] leading-relaxed ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                  {m.desc}
+                </p>
+              </button>
             );
           })}
         </div>
+      </div>
 
-        {/* OTHER / CUSTOM IMAGE STYLE */}
-        <div
-          className={`p-4 rounded-xl border transition-all ${
-            isCustomStyle
-              ? 'border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900'
-              : 'border-neutral-200 bg-white hover:border-neutral-300'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-2">
-              <Plus className="w-4 h-4 text-neutral-800" />
-              <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                Other / Custom Visual Style
-              </h3>
-              <span className="text-[10px] font-mono text-neutral-400">
-                technical: custom asset aesthetic
-              </span>
-            </div>
-            {isCustomStyle && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-900 text-white">
-                Active Style
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-neutral-500 mb-2">
-            Want a specific artistic style (e.g. 3D clay render, retro film grain, or hand-drawn sketches)?
+      {/* 2. Icon System: Library & Style */}
+      <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs space-y-6">
+        <div>
+          <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+            <Boxes className="w-4 h-4 text-neutral-700" />
+            <span>Iconography Engine</span>
+          </h3>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Consistent iconography style across navigation, features, and cards.
           </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={customStyleText}
-              onChange={e => setCustomStyleText(e.target.value)}
-              placeholder="e.g. 3D Isometric clay icons, warm 35mm film grain portraits..."
-              className="w-full px-3 py-1.5 text-xs bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-1 focus:ring-neutral-900"
-            />
-            <button
-              type="button"
-              onClick={handleApplyCustomStyle}
-              className="px-3 py-1.5 text-xs font-semibold bg-neutral-900 text-white rounded-md shrink-0"
-            >
-              Apply
-            </button>
+        </div>
+
+        {/* Library Selection */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider block">
+            Icon Set Family
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { id: 'lucide', label: 'Lucide Icons', desc: 'Crisp, 24px grid, default modern standard.' },
+              { id: 'phosphor', label: 'Phosphor Icons', desc: 'Versatile, geometric curves, multiple weights.' },
+              { id: 'tabler', label: 'Tabler Icons', desc: 'Generous strokes, highly consistent open source.' }
+            ].map(lib => {
+              const isSelected = currentIconLib === lib.id;
+              return (
+                <button
+                  key={lib.id}
+                  type="button"
+                  onClick={() => handleIconLibChange(lib.id as any)}
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
+                      : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-800'
+                  }`}
+                >
+                  <div className="text-xs font-bold">{lib.label}</div>
+                  <div className={`text-[11px] mt-0.5 ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                    {lib.desc}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Framing & Roundness Controls */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-xs space-y-6">
-          <div>
-            <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-              Photo Shape & Proportions
-            </h3>
-            <span className="text-[10px] font-mono text-neutral-400 block mb-3">
-              technical: aspect-ratio & border-radius tokens
-            </span>
+        {/* Icon Style */}
+        <div className="space-y-2 pt-2 border-t border-neutral-100">
+          <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider block">
+            Icon Render Style
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { id: 'outline', label: 'Clean Outline (Line)', desc: '1.75px vector stroke outline.' },
+              { id: 'filled', label: 'Solid Filled (Silhouette)', desc: 'High visual weight, opaque filled silhouette.' },
+              { id: 'duotone', label: 'Duotone (Two-Tone)', desc: 'Layered primary stroke with translucent fill.' }
+            ].map(st => {
+              const isSelected = currentIconStyle === st.id;
+              return (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => handleIconStyleChange(st.id as any)}
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
+                      : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-800'
+                  }`}
+                >
+                  <div className="text-xs font-bold">{st.label}</div>
+                  <div className={`text-[11px] mt-0.5 ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                    {st.desc}
+                  </div>
+                </button>
+              );
+            })}
           </div>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-neutral-800 mb-0.5">
-                Image Proportions
-              </label>
-              <span className="text-[10px] font-mono text-neutral-400 block mb-2">
-                technical: aspect-ratio (16:9, 4:3, 1:1)
-              </span>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { id: '16:9', label: '16:9 Wide' },
-                  { id: '4:3', label: '4:3 Balanced' },
-                  { id: '1:1', label: '1:1 Square' }
-                ].map(ratio => (
-                  <button
-                    key={ratio.id}
-                    type="button"
-                    onClick={() => updateImagery('aspectRatio', ratio.id)}
-                    className={`py-2 px-2 text-xs font-medium rounded-lg border text-center transition-colors ${
-                      project.imagery.aspectRatio === ratio.id
-                        ? 'bg-neutral-900 text-white border-neutral-900'
-                        : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'
-                    }`}
-                  >
-                    {ratio.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* 3. Imagery Treatment */}
+      <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs space-y-4">
+        <div>
+          <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-neutral-700" />
+            <span>Photography & Image Treatment</span>
+          </h3>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Color grading and texture overlays applied to hero banners and card photos.
+          </p>
+        </div>
 
-            <div>
-              <label className="block text-xs font-bold text-neutral-800 mb-0.5">
-                Image Corner Curvature
-              </label>
-              <span className="text-[10px] font-mono text-neutral-400 block mb-2">
-                technical: border-radius
-              </span>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { id: 'none', label: 'Sharp' },
-                  { id: 'medium', label: 'Curved' },
-                  { id: 'full', label: 'Round' }
-                ].map(r => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => updateImagery('cornerRadius', r.id)}
-                    className={`py-2 px-2 text-xs font-medium rounded-lg border text-center transition-colors ${
-                      project.imagery.cornerRadius === r.id
-                        ? 'bg-neutral-900 text-white border-neutral-900'
-                        : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'
-                    }`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Optional Upload */}
-          <div className="pt-4 border-t border-neutral-200">
-            <label className="block text-xs font-bold text-neutral-800 mb-0.5">
-              Upload Your Own Image or Logo (Optional)
-            </label>
-            <span className="text-[10px] font-mono text-neutral-400 block mb-2">
-              technical: user asset replacement
-            </span>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-xs font-medium text-neutral-700 cursor-pointer transition-colors">
-                <Upload className="w-4 h-4" />
-                <span>Choose photo file</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-
-              {project.imagery.customHeroUrl && (
-                <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" />
-                  Custom image active in live preview
-                </span>
-              )}
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            {
+              id: 'natural',
+              label: 'Natural Daylight',
+              desc: 'True-to-life colors, clean documentary lighting, and crisp highlights.'
+            },
+            {
+              id: 'duotone',
+              label: 'Brand-Tinted Duotone',
+              desc: 'Infuses shadows with brand hue and highlights with light tints.'
+            },
+            {
+              id: 'mono',
+              label: 'Architectural Monochrome',
+              desc: 'High-contrast black & white with delicate micro-grain overlay.'
+            }
+          ].map(t => {
+            const isSelected = currentTreatment === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => handleTreatmentChange(t.id as any)}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
+                    : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-800'
+                }`}
+              >
+                <div className="text-xs font-bold mb-1">{t.label}</div>
+                <p className={`text-[11px] leading-relaxed ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                  {t.desc}
+                </p>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

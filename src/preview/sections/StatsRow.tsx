@@ -40,3 +40,4 @@ export const StatsRow: React.FC<StatsRowProps> = ({
     </section>
   );
 };
+

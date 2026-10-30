@@ -43,3 +43,4 @@ export const HospitalityTemplate: React.FC<TemplateProps> = ({
     </div>
   );
 };
+

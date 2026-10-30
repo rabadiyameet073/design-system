@@ -46,3 +46,4 @@ export const EducationTemplate: React.FC<TemplateProps> = ({
     </div>
   );
 };
+

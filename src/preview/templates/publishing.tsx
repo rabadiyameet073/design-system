@@ -41,3 +41,4 @@ export const PublishingTemplate: React.FC<TemplateProps> = ({
     </div>
   );
 };
+

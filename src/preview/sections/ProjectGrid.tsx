@@ -83,3 +83,4 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({
     </section>
   );
 };
+

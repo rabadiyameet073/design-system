@@ -46,3 +46,4 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
     </div>
   );
 };
+

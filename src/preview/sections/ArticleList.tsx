@@ -76,3 +76,4 @@ export const ArticleList: React.FC<ArticleListProps> = ({
     </section>
   );
 };
+

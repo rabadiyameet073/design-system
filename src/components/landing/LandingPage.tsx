@@ -41,7 +41,10 @@ import { LiveWebsitePreview } from '../preview/LiveWebsitePreview';
 import { ALL_SHOWCASE_PRESETS, ShowcasePreset } from '../../data/showcasePresets';
 import { WIZARD_STEPS } from '../common/WizardNav';
 import { importProjectFromJson } from '../../utils/storage';
-import { Interactive3DCanvas } from '../common/Interactive3DCanvas';
+// Lazy-load Three.js canvas to keep initial landing bundle < 250KB and support low-power devices
+const Interactive3DCanvas = React.lazy(() =>
+  import('../common/Interactive3DCanvas').then(m => ({ default: m.Interactive3DCanvas }))
+);
 import { DesignSystemAnatomy } from './DesignSystemAnatomy';
 import { StudioFooter } from './StudioFooter';
 
@@ -443,11 +446,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                 {architectureTab === '3d' ? (
                   <div className="relative mt-4 h-[330px] rounded-xl border border-ink/10 bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950 overflow-hidden flex flex-col justify-between p-3.5 shadow-inner">
-                    <Interactive3DCanvas
-                      primaryColor={activeSample.colorPalette.primary}
-                      accentColor={activeSample.colorPalette.accent}
-                      className="absolute inset-0"
-                    />
+                    {reduceMotion ? (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-radial from-stone-900 to-stone-950">
+                        <div
+                          className="w-24 h-24 rounded-full blur-xl opacity-40 mb-3"
+                          style={{ backgroundColor: activeSample.colorPalette.primary }}
+                        />
+                        <span className="text-xs font-semibold text-white/90">
+                          3D Spatial Preview (Reduced Motion Mode)
+                        </span>
+                        <span className="text-[11px] text-white/50 max-w-xs mt-1">
+                          Interactive WebGL animation paused to honor accessibility preferences.
+                        </span>
+                      </div>
+                    ) : (
+                      <React.Suspense
+                        fallback={
+                          <div className="absolute inset-0 flex items-center justify-center text-xs font-mono text-white/60">
+                            Loading 3D WebGL Canvas...
+                          </div>
+                        }
+                      >
+                        <Interactive3DCanvas
+                          primaryColor={activeSample.colorPalette.primary}
+                          accentColor={activeSample.colorPalette.accent}
+                          className="absolute inset-0"
+                        />
+                      </React.Suspense>
+                    )}
                     <div className="relative z-10 flex items-center justify-between pointer-events-none">
                       <span className="text-[10px] font-mono uppercase tracking-wider text-white/80 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/15">
                         Interactive 3D WebGL

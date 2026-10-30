@@ -23,6 +23,7 @@ import { Step8ImageryStudio } from './components/wizard/Step8ImageryStudio';
 import { Step10ReviewAudit } from './components/wizard/Step10ReviewAudit';
 import { Step11ExportCenter } from './components/wizard/Step11ExportCenter';
 import { WizardWorkspaceStage } from './components/wizard/WizardWorkspaceStage';
+import { KeyboardShortcutsModal } from './components/common/KeyboardShortcutsModal';
 
 import { DesignProject } from './types/designSystem';
 import {
@@ -51,6 +52,7 @@ function MainStudio() {
   const [draftLabel, setDraftLabel] = useState<string | null>(null);
   const [history, setHistory] = useState<DesignProject[]>([]);
   const [future, setFuture] = useState<DesignProject[]>([]);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   // Initialize projects on load
   useEffect(() => {
@@ -205,6 +207,60 @@ function MainStudio() {
     });
   };
 
+  // Global Keyboard Shortcuts (← / → steps, Cmd+Z undo, Cmd+Shift+Z redo, C compare, ? help)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable);
+
+      // ? or Shift+/ opens shortcuts modal
+      if ((e.key === '?' || (e.shiftKey && e.key === '/')) && !isInput) {
+        e.preventDefault();
+        setIsShortcutsOpen(prev => !prev);
+        return;
+      }
+
+      // Cmd/Ctrl + Z (Undo)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+        return;
+      }
+
+      // Cmd/Ctrl + Shift + Z or Ctrl + Y (Redo)
+      if (
+        ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && e.shiftKey) ||
+        ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y')
+      ) {
+        e.preventDefault();
+        handleRedo();
+        return;
+      }
+
+      // Navigation shortcuts in wizard mode
+      if (!isInput && view === 'wizard') {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          handleNextStep();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          handleBackStep();
+        } else if (e.key.toLowerCase() === 'c' && draftProject) {
+          e.preventDefault();
+          handleApplyDraft();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [view, draftProject, handleUndo, handleRedo, handleNextStep, handleBackStep, handleApplyDraft]);
+
   const handleResetCurrentStep = () => {
     if (window.confirm('Reset this step to recommended defaults?')) {
       const fresh = createNewProject(activeProject.name, activeProject.websiteType.id);
@@ -315,6 +371,8 @@ function MainStudio() {
           <Step6ColorStudio
             project={effectiveProject}
             onChange={handleUpdateActiveProject}
+            onPreviewDraft={handlePreviewDraft}
+            onClearDraft={handleClearDraft}
           />
         );
       case 6:
@@ -381,6 +439,7 @@ function MainStudio() {
         activeProject={activeProject}
         onTogglePreviewDrawer={() => setIsPreviewDrawerOpen(!isPreviewDrawerOpen)}
         isPreviewDrawerOpen={isPreviewDrawerOpen}
+        onOpenShortcuts={() => setIsShortcutsOpen(true)}
       />
 
       {/* Main Content Areas */}
@@ -458,6 +517,10 @@ function MainStudio() {
       )}
 
       <OAuthModal />
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
     </div>
   );
 }

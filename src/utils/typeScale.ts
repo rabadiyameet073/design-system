@@ -150,3 +150,4 @@ export function getRecommendedBodyFonts(
   // Return top 6 distinct recommendations
   return scored.slice(0, 6).map(item => item.font);
 }
+

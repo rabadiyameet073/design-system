@@ -368,3 +368,4 @@ export function getGenresForCategory(category: CategoryId): GenreConfig[] {
 export function getGenreById(id: string): GenreConfig {
   return GENRE_CONFIGS[id] || GENRE_CONFIGS['ceramics-atelier'];
 }
+

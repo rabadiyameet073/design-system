@@ -188,3 +188,4 @@ export const Step1CategoryGenre: React.FC<Step1CategoryGenreProps> = ({
     </div>
   );
 };
+

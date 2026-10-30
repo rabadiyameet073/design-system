@@ -8,6 +8,7 @@ interface HeaderProps {
   activeProject?: DesignProject;
   onTogglePreviewDrawer?: () => void;
   isPreviewDrawerOpen?: boolean;
+  onOpenShortcuts?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,7 +16,8 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate,
   activeProject,
   onTogglePreviewDrawer,
-  isPreviewDrawerOpen
+  isPreviewDrawerOpen,
+  onOpenShortcuts
 }) => {
   const { user, setIsOAuthModalOpen, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -77,6 +79,16 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Zone 3: account state + primary action */}
         <div className="flex items-center gap-3 shrink-0">
+          {onOpenShortcuts && (
+            <button
+              onClick={onOpenShortcuts}
+              className="w-8 h-8 rounded-xl border border-ink/15 hover:border-ink/35 bg-white hover:bg-neutral-50 flex items-center justify-center text-xs font-bold text-ink/70 hover:text-ink transition-colors cursor-pointer shadow-2xs"
+              title="Keyboard Shortcuts (?)"
+            >
+              ?
+            </button>
+          )}
+
           {/* Real-Time Google Auth User State */}
           {user ? (
             <div className="relative">

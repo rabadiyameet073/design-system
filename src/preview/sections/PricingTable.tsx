@@ -142,3 +142,4 @@ export const PricingTable: React.FC<PricingTableProps> = ({
     </section>
   );
 };
+

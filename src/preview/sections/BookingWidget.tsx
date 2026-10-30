@@ -74,3 +74,4 @@ export const BookingWidget: React.FC<BookingWidgetProps> = ({ id = 'booking' }) 
     </section>
   );
 };
+

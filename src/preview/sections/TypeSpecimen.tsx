@@ -120,3 +120,4 @@ export const TypeSpecimen: React.FC<TypeSpecimenProps> = ({ id = 'type-specimen'
     </section>
   );
 };
+
