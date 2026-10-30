@@ -1,0 +1,35 @@
+name: Weekly Font Snapshot Refresh
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # Runs every Monday at 03:00 UTC
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  refresh-fonts:
+    name: Refresh Fonts Snapshot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Fetch and Refresh Fonts Snapshot
+        env:
+          GOOGLE_FONTS_API_KEY: ${{ secrets.GOOGLE_FONTS_API_KEY }}
+        run: npm run fonts:snapshot
+
+      - name: Commit Updated Snapshot (if changed)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(fonts): weekly automated Google Fonts snapshot refresh"
+          file_pattern: "src/data/fonts.snapshot.json"
+

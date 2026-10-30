@@ -37,11 +37,40 @@ export const app = express();
 
 app.use(express.json({ limit: '10mb' }));
 
+// Security headers middleware per Doc 05 §2
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  next();
+});
+
+// In-memory IP rate limiter: 60 req/min per Doc 05 §2
+const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
+app.use((req, res, next) => {
+  const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+  const now = Date.now();
+  const entry = ipRequestCounts.get(ip);
+
+  if (!entry || now > entry.resetTime) {
+    ipRequestCounts.set(ip, { count: 1, resetTime: now + 60000 });
+    return next();
+  }
+
+  if (entry.count >= 60) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Rate limit exceeded: maximum 60 requests per minute.' });
+  }
+
+  entry.count++;
+  next();
+});
+
 // Helper to register API endpoints
 const router = express.Router();
 
-// Health check endpoint
-router.get('/health', (req, res) => {
+// Health check endpoint with /health and /healthz per Doc 05 §5
+router.get(['/health', '/healthz'], (req, res) => {
   res.json({
     status: 'healthy',
     version: '1.2.0',

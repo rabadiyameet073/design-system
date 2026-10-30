@@ -9,7 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2026-10-30
 
-### Complete Industrial Implementation (Doc 01 Roadmap & Guidelines)
+### Complete Industrial Implementation (Docs 00–05 Full Alignment)
+- **Token Architecture & Migration Engine (Doc 04 §1 & Doc 05 §2)**:
+  - Strict 3-tier token system (`primitives` → `semantic` → `component`) validated by Zod with `schemaVersion: 1`.
+  - Created `src/tokens/migration.ts` providing `migrateTokens()` and `importDesignTokensFromJson()` with a strict 2 MB payload size limit.
+  - Implemented safe JSON import in `src/utils/storage.ts` supporting both full project backups and standalone `project.dss.json` token packages.
+- **Color Science, Contrast & Colorblind Simulation (Doc 04 §2 & §6)**:
+  - 11-step OKLCH scales with fixed perceptual lightness steps and brand-tinted neutral scales.
+  - Unit-tested across 50 diverse colors verifying monotonic lightness descent and valid sRGB hex output.
+  - `nudgeToContrast()` auto-steps OKLCH lightness while maintaining hue within $\le 3^\circ$.
+  - Added APCA Lightness Contrast ($L_c$) calculation as an informational perceptual second opinion.
+  - Real-time live colorblind simulation toolbar with SVG `<feColorMatrix>` filters (Protanopia, Deuteranopia, Tritanopia, Achromatopsia).
+- **Typography Font System & Guardrails (Doc 03)**:
+  - 6-role typography architecture (`display`, `heading`, `body`, `ui`, `mono`, `accent`) with modular scaling (`clamp()`).
+  - Dual-mode Typography Studio (Pair Mode with `scorePair()` ranking vs Advanced Mode).
+  - Virtualized lazy font picker (`FontPickerModal.tsx`) using Google Fonts `&text=` glyph subsetting.
+  - Multi-script filtering for Latin, Devanagari, Gujarati, Arabic, and Cyrillic.
+  - Comprehensive typography guardrails engine (`typographyGuardrails.ts`) checking family counts, body sizes, weights, and payload budgets (>150 KB).
+- **Production Exporters & Starter Kit (Doc 04 §5)**:
+  - 10 production export formats: Tailwind CSS 4 theme (`theme.css`), CSS variables (`tokens.css`), W3C DTCG JSON (`tokens.json` with `{color.brand.600}` aliases and dimension scales), TypeScript definitions (`tokens.ts`), shadcn/ui theme (`shadcn-theme.css`), Figma Tokens Studio (`tokens.studio.json`), PDF specification, specimen board PNG, project file (`project.dss.json`), and complete starter ZIP (`starter.zip`).
+  - Added sample production `components/Button.tsx` and `components/Card.tsx` directly into the starter ZIP.
+- **QA, Security, CI & Legal Hygiene (Doc 05)**:
+  - Configured security headers (`X-Content-Type-Options: nosniff`, `Referrer-Policy`, `X-Frame-Options: SAMEORIGIN`) in `api/index.ts` and `vercel.json`.
+  - Configured in-memory IP rate limiter (60 req/min/IP) on API routes.
+  - Added `/healthz` endpoint alias alongside `/health`.
+  - Added `scripts/generateFontSnapshot.ts` and `npm run fonts:snapshot`.
+  - Configured GitHub Actions CI workflows (`.github/workflows/ci.yml` and `font-snapshot.yml`).
+  - Created `ATTRIBUTIONS.md` documenting open font licenses (SIL OFL 1.1) and Unsplash imagery terms.
+  - Created editorial `LegalModal.tsx` for Terms of Service and Privacy Policy.
+  - Added live autosave elapsed time indicator ("Saved ✓ 2 s ago") in `WizardNav.tsx`.
 - **Three.js Performance & Code-Splitting**:
   - Code-split `Interactive3DCanvas` into a lazy chunk via `React.lazy()` and `<Suspense>`, reducing initial landing bundle size.
   - Implemented accessible static fallback for users with `prefers-reduced-motion` or low-power devices.
@@ -120,7 +148,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2026-10-30
 
-### Complete Industrial Implementation (Doc 01 Roadmap & Guidelines)
+### Complete Industrial Implementation (Docs 00–05 Full Alignment)
+- **Token Architecture & Migration Engine (Doc 04 §1 & Doc 05 §2)**:
+  - Strict 3-tier token system (`primitives` → `semantic` → `component`) validated by Zod with `schemaVersion: 1`.
+  - Created `src/tokens/migration.ts` providing `migrateTokens()` and `importDesignTokensFromJson()` with a strict 2 MB payload size limit.
+  - Implemented safe JSON import in `src/utils/storage.ts` supporting both full project backups and standalone `project.dss.json` token packages.
+- **Color Science, Contrast & Colorblind Simulation (Doc 04 §2 & §6)**:
+  - 11-step OKLCH scales with fixed perceptual lightness steps and brand-tinted neutral scales.
+  - Unit-tested across 50 diverse colors verifying monotonic lightness descent and valid sRGB hex output.
+  - `nudgeToContrast()` auto-steps OKLCH lightness while maintaining hue within $\le 3^\circ$.
+  - Added APCA Lightness Contrast ($L_c$) calculation as an informational perceptual second opinion.
+  - Real-time live colorblind simulation toolbar with SVG `<feColorMatrix>` filters (Protanopia, Deuteranopia, Tritanopia, Achromatopsia).
+- **Typography Font System & Guardrails (Doc 03)**:
+  - 6-role typography architecture (`display`, `heading`, `body`, `ui`, `mono`, `accent`) with modular scaling (`clamp()`).
+  - Dual-mode Typography Studio (Pair Mode with `scorePair()` ranking vs Advanced Mode).
+  - Virtualized lazy font picker (`FontPickerModal.tsx`) using Google Fonts `&text=` glyph subsetting.
+  - Multi-script filtering for Latin, Devanagari, Gujarati, Arabic, and Cyrillic.
+  - Comprehensive typography guardrails engine (`typographyGuardrails.ts`) checking family counts, body sizes, weights, and payload budgets (>150 KB).
+- **Production Exporters & Starter Kit (Doc 04 §5)**:
+  - 10 production export formats: Tailwind CSS 4 theme (`theme.css`), CSS variables (`tokens.css`), W3C DTCG JSON (`tokens.json` with `{color.brand.600}` aliases and dimension scales), TypeScript definitions (`tokens.ts`), shadcn/ui theme (`shadcn-theme.css`), Figma Tokens Studio (`tokens.studio.json`), PDF specification, specimen board PNG, project file (`project.dss.json`), and complete starter ZIP (`starter.zip`).
+  - Added sample production `components/Button.tsx` and `components/Card.tsx` directly into the starter ZIP.
+- **QA, Security, CI & Legal Hygiene (Doc 05)**:
+  - Configured security headers (`X-Content-Type-Options: nosniff`, `Referrer-Policy`, `X-Frame-Options: SAMEORIGIN`) in `api/index.ts` and `vercel.json`.
+  - Configured in-memory IP rate limiter (60 req/min/IP) on API routes.
+  - Added `/healthz` endpoint alias alongside `/health`.
+  - Added `scripts/generateFontSnapshot.ts` and `npm run fonts:snapshot`.
+  - Configured GitHub Actions CI workflows (`.github/workflows/ci.yml` and `font-snapshot.yml`).
+  - Created `ATTRIBUTIONS.md` documenting open font licenses (SIL OFL 1.1) and Unsplash imagery terms.
+  - Created editorial `LegalModal.tsx` for Terms of Service and Privacy Policy.
+  - Added live autosave elapsed time indicator ("Saved ✓ 2 s ago") in `WizardNav.tsx`.
 - **Three.js Performance & Code-Splitting**:
   - Code-split `Interactive3DCanvas` into a lazy chunk via `React.lazy()` and `<Suspense>`, reducing initial landing bundle size.
   - Implemented accessible static fallback for users with `prefers-reduced-motion` or low-power devices.

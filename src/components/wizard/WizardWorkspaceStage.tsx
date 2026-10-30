@@ -164,6 +164,12 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
     sendToPreview({ type: 'MODE', mode: nextMode });
   };
 
+  useEffect(() => {
+    const handleCustomToggle = () => toggleMode();
+    window.addEventListener('dss:toggle-mode', handleCustomToggle);
+    return () => window.removeEventListener('dss:toggle-mode', handleCustomToggle);
+  }, [mode, project.tokens]);
+
   // Viewport container width style
   const getViewportWidth = () => {
     switch (viewport) {

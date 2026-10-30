@@ -19,9 +19,10 @@ import {
 interface StudioFooterProps {
   onStartNew: () => void;
   onExploreSample?: () => void;
+  onOpenLegal?: (tab: 'privacy' | 'terms') => void;
 }
 
-export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExploreSample }) => {
+export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExploreSample, onOpenLegal }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -251,9 +252,23 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
       <div className="relative z-10 border-t border-white/10 bg-black/40 py-6">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/50 font-light">
-            <span>© {new Date().getFullYear()} Design System Studio. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} Design System Studio.</span>
             <span className="hidden sm:inline">•</span>
-            <span>Crafted for founders, designers, and software engineers.</span>
+            <button
+              onClick={() => onOpenLegal?.('privacy')}
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              Privacy Policy
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => onOpenLegal?.('terms')}
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              Terms of Service
+            </button>
+            <span className="hidden sm:inline">•</span>
+            <span>Crafted for founders and engineers.</span>
           </div>
 
           <div className="flex items-center gap-4 text-xs font-mono text-white/60">

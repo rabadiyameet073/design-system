@@ -24,6 +24,7 @@ import { Step10ReviewAudit } from './components/wizard/Step10ReviewAudit';
 import { Step11ExportCenter } from './components/wizard/Step11ExportCenter';
 import { WizardWorkspaceStage } from './components/wizard/WizardWorkspaceStage';
 import { KeyboardShortcutsModal } from './components/common/KeyboardShortcutsModal';
+import { LegalModal } from './components/common/LegalModal';
 
 import { DesignProject } from './types/designSystem';
 import {
@@ -53,6 +54,10 @@ function MainStudio() {
   const [history, setHistory] = useState<DesignProject[]>([]);
   const [future, setFuture] = useState<DesignProject[]>([]);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [legalModal, setLegalModal] = useState<{ isOpen: boolean; tab: 'terms' | 'privacy' }>({
+    isOpen: false,
+    tab: 'privacy'
+  });
 
   // Initialize projects on load
   useEffect(() => {
@@ -253,6 +258,9 @@ function MainStudio() {
         } else if (e.key.toLowerCase() === 'c' && draftProject) {
           e.preventDefault();
           handleApplyDraft();
+        } else if (e.key.toLowerCase() === 'd') {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('dss:toggle-mode'));
         }
       }
     };
@@ -449,6 +457,7 @@ function MainStudio() {
         <LandingPage
           onStartNew={handleStartNewProject}
           onExploreSample={handleExploreSample}
+          onOpenLegal={(tab) => setLegalModal({ isOpen: true, tab })}
           onImportProject={project => {
             refreshProjectsList();
             setActiveProjectId(project.id);
@@ -488,6 +497,7 @@ function MainStudio() {
             onSkip={handleNextStep}
             onResetStep={handleResetCurrentStep}
             isAutosaving={isAutosaving}
+            lastSavedAt={activeProject.updatedAt}
             continueLabel={
               activeProject.currentStep === 10
                 ? 'Proceed to Export'
@@ -522,6 +532,11 @@ function MainStudio() {
       <KeyboardShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+      />
+      <LegalModal
+        isOpen={legalModal.isOpen}
+        initialTab={legalModal.tab}
+        onClose={() => setLegalModal(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

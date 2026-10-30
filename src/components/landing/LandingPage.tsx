@@ -52,6 +52,7 @@ interface LandingPageProps {
   onStartNew: () => void;
   onExploreSample: (project: DesignProject) => void;
   onImportProject?: (project: DesignProject) => void;
+  onOpenLegal?: (tab: 'privacy' | 'terms') => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -217,7 +218,8 @@ const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onStartNew,
   onExploreSample,
-  onImportProject
+  onImportProject,
+  onOpenLegal
 }) => {
   const [selectedTypeId, setSelectedTypeId] = useState<string>('ecommerce');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -1013,7 +1015,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* ============================= STUDIO EDITORIAL FOOTER ============================= */}
-      <StudioFooter onStartNew={onStartNew} onExploreSample={() => onExploreSample(activeSample)} />
+      <StudioFooter
+        onStartNew={onStartNew}
+        onExploreSample={() => onExploreSample(activeSample)}
+        onOpenLegal={onOpenLegal}
+      />
     </div>
   );
 };

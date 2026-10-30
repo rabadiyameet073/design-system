@@ -17,7 +17,7 @@ export const WIZARD_STEPS: WizardStepMeta[] = [
   { number: 11, title: 'Export Center', subtitle: '10 formats & starter ZIP', category: 'Export', estimatedMinutes: 1 }
 ];
 
-interface WizardNavProps {
+export interface WizardNavProps {
   currentStep: number;
   completedSteps: number[];
   onSelectStep: (step: number) => void;
@@ -28,6 +28,7 @@ interface WizardNavProps {
   canContinue?: boolean;
   continueLabel?: string;
   isAutosaving?: boolean;
+  lastSavedAt?: number;
 }
 
 export const WizardNav: React.FC<WizardNavProps> = ({
@@ -40,10 +41,26 @@ export const WizardNav: React.FC<WizardNavProps> = ({
   onResetStep,
   canContinue = true,
   continueLabel = 'Continue',
-  isAutosaving = false
+  isAutosaving = false,
+  lastSavedAt
 }) => {
   const currentStepMeta = WIZARD_STEPS.find(s => s.number === currentStep) || WIZARD_STEPS[0];
   const progressPercent = Math.round((currentStep / WIZARD_STEPS.length) * 100);
+
+  const [now, setNow] = React.useState(Date.now());
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getSavedLabel = () => {
+    if (isAutosaving) return 'Saving...';
+    if (!lastSavedAt) return 'Saved ✓';
+    const diffSec = Math.max(0, Math.floor((now - lastSavedAt) / 1000));
+    if (diffSec < 3) return 'Saved ✓ just now';
+    if (diffSec < 60) return `Saved ✓ ${diffSec} s ago`;
+    return `Saved ✓ ${Math.floor(diffSec / 60)} m ago`;
+  };
 
   return (
     <div className="bg-white border-b border-neutral-200 sticky top-16 z-30">
@@ -70,7 +87,7 @@ export const WizardNav: React.FC<WizardNavProps> = ({
                 <span aria-hidden="true">·</span>
                 <span>{currentStepMeta.category}</span>
                 <span aria-hidden="true">·</span>
-                <span>{isAutosaving ? 'Saving...' : 'Saved to browser'}</span>
+                <span className="text-emerald-700 font-mono font-medium">{getSavedLabel()}</span>
               </div>
               <h2 className="text-base font-semibold text-neutral-900 leading-snug">
                 {currentStepMeta.title}
@@ -88,13 +105,12 @@ export const WizardNav: React.FC<WizardNavProps> = ({
                 <button
                   key={step.number}
                   onClick={() => onSelectStep(step.number)}
-                  className={`w-7 h-7 rounded text-xs font-medium transition-colors flex items-center justify-center shrink-0 cursor-pointer ${
-                    isCurrent
-                      ? 'bg-neutral-900 text-white shadow-xs'
-                      : isCompleted
+                  className={`w-7 h-7 rounded text-xs font-medium transition-colors flex items-center justify-center shrink-0 cursor-pointer ${isCurrent
+                    ? 'bg-neutral-900 text-white shadow-xs'
+                    : isCompleted
                       ? 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'
                       : 'text-neutral-400 hover:text-neutral-700'
-                  }`}
+                    }`}
                   title={`${step.number}. ${step.title}`}
                 >
                   {isCompleted && !isCurrent ? (
@@ -133,11 +149,10 @@ export const WizardNav: React.FC<WizardNavProps> = ({
             <button
               onClick={onNext}
               disabled={!canContinue}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer ${
-                canContinue
-                  ? 'bg-neutral-900 text-white hover:bg-neutral-800'
-                  : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-              }`}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer ${canContinue
+                ? 'bg-neutral-900 text-white hover:bg-neutral-800'
+                : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                }`}
             >
               <span>{currentStep === WIZARD_STEPS.length ? 'Finish & Export' : continueLabel}</span>
               <ChevronRight className="w-3.5 h-3.5" />
