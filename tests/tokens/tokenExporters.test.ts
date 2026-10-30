@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import JSZip from 'jszip';
 import {
   exportTailwind4,
   exportCssVars,
@@ -6,7 +7,8 @@ import {
   exportTypeScript,
   exportShadcn,
   exportFigmaTokensStudio,
-  exportProjectJson
+  exportProjectJson,
+  exportStarterZip
 } from '../../src/utils/tokenExporters';
 import { DEFAULT_DESIGN_TOKENS } from '../../src/tokens/defaultTokens';
 import { DesignTokensSchema } from '../../src/tokens/types';
@@ -63,6 +65,27 @@ describe('tokenExporters pure functions', () => {
       expect(validation.data.schemaVersion).toBe(1);
       expect(validation.data.meta.projectName).toBe(DEFAULT_DESIGN_TOKENS.meta.projectName);
     }
+  });
+
+  it('generates a complete Starter ZIP bundle with all token formats and sample components', async () => {
+    const zipBlob = await exportStarterZip(DEFAULT_DESIGN_TOKENS);
+    expect(zipBlob).toBeDefined();
+    expect(zipBlob.size).toBeGreaterThan(500);
+
+    const arrayBuffer = await zipBlob.arrayBuffer();
+    const unzipped = await JSZip.loadAsync(arrayBuffer);
+    const filenames = Object.keys(unzipped.files);
+
+    expect(filenames.some(f => f.includes('theme.css'))).toBe(true);
+    expect(filenames.some(f => f.includes('tokens.css'))).toBe(true);
+    expect(filenames.some(f => f.includes('tokens.json'))).toBe(true);
+    expect(filenames.some(f => f.includes('tokens.ts'))).toBe(true);
+    expect(filenames.some(f => f.includes('shadcn-theme.css'))).toBe(true);
+    expect(filenames.some(f => f.includes('tokens.studio.json'))).toBe(true);
+    expect(filenames.some(f => f.includes('project.dss.json'))).toBe(true);
+    expect(filenames.some(f => f.includes('README.md'))).toBe(true);
+    expect(filenames.some(f => f.includes('components/Button.tsx'))).toBe(true);
+    expect(filenames.some(f => f.includes('components/Card.tsx'))).toBe(true);
   });
 });
 

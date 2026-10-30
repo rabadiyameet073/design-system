@@ -17,6 +17,7 @@ import {
   RotateCw,
   ShieldCheck,
   AlertTriangle,
+  Glasses,
   X
 } from 'lucide-react';
 import { DesignProject } from '../../types/designSystem';
@@ -60,6 +61,11 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
 
   // Theme mode: 'light' | 'dark'
   const [mode, setMode] = useState<'light' | 'dark'>('light');
+
+  // Colorblind simulation mode
+  const [colorblindMode, setColorblindMode] = useState<
+    'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia'
+  >('none');
 
   // A11y live stats from preview
   const [a11yStats, setA11yStats] = useState<{ pass: number; fail: number }>({ pass: 14, fail: 0 });
@@ -376,8 +382,25 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
               </button>
             </div>
 
-            {/* Middle: Light / Dark Toggle & A11y Badge */}
-            <div className="flex items-center gap-3">
+            {/* Middle: Colorblind Simulator, Light / Dark Toggle & A11y Badge */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              {/* Colorblind Vision Deficiency Simulator */}
+              <div className="relative">
+                <select
+                  value={colorblindMode}
+                  onChange={(e) => setColorblindMode(e.target.value as any)}
+                  className="appearance-none pl-7 pr-3 py-1 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-bold text-neutral-200 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-white/30"
+                  title="Simulate Color Vision Deficiency (SVG feColorMatrix)"
+                >
+                  <option value="none" className="bg-neutral-900 text-white">Vision: Normal</option>
+                  <option value="protanopia" className="bg-neutral-900 text-white">Protanopia (Red-blind)</option>
+                  <option value="deuteranopia" className="bg-neutral-900 text-white">Deuteranopia (Green-blind)</option>
+                  <option value="tritanopia" className="bg-neutral-900 text-white">Tritanopia (Blue-blind)</option>
+                  <option value="achromatopsia" className="bg-neutral-900 text-white">Achromatopsia (Mono)</option>
+                </select>
+                <Glasses className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
               {/* Light / Dark Mode Toggle */}
               <button
                 onClick={toggleMode}
@@ -412,10 +435,55 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
             </div>
           </div>
 
+          {/* SVG Filter Matrix Definitions for Colorblind Simulation */}
+          <svg className="hidden" aria-hidden="true">
+            <defs>
+              <filter id="dss-filter-protanopia">
+                <feColorMatrix
+                  type="matrix"
+                  values="0.567, 0.433, 0,     0, 0
+                          0.558, 0.442, 0,     0, 0
+                          0,     0.242, 0.758, 0, 0
+                          0,     0,     0,     1, 0"
+                />
+              </filter>
+              <filter id="dss-filter-deuteranopia">
+                <feColorMatrix
+                  type="matrix"
+                  values="0.625, 0.375, 0,   0, 0
+                          0.7,   0.3,   0,   0, 0
+                          0,     0.3,   0.7, 0, 0
+                          0,     0,     0,   1, 0"
+                />
+              </filter>
+              <filter id="dss-filter-tritanopia">
+                <feColorMatrix
+                  type="matrix"
+                  values="0.95,  0.05,  0,     0, 0
+                          0,     0.433, 0.567, 0, 0
+                          0,     0.475, 0.525, 0, 0
+                          0,     0,     0,     1, 0"
+                />
+              </filter>
+              <filter id="dss-filter-achromatopsia">
+                <feColorMatrix
+                  type="matrix"
+                  values="0.299, 0.587, 0.114, 0, 0
+                          0.299, 0.587, 0.114, 0, 0
+                          0.299, 0.587, 0.114, 0, 0
+                          0,     0,     0,     1, 0"
+                />
+              </filter>
+            </defs>
+          </svg>
+
           {/* Iframe Viewport Container (True responsive width) */}
           <div className="flex-1 min-h-0 flex items-center justify-center relative overflow-hidden">
             <div
               className={`h-full transition-all duration-300 relative rounded-xl overflow-hidden shadow-2xl border border-neutral-800 bg-white ${getViewportWidth()}`}
+              style={{
+                filter: colorblindMode !== 'none' ? `url(#dss-filter-${colorblindMode})` : undefined
+              }}
             >
               <iframe
                 ref={iframeRef}

@@ -260,6 +260,81 @@ export async function exportStarterZip(tokens: DesignTokens): Promise<Blob> {
   folder.file('tokens.studio.json', exportFigmaTokensStudio(tokens));
   folder.file('project.dss.json', exportProjectJson(tokens));
 
+  // Add sample production components that consume the tokens
+  folder.file('components/Button.tsx', `import React from 'react';
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+  size?: 'sm' | 'md' | 'lg';
+  children: React.ReactNode;
+}
+
+export const Button: React.FC<ButtonProps> = ({
+  variant = 'primary',
+  size = 'md',
+  className = '',
+  children,
+  ...props
+}) => {
+  const baseStyles = 'inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none rounded-[var(--radius-md)]';
+  
+  const sizeStyles = {
+    sm: 'h-8 px-3 text-xs',
+    md: 'h-10 px-4 text-sm',
+    lg: 'h-12 px-6 text-base'
+  };
+
+  const variantStyles = {
+    primary: 'bg-[var(--color-action-primary)] text-[var(--color-action-primary-fg)] hover:bg-[var(--color-action-primary-hover)] focus-visible:ring-[var(--color-focus-ring)]',
+    secondary: 'bg-[var(--color-bg-surface)] text-[var(--color-fg-default)] hover:bg-[var(--color-bg-elevated)] border border-[var(--color-border-default)]',
+    outline: 'border border-[var(--color-border-default)] text-[var(--color-fg-default)] hover:bg-[var(--color-bg-surface)]',
+    ghost: 'text-[var(--color-fg-default)] hover:bg-[var(--color-bg-surface)]',
+    destructive: 'bg-[var(--color-status-danger)] text-white hover:opacity-90'
+  };
+
+  return (
+    <button
+      className={\`\${baseStyles} \${sizeStyles[size]} \${variantStyles[variant]} \${className}\`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+`);
+
+  folder.file('components/Card.tsx', `import React from 'react';
+
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'flat' | 'outlined' | 'elevated';
+  children: React.ReactNode;
+}
+
+export const Card: React.FC<CardProps> = ({
+  variant = 'outlined',
+  className = '',
+  children,
+  ...props
+}) => {
+  const baseStyles = 'rounded-[var(--radius-lg)] p-6 transition-shadow';
+  
+  const variantStyles = {
+    flat: 'bg-[var(--color-bg-surface)]',
+    outlined: 'bg-[var(--color-bg-surface)] border border-[var(--color-border-default)]',
+    elevated: 'bg-[var(--color-bg-elevated)] shadow-[var(--shadow-md)] border border-[var(--color-border-default)]'
+  };
+
+  return (
+    <div
+      className={\`\${baseStyles} \${variantStyles[variant]} \${className}\`}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+`);
+
   const headingFamily = tokens.typography.roles.heading?.family || 'Fraunces';
   const bodyFamily = tokens.typography.roles.body?.family || 'DM Sans';
 
