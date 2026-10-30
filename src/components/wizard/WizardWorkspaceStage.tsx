@@ -107,13 +107,27 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
     return () => window.removeEventListener('message', handlePreviewMessage);
   }, [project.tokens, mode, sendToPreview]);
 
-  // Synchronize tokens to iframe whenever project.tokens changes
+  // Outbound rAF throttler for TOKENS (Doc 02 §3.2)
+  const pendingTokensRef = useRef<DesignTokens | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+
+  // Synchronize tokens to iframe whenever project.tokens changes (throttled to 1 per animation frame)
   useEffect(() => {
     if (project.tokens) {
-      sendToPreview({
-        type: 'TOKENS',
-        tokens: project.tokens
-      });
+      pendingTokensRef.current = project.tokens;
+
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(() => {
+          if (pendingTokensRef.current) {
+            sendToPreview({
+              type: 'TOKENS',
+              tokens: pendingTokensRef.current
+            });
+            pendingTokensRef.current = null;
+          }
+          rafIdRef.current = null;
+        });
+      }
 
       // Local compute fallback for a11y
       if (project.tokens.color?.semantic) {
@@ -121,6 +135,13 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
         setA11yStats({ pass: audit.passCount, fail: audit.failCount });
       }
     }
+
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
   }, [project.tokens, mode, sendToPreview]);
 
   // Synchronize genre when project genre changes
@@ -190,7 +211,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
         {/* Left: Active Website Identity & Draft Preview Status */}
         <div className="flex items-center gap-2.5 flex-wrap min-w-0">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse motion-reduce:animate-none" />
             <span className="font-mono text-[11px] font-bold text-neutral-800 uppercase tracking-wider hidden sm:inline">
               Live Preview:
             </span>
@@ -217,7 +238,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
                 exit={{ opacity: 0, scale: 0.95, y: -2 }}
                 className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full shadow-2xs shrink-0"
               >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600 animate-spin" />
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600 animate-spin motion-reduce:animate-none" />
                 <span className="text-xs font-bold text-indigo-900">
                   Previewing: {draftLabel}
                 </span>
@@ -321,7 +342,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
               }`}
             >
               <span>Site</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse motion-reduce:animate-none" />
             </button>
           </div>
         </div>
@@ -522,7 +543,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
         >
           <Eye className="w-3.5 h-3.5" />
           <span>Live Site</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse motion-reduce:animate-none" />
         </button>
       </div>
     </div>

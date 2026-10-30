@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { Sparkles, Info } from 'lucide-react';
 import { Header } from './components/common/Header';
 import { WizardNav } from './components/common/WizardNav';
 import { LandingPage } from './components/landing/LandingPage';
@@ -51,8 +52,17 @@ function MainStudio() {
   // Draft preview and undo/redo state
   const [draftProject, setDraftProject] = useState<Partial<DesignProject> | null>(null);
   const [draftLabel, setDraftLabel] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [history, setHistory] = useState<DesignProject[]>([]);
   const [future, setFuture] = useState<DesignProject[]>([]);
+
+  // Auto-dismiss toast message
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [legalModal, setLegalModal] = useState<{ isOpen: boolean; tab: 'terms' | 'privacy' }>({
     isOpen: false,
@@ -155,10 +165,11 @@ function MainStudio() {
   const handleApplyDraft = useCallback(() => {
     if (draftProject) {
       handleUpdateActiveProject(draftProject);
+      setToastMessage(`Applied: ${draftLabel || 'Preview preset'}`);
       setDraftProject(null);
       setDraftLabel(null);
     }
-  }, [draftProject, handleUpdateActiveProject]);
+  }, [draftProject, draftLabel, handleUpdateActiveProject]);
 
   // Undo / Redo Handlers
   const handleUndo = useCallback(() => {
@@ -168,6 +179,7 @@ function MainStudio() {
       setHistory(h => h.slice(0, h.length - 1));
       saveProject(prev);
       setProjects(list => list.map(p => p.id === prev.id ? prev : p));
+      setToastMessage('Undone last action');
     }
   }, [history, activeProject]);
 
@@ -178,11 +190,15 @@ function MainStudio() {
       setFuture(f => f.slice(1));
       saveProject(next);
       setProjects(list => list.map(p => p.id === next.id ? next : p));
+      setToastMessage('Redone action');
     }
   }, [future, activeProject]);
 
   // Step Navigation handlers
   const handleNextStep = () => {
+    if (draftProject) {
+      setToastMessage('Preview draft discarded — preset restored');
+    }
     handleClearDraft();
     if (activeProject.currentStep < 11) {
       const nextStep = activeProject.currentStep + 1;
@@ -197,6 +213,9 @@ function MainStudio() {
   };
 
   const handleBackStep = () => {
+    if (draftProject) {
+      setToastMessage('Preview draft discarded — preset restored');
+    }
     handleClearDraft();
     if (activeProject.currentStep > 1) {
       handleUpdateActiveProject({
@@ -206,6 +225,9 @@ function MainStudio() {
   };
 
   const handleSelectStep = (stepNumber: number) => {
+    if (draftProject) {
+      setToastMessage('Preview draft discarded — preset restored');
+    }
     handleClearDraft();
     handleUpdateActiveProject({
       currentStep: stepNumber
@@ -538,6 +560,22 @@ function MainStudio() {
         initialTab={legalModal.tab}
         onClose={() => setLegalModal(prev => ({ ...prev, isOpen: false }))}
       />
+
+      {/* Floating Status & Preview Toast (Doc 02 §3.3) */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-6 right-6 z-50 bg-neutral-900/90 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-2xl border border-neutral-700/60 backdrop-blur-md flex items-center gap-2 pointer-events-none"
+          >
+            <Info className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
