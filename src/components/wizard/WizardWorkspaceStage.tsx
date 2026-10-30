@@ -117,6 +117,41 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
     }
   }, [project.tokens, mode, sendToPreview]);
 
+  // Synchronize genre when project genre changes
+  const activeGenreId = project.tokens?.meta?.genreId || project.websiteType?.id;
+  useEffect(() => {
+    if (activeGenreId) {
+      sendToPreview({
+        type: 'INIT',
+        genreId: activeGenreId,
+        tokens: project.tokens,
+        mode
+      });
+    }
+  }, [activeGenreId, sendToPreview]);
+
+  // Auto-scroll iframe preview to relevant section for active wizard step (Doc 02 §3.4)
+  useEffect(() => {
+    const STEP_FOCUS_SECTIONS: Record<number, string> = {
+      1: 'hero',
+      2: 'hero',
+      3: 'hero',
+      4: 'hero',
+      5: 'hero',
+      6: 'type-specimen',
+      7: 'components-showcase',
+      8: 'components-showcase',
+      9: 'gallery',
+      10: 'components-showcase',
+      11: 'components-showcase'
+    };
+    const targetSection = STEP_FOCUS_SECTIONS[currentStep] || 'hero';
+    const timer = setTimeout(() => {
+      sendToPreview({ type: 'SCROLL_TO', sectionId: targetSection });
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [currentStep, sendToPreview]);
+
   const toggleMode = () => {
     const nextMode = mode === 'light' ? 'dark' : 'light';
     setMode(nextMode);

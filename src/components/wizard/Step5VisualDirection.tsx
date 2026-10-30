@@ -1,24 +1,66 @@
-import React, { useState } from 'react';
-import { Sparkles, Check, ArrowRight, Plus } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Sparkles, Check, ArrowRight, Plus, Star } from 'lucide-react';
 import { DesignProject, VisualDirection } from '../../types/designSystem';
 import { VISUAL_DIRECTIONS } from '../../data/visualDirections';
 import { COLOR_PALETTES } from '../../data/palettes';
 import { TYPOGRAPHY_PAIRINGS } from '../../data/typographyPairs';
+import { generateAllColorPrimitives } from '../../tokens/colorScale';
+import { createLightSemanticColors, createDarkSemanticColors } from '../../tokens/semanticMapping';
 
 interface Step5VisualDirectionProps {
   project: DesignProject;
   onChange: (updated: Partial<DesignProject>) => void;
+  onPreviewDraft?: (draft: Partial<DesignProject>, label: string) => void;
+  onClearDraft?: () => void;
 }
 
-export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({ project, onChange }) => {
+export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({
+  project,
+  onChange,
+  onPreviewDraft,
+  onClearDraft
+}) => {
   const [customName, setCustomName] = useState('');
   const [customTagline, setCustomTagline] = useState('');
   const [isCustomMode, setIsCustomMode] = useState(false);
+
+  // Derive recommended directions deterministically from personality dials (Doc 02 §7)
+  const personality = project.tokens?.meta?.personality || {
+    energy: 50,
+    craft: 50,
+    voice: 50,
+    formality: 50,
+    density: 50
+  };
+
+  const recommendedIds = useMemo(() => {
+    const list: string[] = [];
+    if (personality.craft >= 50 && personality.energy < 55) {
+      list.push('minimal-editorial', 'nature-inspired');
+    }
+    if (personality.energy >= 55) {
+      list.push('bold-commercial', 'modern-product');
+    }
+    if (personality.formality >= 50) {
+      list.push('clean-corporate', 'premium-luxury');
+    }
+    if (personality.voice >= 50 && personality.craft >= 50) {
+      list.push('warm-approachable');
+    }
+    if (personality.craft < 50 && personality.energy >= 50) {
+      list.push('clean-tech');
+    }
+    return Array.from(new Set(list)).slice(0, 3);
+  }, [personality]);
 
   const handleSelectDirection = (dir: typeof VISUAL_DIRECTIONS[0]) => {
     setIsCustomMode(false);
     const recommendedPalette = COLOR_PALETTES.find(p => p.id === dir.recommendedPaletteId) || project.colorPalette;
     const recommendedPairing = TYPOGRAPHY_PAIRINGS.find(p => p.id === dir.recommendedPairingId) || TYPOGRAPHY_PAIRINGS[0];
+
+    const primitives = generateAllColorPrimitives(recommendedPalette.primary, recommendedPalette.accent);
+    const light = createLightSemanticColors(primitives);
+    const dark = createDarkSemanticColors(primitives);
 
     onChange({
       visualDirection: dir,
@@ -34,6 +76,13 @@ export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({ proj
         scaleRatio: recommendedPairing.scaleRatio,
         headingWeight: recommendedPairing.headingWeight,
         bodyWeight: recommendedPairing.bodyWeight
+      },
+      tokens: {
+        ...project.tokens,
+        color: {
+          primitives,
+          semantic: { light, dark }
+        }
       }
     });
   };
@@ -58,34 +107,52 @@ export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({ proj
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div className="max-w-4xl mx-auto py-4 space-y-8">
       {/* Header */}
-      <div className="mb-8 text-center">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-700 text-xs font-medium mb-3">
-          <Sparkles className="w-3.5 h-3.5 text-neutral-900" />
-          <span>Step 5 of 14 · Visual Direction</span>
+      <div className="space-y-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-white text-xs font-semibold">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>Step 4 of 11 · Visual Direction & Aesthetic Mood</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 mb-1">
-          Choose Your Visual Style
+        <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+          Select an aesthetic mood archetype
         </h1>
-        <span className="text-[11px] font-mono text-neutral-400 block mb-2">
-          technical: aesthetic archetype & stylistic baseline
-        </span>
-        <p className="text-sm text-neutral-600 max-w-lg mx-auto leading-relaxed">
-          Visual direction establishes the baseline mood of your site — from editorial luxury with wide photo margins to clean product-led SaaS with crisp data lines.
+        <p className="text-sm text-neutral-600 leading-relaxed max-w-2xl">
+          Visual directions bundle baseline palettes, typography pairing hints, and layout attitudes. Hover any card to preview its atmosphere in the live template pane.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {VISUAL_DIRECTIONS.map(dir => {
           const isSelected = !isCustomMode && project.visualDirection.id === dir.id;
           const matchingPalette = COLOR_PALETTES.find(p => p.id === dir.recommendedPaletteId) || COLOR_PALETTES[0];
+          const isRecommended = recommendedIds.includes(dir.id);
 
           return (
             <div
               key={dir.id}
               onClick={() => handleSelectDirection(dir)}
-              className={`p-5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+              onMouseEnter={() => {
+                if (onPreviewDraft) {
+                  const prims = generateAllColorPrimitives(matchingPalette.primary, matchingPalette.accent);
+                  onPreviewDraft({
+                    visualDirection: dir,
+                    colorPalette: matchingPalette,
+                    tokens: {
+                      ...project.tokens,
+                      color: {
+                        primitives: prims,
+                        semantic: {
+                          light: createLightSemanticColors(prims),
+                          dark: createDarkSemanticColors(prims)
+                        }
+                      }
+                    }
+                  }, dir.name);
+                }
+              }}
+              onMouseLeave={() => onClearDraft && onClearDraft()}
+              className={`p-5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
                 isSelected
                   ? 'border-neutral-900 bg-white ring-2 ring-neutral-900 shadow-md'
                   : 'border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-xs'
@@ -93,11 +160,14 @@ export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({ proj
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <div>
-                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
-                      {dir.tagline}
-                    </span>
-                    <span className="text-[9px] font-mono text-neutral-400">
+                  <div className="flex items-center gap-1.5">
+                    {isRecommended && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+                        <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-600" />
+                        <span>Recommended</span>
+                      </span>
+                    )}
+                    <span className="text-[10px] font-mono text-neutral-400">
                       preset: {dir.id}
                     </span>
                   </div>
@@ -108,9 +178,12 @@ export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({ proj
                   )}
                 </div>
 
-                <h3 className="text-base font-bold text-neutral-900 mb-1.5">
+                <h3 className="text-base font-bold text-neutral-900 mb-1">
                   {dir.name}
                 </h3>
+                <span className="text-xs font-semibold text-neutral-500 block mb-2">
+                  {dir.tagline}
+                </span>
                 <p className="text-xs text-neutral-600 leading-relaxed mb-4">
                   {dir.description}
                 </p>
@@ -133,8 +206,8 @@ export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({ proj
                     {matchingPalette.name.split('&')[0]}
                   </span>
                 </div>
-                <span className="text-xs text-neutral-400 flex items-center gap-1">
-                  Select <ArrowRight className="w-3 h-3" />
+                <span className="text-xs font-bold text-neutral-600 flex items-center gap-1">
+                  Apply <ArrowRight className="w-3 h-3" />
                 </span>
               </div>
             </div>
@@ -144,7 +217,7 @@ export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({ proj
 
       {/* OTHER / CUSTOM VISUAL DIRECTION CARD */}
       <div
-        className={`p-5 rounded-xl border transition-all ${
+        className={`p-6 rounded-2xl border transition-all ${
           isCustomMode
             ? 'border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900 shadow-md'
             : 'border-neutral-200 bg-white hover:border-neutral-300'
@@ -161,7 +234,7 @@ export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({ proj
             </span>
           </div>
           {isCustomMode && (
-            <span className="text-xs font-bold text-neutral-900 bg-neutral-200 px-2 py-0.5 rounded">
+            <span className="text-xs font-bold text-neutral-900 bg-neutral-200 px-2.5 py-0.5 rounded-full">
               Active Direction
             </span>
           )}
@@ -177,21 +250,21 @@ export const Step5VisualDirection: React.FC<Step5VisualDirectionProps> = ({ proj
             value={customName}
             onChange={e => setCustomName(e.target.value)}
             placeholder="Style name (e.g. Kyoto Brutalism, Neo-Deco...)"
-            className="px-3 py-2 text-xs bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900"
+            className="px-3.5 py-2 text-xs bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900"
           />
           <input
             type="text"
             value={customTagline}
             onChange={e => setCustomTagline(e.target.value)}
             placeholder="Short description (e.g. Tactile raw concrete, warm cedar, dark brass)"
-            className="px-3 py-2 text-xs bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900"
+            className="px-3.5 py-2 text-xs bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900"
           />
         </div>
 
         <button
           type="button"
           onClick={handleApplyCustomDirection}
-          className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors"
+          className="px-4 py-2 text-xs font-bold bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
         >
           Use Custom Style
         </button>

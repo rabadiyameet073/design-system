@@ -364,6 +364,8 @@ function MainStudio() {
           <Step5VisualDirection
             project={effectiveProject}
             onChange={handleUpdateActiveProject}
+            onPreviewDraft={handlePreviewDraft}
+            onClearDraft={handleClearDraft}
           />
         );
       case 5:

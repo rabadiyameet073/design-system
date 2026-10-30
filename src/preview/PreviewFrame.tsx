@@ -51,6 +51,9 @@ export const PreviewFrame: React.FC = () => {
         case 'TOKENS': {
           if (data.tokens) {
             setTokens(data.tokens);
+            if (data.tokens.meta?.genreId) {
+              setGenreId(data.tokens.meta.genreId);
+            }
             // Throttle with rAF
             requestAnimationFrame(() => {
               applyTokens(data.tokens, mode);
@@ -97,7 +100,10 @@ export const PreviewFrame: React.FC = () => {
 
         case 'SCROLL_TO': {
           if (data.sectionId) {
-            const el = document.getElementById(data.sectionId);
+            let el = document.getElementById(data.sectionId);
+            if (!el && data.sectionId !== 'hero') {
+              el = document.getElementById('hero');
+            }
             if (el) {
               el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }

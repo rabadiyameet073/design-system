@@ -88,7 +88,7 @@ export const ComponentsShowcase: React.FC<ComponentsShowcaseProps> = ({ id = 'co
               className="px-4 py-2 text-sm font-medium transition-all hover:opacity-90 active:scale-95 cursor-pointer"
               style={{
                 backgroundColor: 'var(--color-status-danger)',
-                color: '#FFFFFF',
+                color: 'var(--color-status-danger-fg)',
                 borderRadius: 'var(--radius-md)'
               }}
             >
