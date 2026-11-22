@@ -64,18 +64,20 @@ export const FeatureGrid: React.FC<FeatureGridProps> = ({
             return (
               <div
                 key={idx}
-                className="p-6 rounded-[var(--radius-lg)] border transition-all duration-300 hover:shadow-[var(--shadow-md)] flex flex-col justify-between"
+                className="p-6 border transition-all duration-300 hover:shadow-[var(--shadow-md)] flex flex-col justify-between"
                 style={{
                   backgroundColor: 'var(--color-bg-default)',
-                  borderColor: 'var(--color-border-default)'
+                  borderColor: 'var(--color-border-default)',
+                  borderRadius: 'var(--radius-card, var(--radius-lg))'
                 }}
               >
                 <div className="space-y-4">
                   <div
-                    className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center"
+                    className="w-10 h-10 flex items-center justify-center"
                     style={{
                       backgroundColor: 'var(--color-status-info-bg)',
-                      color: 'var(--color-action-primary)'
+                      color: 'var(--color-action-primary)',
+                      borderRadius: 'var(--radius-button, var(--radius-md))'
                     }}
                   >
                     <Icon className="w-5 h-5" />

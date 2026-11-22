@@ -76,21 +76,95 @@ export const Step6TypographyStudio: React.FC<Step6TypographyStudioProps> = ({
     source: 'google'
   };
 
-  // Recommended body fonts
+  // Recommended body fonts filtered by required scripts
   const recommendedBodies = useMemo(() => {
     return getRecommendedBodyFonts(
       currentHeadingMeta as FontMeta,
       allFonts,
-      project.tokens.meta.category ? [project.tokens.meta.category] : ['modern', 'editorial']
+      project.tokens.meta.category ? [project.tokens.meta.category] : ['modern', 'editorial'],
+      project.tokens.meta.scripts || ['latin']
     );
-  }, [currentHeadingMeta, allFonts, project.tokens.meta.category]);
+  }, [currentHeadingMeta, allFonts, project.tokens.meta.category, project.tokens.meta.scripts]);
 
   // Run guardrails audit (Doc 03 §8)
   const auditResult = useMemo(() => {
     return auditTypographyTokens(typography, fontsMetaMap);
   }, [typography, fontsMetaMap]);
 
+  // Real-time hover preview on template (Doc 03 §5: "hover = preview in the site")
+  const handleHoverFont = (font: FontMeta) => {
+    if (!onPreviewDraft || !activePickerRole) return;
+    const fallback =
+      activePickerRole === 'mono'
+        ? ['ui-monospace', 'monospace']
+        : font.category === 'serif'
+        ? ['ui-serif', 'Georgia', 'serif']
+        : ['ui-sans-serif', 'system-ui', 'sans-serif'];
+
+    const draftRoles = { ...typography.roles };
+    if (activePickerRole === 'heading') {
+      draftRoles.heading = {
+        family: font.family,
+        fallback,
+        weight: 600,
+        lineHeight: 1.15,
+        letterSpacing: '-0.02em'
+      };
+      draftRoles.display = {
+        family: font.family,
+        fallback,
+        weight: 700,
+        lineHeight: 1.08,
+        letterSpacing: '-0.03em'
+      };
+    } else if (activePickerRole === 'body') {
+      draftRoles.body = {
+        family: font.family,
+        fallback,
+        weight: 400,
+        lineHeight: 1.6,
+        letterSpacing: '0em'
+      };
+      draftRoles.ui = {
+        family: font.family,
+        fallback: ['ui-sans-serif', 'system-ui', 'sans-serif'],
+        weight: 500,
+        lineHeight: 1.25,
+        letterSpacing: '0.01em'
+      };
+    } else {
+      const existing = draftRoles[activePickerRole] || {
+        weight: 400,
+        lineHeight: 1.5,
+        letterSpacing: '0em'
+      };
+      draftRoles[activePickerRole] = {
+        ...existing,
+        family: font.family,
+        fallback
+      };
+    }
+
+    onPreviewDraft(
+      {
+        tokens: {
+          ...project.tokens,
+          typography: {
+            ...project.tokens.typography,
+            roles: draftRoles
+          }
+        }
+      },
+      `Previewing: ${font.family}`
+    );
+  };
+
+  const handleClearHover = () => {
+    if (onClearDraft) onClearDraft();
+  };
+
   const handleSelectHeading = (font: FontMeta) => {
+    if (onClearDraft) onClearDraft();
     const fallback = font.category === 'serif' ? ['ui-serif', 'Georgia', 'serif'] : ['ui-sans-serif', 'system-ui', 'sans-serif'];
     const updatedRoles = {
       ...typography.roles,
@@ -130,6 +204,7 @@ export const Step6TypographyStudio: React.FC<Step6TypographyStudioProps> = ({
   };
 
   const handleSelectBody = (font: FontMeta) => {
+    if (onClearDraft) onClearDraft();
     const fallback = font.category === 'serif' ? ['ui-serif', 'Georgia', 'serif'] : ['ui-sans-serif', 'system-ui', 'sans-serif'];
     const updatedRoles = {
       ...typography.roles,
@@ -165,6 +240,7 @@ export const Step6TypographyStudio: React.FC<Step6TypographyStudioProps> = ({
   };
 
   const handleSelectGenericRole = (role: FontRole, font: FontMeta) => {
+    if (onClearDraft) onClearDraft();
     const fallback =
       role === 'mono'
         ? ['ui-monospace', 'monospace']
@@ -338,17 +414,19 @@ export const Step6TypographyStudio: React.FC<Step6TypographyStudioProps> = ({
           </button>
         </div>
 
-        {/* Estimated payload badge */}
+        {/* Performance budget badge (Doc 03 §5: Performance: 2 families • 5 files • ~74 KB ✅) */}
         <div className="flex items-center gap-2 text-xs font-mono">
-          <span className="text-neutral-600">Payload: ≈ {auditResult.estimatedPayloadKb} KB</span>
+          <span className="text-neutral-700">
+            Performance: <span className="font-bold">{auditResult.totalFamiliesCount}</span> {auditResult.totalFamiliesCount === 1 ? 'family' : 'families'} • <span className="font-bold">{auditResult.totalFontFiles}</span> files • <span className="font-bold">≈ {auditResult.estimatedPayloadKb} KB</span>
+          </span>
           <span
             className={`px-2 py-0.5 rounded-full font-bold ${
-              auditResult.estimatedPayloadKb <= 150
+              auditResult.issues.filter(i => i.severity === 'error' || i.severity === 'warning').length === 0
                 ? 'bg-emerald-100 text-emerald-800'
                 : 'bg-amber-100 text-amber-800'
             }`}
           >
-            {auditResult.estimatedPayloadKb <= 150 ? 'Optimal ✓' : 'Heavy Payload'}
+            {auditResult.issues.filter(i => i.severity === 'error' || i.severity === 'warning').length === 0 ? 'Budget OK ✅' : 'Review Warnings ⚠️'}
           </span>
         </div>
       </div>
@@ -702,7 +780,7 @@ export const Step6TypographyStudio: React.FC<Step6TypographyStudioProps> = ({
         </div>
       </div>
 
-      {/* Font Picker Modal */}
+      {/* Font Picker Modal with real-time hover-to-preview per Doc 03 §5 */}
       {activePickerRole && (
         <FontPickerModal
           isOpen={!!activePickerRole}
@@ -718,8 +796,14 @@ export const Step6TypographyStudio: React.FC<Step6TypographyStudioProps> = ({
               ? accentFamily
               : (typography.roles[activePickerRole]?.family || headingFamily)
           }
-          onClose={() => setActivePickerRole(null)}
+          onClose={() => {
+            handleClearHover();
+            setActivePickerRole(null);
+          }}
+          onHoverFont={handleHoverFont}
+          onClearHover={handleClearHover}
           onSelectFont={font => {
+            handleClearHover();
             if (activePickerRole === 'heading') handleSelectHeading(font);
             else if (activePickerRole === 'body') handleSelectBody(font);
             else handleSelectGenericRole(activePickerRole, font);

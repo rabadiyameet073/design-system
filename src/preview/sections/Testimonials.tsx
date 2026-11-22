@@ -44,10 +44,11 @@ export const Testimonials: React.FC<TestimonialsProps> = ({
           {testimonials.map((t, idx) => (
             <div
               key={idx}
-              className="p-8 rounded-[var(--radius-xl)] border space-y-6 flex flex-col justify-between"
+              className="p-8 border space-y-6 flex flex-col justify-between"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
-                borderColor: 'var(--color-border-default)'
+                borderColor: 'var(--color-border-default)',
+                borderRadius: 'var(--radius-card, var(--radius-xl))'
               }}
             >
               <div className="space-y-4">

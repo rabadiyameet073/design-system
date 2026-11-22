@@ -50,10 +50,11 @@ export const FAQ: React.FC<FAQProps> = ({
             return (
               <div
                 key={idx}
-                className="rounded-[var(--radius-lg)] border overflow-hidden transition-colors"
+                className="border overflow-hidden transition-colors"
                 style={{
                   backgroundColor: 'var(--color-bg-default)',
-                  borderColor: 'var(--color-border-default)'
+                  borderColor: 'var(--color-border-default)',
+                  borderRadius: 'var(--radius-card, var(--radius-lg))'
                 }}
               >
                 <button

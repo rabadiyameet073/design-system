@@ -1,0 +1,14 @@
+{
+  "category": "publishing",
+  "hero": {
+    "badge": "Vol. 14 · Autumn Monograph",
+    "title": "A quarterly journal exploring material culture, architecture, and technology",
+    "subtitle": "Long-form essays, critical monographs, and philosophical investigations into how designed tools shape human thought.",
+    "primaryAction": "Read Lead Essay",
+    "secondaryAction": "Issue Archives"
+  },
+  "articles": {
+    "title": "Dispatches & Recent Inquiries",
+    "subtitle": "Peer-reviewed investigations and field notes from practitioners worldwide."
+  }
+}

@@ -1,6 +1,6 @@
 import { DesignProject } from '../types/designSystem';
 
-export interface CloudProjectRecord {
+export interface UserProjectRecord {
   id: string;
   userId: string;
   name: string;
@@ -12,17 +12,17 @@ export interface CloudProjectRecord {
   updatedAt: string;
 }
 
-// Real-time synchronization using BroadcastChannel & storage events (Zero Firebase)
-const SYNC_CHANNEL_NAME = 'dss_projects_sync_channel';
-const CLOUD_STORAGE_PREFIX = 'dss_cloud_projects_';
+// Transparent local-first and multi-tab sync using BroadcastChannel and Web Storage (Zero remote tracking)
+const SYNC_CHANNEL_NAME = 'dss_projects_tab_sync_channel';
+const LOCAL_STORAGE_PREFIX = 'dss_user_projects_';
 
-function getCloudProjectsKey(userId: string): string {
-  return `${CLOUD_STORAGE_PREFIX}${userId}`;
+function getUserProjectsKey(userId: string): string {
+  return `${LOCAL_STORAGE_PREFIX}${userId}`;
 }
 
 function loadProjectsFromStorage(userId: string): DesignProject[] {
   try {
-    const raw = localStorage.getItem(getCloudProjectsKey(userId));
+    const raw = localStorage.getItem(getUserProjectsKey(userId));
     if (!raw) return [];
     return JSON.parse(raw);
   } catch {
@@ -32,15 +32,15 @@ function loadProjectsFromStorage(userId: string): DesignProject[] {
 
 function saveProjectsToStorage(userId: string, projects: DesignProject[]): void {
   try {
-    localStorage.setItem(getCloudProjectsKey(userId), JSON.stringify(projects));
+    localStorage.setItem(getUserProjectsKey(userId), JSON.stringify(projects));
   } catch (err) {
     console.warn('Storage sync error:', err);
   }
 }
 
 /**
- * Subscribes to real-time updates for projects owned by the authenticated user.
- * Works seamlessly across browser tabs and windows without Firebase.
+ * Subscribes to real-time multi-tab updates for projects belonging to the user.
+ * Operates offline-first and syncs seamlessly between browser tabs and windows.
  */
 export function subscribeToUserProjects(
   userId: string,
@@ -69,7 +69,7 @@ export function subscribeToUserProjects(
   }
 
   const storageHandler = (event: StorageEvent) => {
-    if (event.key === getCloudProjectsKey(userId)) {
+    if (event.key === getUserProjectsKey(userId)) {
       const updated = loadProjectsFromStorage(userId);
       onProjectsUpdated(updated);
     }
@@ -83,9 +83,9 @@ export function subscribeToUserProjects(
 }
 
 /**
- * Saves or updates a project for the authenticated user in real-time.
+ * Saves or updates a project for the authenticated user in local storage and broadcasts to other tabs.
  */
-export async function saveProjectToCloud(
+export async function saveProjectToStorage(
   userId: string,
   project: DesignProject
 ): Promise<void> {
@@ -118,10 +118,13 @@ export async function saveProjectToCloud(
   }
 }
 
+// Backward-compatible alias
+export const saveProjectToCloud = saveProjectToStorage;
+
 /**
- * Deletes a project.
+ * Deletes a project from local user store.
  */
-export async function deleteProjectFromCloud(
+export async function deleteProjectFromStorage(
   userId: string,
   projectId: string
 ): Promise<void> {
@@ -140,10 +143,13 @@ export async function deleteProjectFromCloud(
   }
 }
 
+// Backward-compatible alias
+export const deleteProjectFromCloud = deleteProjectFromStorage;
+
 /**
- * Bulk imports local projects to the authenticated user's store.
+ * Merges projects into the user's local multi-tab store.
  */
-export async function syncLocalProjectsToCloud(
+export async function syncLocalProjectsToUserStore(
   userId: string,
   localProjects: DesignProject[]
 ): Promise<number> {
@@ -151,7 +157,8 @@ export async function syncLocalProjectsToCloud(
   const map = new Map<string, DesignProject>();
   current.forEach(p => map.set(p.id, p));
   localProjects.forEach(p => {
-    if (!map.has(p.id)) {
+    const existing = map.get(p.id);
+    if (!existing || (p.updatedAt || 0) > (existing.updatedAt || 0)) {
       map.set(p.id, p);
     }
   });
@@ -160,3 +167,7 @@ export async function syncLocalProjectsToCloud(
   saveProjectsToStorage(userId, merged);
   return merged.length;
 }
+
+// Backward-compatible alias
+export const syncLocalProjectsToCloud = syncLocalProjectsToUserStore;
+

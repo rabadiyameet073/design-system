@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
             style={{
               backgroundColor: 'var(--color-action-primary)',
               color: 'var(--color-action-primary-fg)',
-              borderRadius: 'var(--radius-md)',
+              borderRadius: 'var(--radius-button, var(--radius-md))',
               fontFamily: 'var(--font-ui, var(--font-body))'
             }}
           >

@@ -11,6 +11,9 @@ describe('Tokens to CSS Variables Serializer', () => {
     expect(vars['--color-bg-default']).toBeDefined();
     expect(vars['--color-fg-default']).toBeDefined();
     expect(vars['--radius-md']).toBe('8px');
+    expect(vars['--radius-button']).toBe('8px');
+    expect(vars['--radius-card']).toBe('12px');
+    expect(vars['--radius-input']).toBe('8px');
     expect(vars['--font-heading']).toContain('Cormorant Garamond');
     expect(vars['--font-body']).toContain('Plus Jakarta Sans');
   });

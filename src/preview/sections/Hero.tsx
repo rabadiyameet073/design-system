@@ -67,9 +67,10 @@ export const Hero: React.FC<HeroProps> = ({
             <button
               className="px-6 py-3 text-sm font-semibold tracking-wide flex items-center gap-2 transition-all shadow-[var(--shadow-md)] hover:opacity-90 active:scale-95 cursor-pointer"
               style={{
-                backgroundColor: 'var(--color-action-primary)',
-                color: 'var(--color-action-primary-fg)',
-                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--button-bg, var(--color-action-primary))',
+                color: 'var(--button-fg, var(--color-action-primary-fg))',
+                border: 'var(--button-border, none)',
+                borderRadius: 'var(--radius-button, var(--radius-md))',
                 fontFamily: 'var(--font-ui, var(--font-body))'
               }}
             >
@@ -82,7 +83,7 @@ export const Hero: React.FC<HeroProps> = ({
               style={{
                 borderColor: 'var(--color-border-default)',
                 color: 'var(--color-fg-default)',
-                borderRadius: 'var(--radius-md)',
+                borderRadius: 'var(--radius-button, var(--radius-md))',
                 fontFamily: 'var(--font-ui, var(--font-body))'
               }}
             >
@@ -107,7 +108,7 @@ export const Hero: React.FC<HeroProps> = ({
           <div
             className="relative overflow-hidden shadow-[var(--shadow-lg)] border"
             style={{
-              borderRadius: 'var(--radius-lg)',
+              borderRadius: 'var(--radius-card, var(--radius-lg))',
               borderColor: 'var(--color-border-default)',
               backgroundColor: 'var(--color-bg-surface)'
             }}
@@ -117,6 +118,7 @@ export const Hero: React.FC<HeroProps> = ({
               alt={imageAlt}
               width={800}
               height={600}
+              style={{ filter: 'var(--image-filter, none)' }}
               className="w-full h-80 sm:h-96 object-cover transition-transform duration-500 hover:scale-105"
             />
           </div>

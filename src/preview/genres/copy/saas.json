@@ -1,0 +1,18 @@
+{
+  "category": "saas",
+  "hero": {
+    "badge": "Autonomous Agent Runtime",
+    "title": "Mission-critical data telemetry engineered for real-time velocity",
+    "subtitle": "Unify telemetry, event streaming, and automated remediation on a distributed zero-latency platform.",
+    "primaryAction": "Deploy in 60s",
+    "secondaryAction": "Read Documentation"
+  },
+  "features": {
+    "title": "Production Infrastructure Built for Scale",
+    "subtitle": "Sub-millisecond queries, enterprise audit compliance, and SOC 2 Type II certified data isolation."
+  },
+  "pricing": {
+    "title": "Transparent Utility Pricing",
+    "subtitle": "Start free. Scale compute elastically with zero overage penalties."
+  }
+}

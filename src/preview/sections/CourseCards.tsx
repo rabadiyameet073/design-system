@@ -53,10 +53,11 @@ export const CourseCards: React.FC<CourseCardsProps> = ({ id = 'courses' }) => {
           {courses.map((course, idx) => (
             <div
               key={idx}
-              className="p-6 rounded-[var(--radius-lg)] border flex flex-col justify-between space-y-6 shadow-[var(--shadow-sm)]"
+              className="p-6 border flex flex-col justify-between space-y-6 shadow-[var(--shadow-sm)]"
               style={{
                 backgroundColor: 'var(--color-bg-default)',
-                borderColor: 'var(--color-border-default)'
+                borderColor: 'var(--color-border-default)',
+                borderRadius: 'var(--radius-card, var(--radius-lg))'
               }}
             >
               <div className="space-y-3">
@@ -86,7 +87,7 @@ export const CourseCards: React.FC<CourseCardsProps> = ({ id = 'courses' }) => {
                 style={{
                   borderColor: 'var(--color-border-default)',
                   color: 'var(--color-fg-default)',
-                  borderRadius: 'var(--radius-md)'
+                  borderRadius: 'var(--radius-button, var(--radius-md))'
                 }}
               >
                 <span>Syllabus Overview</span>

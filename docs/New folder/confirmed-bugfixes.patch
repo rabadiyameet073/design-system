@@ -1,0 +1,429 @@
+--- a/src/tokens/contrastEngine.ts
++++ b/src/tokens/contrastEngine.ts
+@@ -37,8 +37,11 @@
+   if (!fgOklch || !bgOklch) return fg;
+ 
+   const bgLightness = bgOklch.l ?? 0.5;
+-  // If background is bright, step foreground toward 0 (darker); if dark, step toward 1 (brighter)
+-  const stepDirection = bgLightness > 0.5 ? -0.01 : 0.01;
++  // Pick the direction (darker/lighter) that can actually reach the target: compare black vs white ceiling
++  const blackR = ratio('#000000', bg);
++  const whiteR = ratio('#FFFFFF', bg);
++  const goDarker = blackR >= whiteR;
++  const stepDirection = goDarker ? -0.01 : 0.01;
+ 
+   let candidateL = fgOklch.l ?? 0.5;
+   let iterations = 0;
+@@ -69,8 +72,8 @@
+     iterations++;
+   }
+ 
+-  // Extreme fallback: black or white
+-  return bgLightness > 0.5 ? '#0A0A0A' : '#FFFFFF';
++  // Extreme fallback: whichever of near-black / white has more contrast
++  return goDarker ? '#0A0A0A' : '#FFFFFF';
+ }
+ 
+ /**
+@@ -118,6 +121,8 @@
+ 
+ export interface A11yAuditIssue {
+   id: string;
++  /** Which SemanticColors key to change when auto-fixing this pair */
++  fgKey: keyof SemanticColors;
+   name: string;
+   fg: string;
+   bg: string;
+@@ -144,6 +149,7 @@
+ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummary {
+   const auditPairs: Array<{
+     id: string;
++    fgKey: keyof SemanticColors;
+     name: string;
+     fg: string;
+     bg: string;
+@@ -152,6 +158,7 @@
+   }> = [
+     {
+       id: 'body-default',
++      fgKey: 'fgDefault',
+       name: 'Body Text on Canvas',
+       fg: semantic.fgDefault,
+       bg: semantic.bgDefault,
+@@ -160,6 +167,7 @@
+     },
+     {
+       id: 'body-surface',
++      fgKey: 'fgDefault',
+       name: 'Body Text on Card Surface',
+       fg: semantic.fgDefault,
+       bg: semantic.bgSurface,
+@@ -168,6 +176,7 @@
+     },
+     {
+       id: 'muted-default',
++      fgKey: 'fgMuted',
+       name: 'Muted Text on Canvas',
+       fg: semantic.fgMuted,
+       bg: semantic.bgDefault,
+@@ -176,6 +185,7 @@
+     },
+     {
+       id: 'action-primary',
++      fgKey: 'actionPrimaryFg',
+       name: 'Primary Button Label',
+       fg: semantic.actionPrimaryFg,
+       bg: semantic.actionPrimary,
+@@ -184,6 +194,7 @@
+     },
+     {
+       id: 'border-ui',
++      fgKey: 'borderDefault',
+       name: 'Card & Control Border (UI Components)',
+       fg: semantic.borderDefault,
+       bg: semantic.bgDefault,
+@@ -192,6 +203,7 @@
+     },
+     {
+       id: 'focus-ring',
++      fgKey: 'focusRing',
+       name: 'Focus Ring Indicator',
+       fg: semantic.focusRing,
+       bg: semantic.bgDefault,
+@@ -200,6 +212,7 @@
+     },
+     {
+       id: 'status-success',
++      fgKey: 'statusSuccessFg',
+       name: 'Success Badge Label',
+       fg: semantic.statusSuccessFg,
+       bg: semantic.statusSuccessBg,
+@@ -208,6 +221,7 @@
+     },
+     {
+       id: 'status-warning',
++      fgKey: 'statusWarningFg',
+       name: 'Warning Badge Label',
+       fg: semantic.statusWarningFg,
+       bg: semantic.statusWarningBg,
+@@ -216,6 +230,7 @@
+     },
+     {
+       id: 'status-danger',
++      fgKey: 'statusDangerFg',
+       name: 'Danger Badge Label',
+       fg: semantic.statusDangerFg,
+       bg: semantic.statusDangerBg,
+@@ -224,6 +239,7 @@
+     },
+     {
+       id: 'status-info',
++      fgKey: 'statusInfoFg',
+       name: 'Info Badge Label',
+       fg: semantic.statusInfoFg,
+       bg: semantic.statusInfoBg,
+@@ -239,6 +255,7 @@
+ 
+     return {
+       id: item.id,
++      fgKey: item.fgKey,
+       name: item.name,
+       fg: item.fg,
+       bg: item.bg,
+@@ -265,3 +282,22 @@
+   };
+ }
+ 
++
++/**
++ * Fixes every failing pair in one pass and returns a NEW SemanticColors object.
++ * Single source of truth for Step 6 "Auto-fix" and Step 10 "Fix all".
++ */
++export function autoFixSemantic(semantic: SemanticColors): SemanticColors {
++  const next = { ...semantic };
++  // Two passes: fixing one pair (e.g. fgDefault vs surface) can affect another.
++  for (let pass = 0; pass < 2; pass++) {
++    for (const issue of auditSemanticContrast(next).issues) {
++      if (!issue.passed) {
++        (next as Record<string, string>)[issue.fgKey] = nudgeToContrast(
++          (next as Record<string, string>)[issue.fgKey], issue.bg, issue.targetRatio
++        );
++      }
++    }
++  }
++  return next;
++}
+--- a/src/components/wizard/Step10ReviewAudit.tsx
++++ b/src/components/wizard/Step10ReviewAudit.tsx
+@@ -1,7 +1,7 @@
+ import React, { useState } from 'react';
+ import { Sparkles, ShieldCheck, AlertTriangle, Check, RefreshCw, Wand2, Sun, Moon, Smartphone, Tablet, Monitor } from 'lucide-react';
+ import { DesignProject } from '../../types/designSystem';
+-import { auditSemanticContrast, nudgeToContrast, ratio, grade, A11yAuditIssue } from '../../tokens/contrastEngine';
++import { auditSemanticContrast, nudgeToContrast, autoFixSemantic, ratio, grade, A11yAuditIssue } from '../../tokens/contrastEngine';
+ import { applyTokens } from '../../preview/tokens/applyTokens';
+ 
+ interface Step10ReviewAuditProps {
+@@ -16,56 +16,26 @@
+   const audit = auditSemanticContrast(semantic);
+ 
+   // Auto-fix handler using nudgeToContrast
+-  const handleFixIssue = (issue: A11yAuditIssue) => {
+-    const fixedFg = nudgeToContrast(issue.fg, issue.bg, issue.targetRatio);
+-
+-    const updatedSemantic = {
+-      ...semantic,
+-      [issue.id === 'body-text' ? 'fgDefault' : issue.id === 'primary-action' ? 'actionPrimaryFg' : issue.id === 'muted-text' ? 'fgMuted' : 'fgDefault']: fixedFg
+-    };
+-
++  const commit = (nextSemantic: typeof semantic) => {
+     const nextTokens = {
+       ...project.tokens,
+       color: {
+         ...project.tokens.color,
+-        semantic: {
+-          ...project.tokens.color.semantic,
+-          [activeMode]: updatedSemantic
+-        }
++        semantic: { ...project.tokens.color.semantic, [activeMode]: nextSemantic }
+       }
+     };
+-
+-    onChange({ tokens: nextTokens });
+-    applyTokens(nextTokens, activeMode);
++    onChange({ tokens: nextTokens }); // preview re-applies tokens from project state
+   };
+ 
+-  const handleFixAll = () => {
+-    let nextSemantic = { ...semantic };
+-
+-    audit.issues.forEach(issue => {
+-      if (!issue.passed) {
+-        const fixedFg = nudgeToContrast(issue.fg, issue.bg, issue.targetRatio);
+-        if (issue.id === 'body-text') nextSemantic.fgDefault = fixedFg;
+-        if (issue.id === 'primary-action') nextSemantic.actionPrimaryFg = fixedFg;
+-        if (issue.id === 'muted-text') nextSemantic.fgMuted = fixedFg;
+-      }
+-    });
+-
+-    const nextTokens = {
+-      ...project.tokens,
+-      color: {
+-        ...project.tokens.color,
+-        semantic: {
+-          ...project.tokens.color.semantic,
+-          [activeMode]: nextSemantic
+-        }
+-      }
+-    };
+-
+-    onChange({ tokens: nextTokens });
+-    applyTokens(nextTokens, activeMode);
++  // Fix ONE pair: change exactly the token this pair is about (issue.fgKey)
++  const handleFixIssue = (issue: A11yAuditIssue) => {
++    const fixedFg = nudgeToContrast(issue.fg, issue.bg, issue.targetRatio);
++    commit({ ...semantic, [issue.fgKey]: fixedFg });
+   };
+ 
++  // Fix ALL failing pairs
++  const handleFixAll = () => commit(autoFixSemantic(semantic));
++
+   return (
+     <div className="max-w-4xl mx-auto py-4 space-y-8">
+       {/* Title */}
+--- a/src/utils/storage.ts
++++ b/src/utils/storage.ts
+@@ -52,7 +52,7 @@
+   }
+ }
+ 
+-export function saveProject(project: DesignProject): void {
++export function saveProject(project: DesignProject, opts: { makeActive?: boolean } = {}): void {
+   const projects = getStoredProjects();
+   const existingIdx = projects.findIndex(p => p.id === project.id);
+   const updatedProject = {
+@@ -67,7 +67,7 @@
+   }
+ 
+   saveProjects(projects);
+-  setActiveProjectId(project.id);
++  if (opts.makeActive) setActiveProjectId(project.id);
+ }
+ 
+ export function deleteProject(id: string): DesignProject[] {
+--- a/src/services/projectSync.ts
++++ b/src/services/projectSync.ts
+@@ -151,7 +151,9 @@
+   const map = new Map<string, DesignProject>();
+   current.forEach(p => map.set(p.id, p));
+   localProjects.forEach(p => {
+-    if (!map.has(p.id)) {
++    const existing = map.get(p.id);
++    // newer edit wins (previously local edits made while logged out were lost)
++    if (!existing || (p.updatedAt || 0) > (existing.updatedAt || 0)) {
+       map.set(p.id, p);
+     }
+   });
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -97,8 +97,10 @@
+             const map = new Map<string, DesignProject>();
+             prev.forEach(p => map.set(p.id, p));
+             cloudProjects.forEach(cp => {
+-              map.set(cp.id, cp);
+-              saveProject(cp);
++              const local = map.get(cp.id);
++              if (!local || (cp.updatedAt || 0) > (local.updatedAt || 0)) {
++                map.set(cp.id, cp); // newer wins; never overwrite a newer local edit
++              }
+             });
+             return Array.from(map.values()).sort(
+               (a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)
+@@ -122,34 +124,25 @@
+     setProjects(list);
+   }, []);
+ 
+-  // Update active project with autosave and real-time cloud sync
++  // Update active project with autosave. Side effects are OUTSIDE the state updater
++  // (updaters must be pure: StrictMode runs them twice, which duplicated history + saves).
++  const autosaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+   const handleUpdateActiveProject = useCallback((updates: Partial<DesignProject>) => {
+-    setIsAutosaving(true);
+-    setProjects(prevProjects => {
+-      const updated = prevProjects.map(p => {
+-        if (p.id === activeProject.id) {
+-          // Push to undo history before mutation
+-          setHistory(h => [...h.slice(-15), p]);
+-          setFuture([]); // clear redo on new change
+-
+-          const next = { ...p, ...updates, updatedAt: Date.now() };
+-          saveProject(next);
+-          if (user) {
+-            saveProjectToCloud(user.id, next).catch(e => {
+-              console.warn('Cloud autosave note:', e);
+-            });
+-          }
+-          return next;
+-        }
+-        return p;
+-      });
+-      return updated;
+-    });
++    const current = projects.find(p => p.id === activeProject.id) || activeProject;
++    const next = { ...current, ...updates, updatedAt: Date.now() };
+ 
+-    setTimeout(() => {
+-      setIsAutosaving(false);
+-    }, 400);
+-  }, [activeProject.id, user]);
++    setIsAutosaving(true);
++    setHistory(h => [...h.slice(-14), current]);
++    setFuture([]);
++    setProjects(prev => prev.map(p => (p.id === next.id ? next : p)));
++
++    saveProject(next);
++    if (user) {
++      saveProjectToCloud(user.id, next).catch(e => console.warn('Cloud autosave note:', e));
++    }
++    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
++    autosaveTimer.current = setTimeout(() => setIsAutosaving(false), 400);
++  }, [projects, activeProject, user]);
+ 
+   // Draft Preview Handlers
+   const handlePreviewDraft = useCallback((draft: Partial<DesignProject>, label: string) => {
+@@ -186,7 +179,7 @@
+   const handleRedo = useCallback(() => {
+     if (future.length > 0) {
+       const next = future[0];
+-      setHistory(h => [...h, activeProject]);
++      setHistory(h => [...h.slice(-14), activeProject]);
+       setFuture(f => f.slice(1));
+       saveProject(next);
+       setProjects(list => list.map(p => p.id === next.id ? next : p));
+@@ -323,6 +316,7 @@
+   };
+ 
+   const handleStartNewProject = () => {
++    setHistory([]); setFuture([]);
+     const newProj = createNewProject('My New Website', 'ceramics-atelier');
+     saveProject(newProj);
+     refreshProjectsList();
+@@ -332,6 +326,7 @@
+   };
+ 
+   const handleSelectProjectFromDashboard = (id: string, continueWizard: boolean = false) => {
++    setHistory([]); setFuture([]); // undo stack is per-project
+     setActiveId(id);
+     setActiveProjectId(id);
+     if (continueWizard) {
+--- a/api/index.ts
++++ b/api/index.ts
+@@ -35,6 +35,12 @@
+ 
+ export const app = express();
+ 
++const escapeHtml = (v: unknown): string =>
++  String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
++// Safe JSON for inline <script>: prevents </script> and U+2028 breakouts
++const safeJson = (v: unknown): string =>
++  JSON.stringify(v).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
++
+ app.use(express.json({ limit: '10mb' }));
+ 
+ // Security headers middleware per Doc 05 §2
+@@ -304,7 +310,7 @@
+         <head><title>OAuth Error</title><style>body{font-family:sans-serif;padding:2rem;text-align:center;}</style></head>
+         <body>
+           <h2>Google Authentication Error</h2>
+-          <p>${error_description || error}</p>
++          <p>${escapeHtml(error_description || error)}</p>
+           <button onclick="window.close()">Close Window</button>
+         </body>
+       </html>
+@@ -408,7 +414,7 @@
+         <head><title>OAuth Token Exchange Error</title><style>body{font-family:sans-serif;padding:2rem;text-align:center;}</style></head>
+         <body>
+           <h2>Google Sign-In Could Not Complete</h2>
+-          <p>${err.message || 'Error communicating with Google token endpoint'}</p>
++          <p>${escapeHtml(err.message || 'Error communicating with Google token endpoint')}</p>
+           <button onclick="window.close()">Close Window</button>
+         </body>
+       </html>
+@@ -475,11 +481,11 @@
+           <div class="icon">✓</div>
+           <div class="badge">Google Identity Verified · Real-Time</div>
+           <h1>Authentication Successful!</h1>
+-          <p>Welcome, <strong>${userProfile.name}</strong> (${userProfile.email}). Returning to Studio...</p>
++          <p>Welcome, <strong>${escapeHtml(userProfile.name)}</strong> (${escapeHtml(userProfile.email)}). Returning to Studio...</p>
+         </div>
+         <script>
+           try {
+-            const user = ${JSON.stringify(userProfile)};
++            const user = ${safeJson({ ...userProfile, accessToken: undefined })};
+             try {
+               localStorage.setItem('dss_google_user_session_v2', JSON.stringify(user));
+             } catch (e) {}
+@@ -497,7 +503,7 @@
+                 window.opener.postMessage({
+                   type: 'OAUTH_AUTH_SUCCESS',
+                   user: user
+-                }, '*');
++                }, window.location.origin);
+               } catch (e) {}
+               setTimeout(() => window.close(), 600);
+             } else {
+--- a/src/utils/exportGenerators.ts
++++ b/src/utils/exportGenerators.ts
+@@ -645,9 +645,11 @@
+ /**
+  * Generates TypeScript token constants
+  */
++const q = (v: unknown): string => JSON.stringify(String(v ?? '')); // safe string literal
++
+ export function generateTypeScriptDefinitions(project: DesignProject): string {
+   return `export const DESIGN_TOKENS = {
+-  projectName: "${project.name}",
++  projectName: ${q(project.name)},
+   colors: {
+     primary: "${project.colorPalette.primary}",
+     secondary: "${project.colorPalette.secondary}",

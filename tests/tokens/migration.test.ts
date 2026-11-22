@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { migrateTokens, importDesignTokensFromJson, TokenMigrationError } from '../../src/tokens/migration';
+import { migrateTokens, migrate, importDesignTokensFromJson, TokenMigrationError } from '../../src/tokens/migration';
 import { DEFAULT_DESIGN_TOKENS } from '../../src/tokens/defaultTokens';
 import { DesignTokensSchema } from '../../src/tokens/types';
 
@@ -9,6 +9,10 @@ describe('Token Migration System (Doc 04 §1.1 & Doc 05 §2)', () => {
     expect(result.schemaVersion).toBe(1);
     expect(result.meta.projectName).toBe(DEFAULT_DESIGN_TOKENS.meta.projectName);
     expect(DesignTokensSchema.safeParse(result).success).toBe(true);
+
+    // Test migrate alias per Doc 04 §1.1
+    const aliasResult = migrate(DEFAULT_DESIGN_TOKENS);
+    expect(aliasResult.schemaVersion).toBe(1);
   });
 
   it('migrates older token payload missing schemaVersion and populates required v1 fields', () => {

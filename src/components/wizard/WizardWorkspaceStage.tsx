@@ -18,11 +18,13 @@ import {
   ShieldCheck,
   AlertTriangle,
   Glasses,
-  X
+  X,
+  Split
 } from 'lucide-react';
 import { DesignProject } from '../../types/designSystem';
 import { DesignTokens } from '../../tokens/types';
 import { auditSemanticContrast } from '../../tokens/contrastEngine';
+import { getStepFocusSection } from './stepDefinitions';
 
 interface WizardWorkspaceStageProps {
   project: DesignProject;
@@ -32,6 +34,8 @@ interface WizardWorkspaceStageProps {
   draftLabel?: string | null;
   onApplyDraft?: () => void;
   onDiscardDraft?: () => void;
+  onToggleCompare?: () => void;
+  isComparing?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -46,6 +50,8 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
   draftLabel = null,
   onApplyDraft,
   onDiscardDraft,
+  onToggleCompare,
+  isComparing = false,
   onUndo,
   onRedo,
   canUndo = false,
@@ -66,6 +72,17 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
   const [colorblindMode, setColorblindMode] = useState<
     'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia'
   >('none');
+
+  useEffect(() => {
+    const handleCbMode = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        setColorblindMode(detail);
+      }
+    };
+    window.addEventListener('dss:set-colorblind-mode', handleCbMode);
+    return () => window.removeEventListener('dss:set-colorblind-mode', handleCbMode);
+  }, []);
 
   // A11y live stats from preview
   const [a11yStats, setA11yStats] = useState<{ pass: number; fail: number }>({ pass: 14, fail: 0 });
@@ -94,7 +111,15 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
           type: 'INIT',
           genreId: project.tokens?.meta?.genreId || project.websiteType?.id || 'ceramics-atelier',
           tokens: project.tokens,
-          mode
+          mode,
+          project: {
+            name: project.name || project.tokens?.meta?.projectName,
+            business: project.business,
+            websiteType: project.websiteType,
+            visualDirection: project.visualDirection,
+            components: project.components,
+            imagery: project.imagery
+          }
         });
       }
 
@@ -105,13 +130,13 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
 
     window.addEventListener('message', handlePreviewMessage);
     return () => window.removeEventListener('message', handlePreviewMessage);
-  }, [project.tokens, mode, sendToPreview]);
+  }, [project, mode, sendToPreview]);
 
   // Outbound rAF throttler for TOKENS (Doc 02 §3.2)
   const pendingTokensRef = useRef<DesignTokens | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
-  // Synchronize tokens to iframe whenever project.tokens changes (throttled to 1 per animation frame)
+  // Synchronize tokens to iframe whenever project or tokens change (throttled to 1 per animation frame)
   useEffect(() => {
     if (project.tokens) {
       pendingTokensRef.current = project.tokens;
@@ -121,7 +146,17 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
           if (pendingTokensRef.current) {
             sendToPreview({
               type: 'TOKENS',
-              tokens: pendingTokensRef.current
+              tokens: pendingTokensRef.current,
+              genreId: project.tokens?.meta?.genreId || project.websiteType?.id,
+              mode,
+              project: {
+                name: project.name || project.tokens?.meta?.projectName,
+                business: project.business,
+                websiteType: project.websiteType,
+                visualDirection: project.visualDirection,
+                components: project.components,
+                imagery: project.imagery
+              }
             });
             pendingTokensRef.current = null;
           }
@@ -142,7 +177,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
         rafIdRef.current = null;
       }
     };
-  }, [project.tokens, mode, sendToPreview]);
+  }, [project, mode, sendToPreview]);
 
   // Synchronize genre when project genre changes
   const activeGenreId = project.tokens?.meta?.genreId || project.websiteType?.id;
@@ -152,27 +187,22 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
         type: 'INIT',
         genreId: activeGenreId,
         tokens: project.tokens,
-        mode
+        mode,
+        project: {
+          name: project.name || project.tokens?.meta?.projectName,
+          business: project.business,
+          websiteType: project.websiteType,
+          visualDirection: project.visualDirection,
+          components: project.components,
+          imagery: project.imagery
+        }
       });
     }
   }, [activeGenreId, sendToPreview]);
 
-  // Auto-scroll iframe preview to relevant section for active wizard step (Doc 02 §3.4)
+  // Auto-scroll iframe preview to relevant section for active wizard step (Doc 02 §3.4 & §5)
   useEffect(() => {
-    const STEP_FOCUS_SECTIONS: Record<number, string> = {
-      1: 'hero',
-      2: 'hero',
-      3: 'hero',
-      4: 'hero',
-      5: 'hero',
-      6: 'type-specimen',
-      7: 'components-showcase',
-      8: 'components-showcase',
-      9: 'gallery',
-      10: 'components-showcase',
-      11: 'components-showcase'
-    };
-    const targetSection = STEP_FOCUS_SECTIONS[currentStep] || 'hero';
+    const targetSection = getStepFocusSection(currentStep);
     const timer = setTimeout(() => {
       sendToPreview({ type: 'SCROLL_TO', sectionId: targetSection });
     }, 200);
@@ -229,7 +259,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
             <span className="truncate">{project.websiteType?.name || 'Ceramics Atelier'}</span>
           </span>
 
-          {/* Draft Preview Ribbon (Apply / Discard) */}
+          {/* Draft Preview Ribbon (Apply / Discard / Compare) */}
           <AnimatePresence>
             {draftLabel && (
               <motion.div
@@ -240,8 +270,22 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-600 animate-spin motion-reduce:animate-none" />
                 <span className="text-xs font-bold text-indigo-900">
-                  Previewing: {draftLabel}
+                  {isComparing ? 'Comparing (A): Original' : `Previewing (B): ${draftLabel}`}
                 </span>
+                {onToggleCompare && (
+                  <button
+                    type="button"
+                    onClick={onToggleCompare}
+                    title="Toggle between original (A) and preview draft (B) [Hotkey: C]"
+                    className={`ml-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition-colors cursor-pointer flex items-center gap-1 ${
+                      isComparing
+                        ? 'bg-amber-500 text-white border-amber-600 shadow-2xs'
+                        : 'bg-indigo-100 text-indigo-900 border-indigo-300 hover:bg-indigo-200'
+                    }`}
+                  >
+                    <span>{isComparing ? 'Showing: Original (A)' : 'Compare A/B (C)'}</span>
+                  </button>
+                )}
                 {onApplyDraft && (
                   <button
                     onClick={onApplyDraft}
@@ -517,6 +561,22 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
                 src="/preview-frame"
                 title="Live Reactive Template"
                 className="w-full h-full border-0"
+                onLoad={() => {
+                  sendToPreview({
+                    type: 'INIT',
+                    genreId: project.tokens?.meta?.genreId || project.websiteType?.id || 'ceramics-atelier',
+                    tokens: project.tokens,
+                    mode,
+                    project: {
+                      name: project.name || project.tokens?.meta?.projectName,
+                      business: project.business,
+                      websiteType: project.websiteType,
+                      visualDirection: project.visualDirection,
+                      components: project.components,
+                      imagery: project.imagery
+                    }
+                  });
+                }}
               />
             </div>
           </div>

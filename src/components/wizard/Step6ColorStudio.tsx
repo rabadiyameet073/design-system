@@ -13,9 +13,13 @@ import {
   AlertTriangle,
   Layers,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Sun,
+  Moon,
+  RefreshCw
 } from 'lucide-react';
 import { DesignProject, ColorPaletteConfig } from '../../types/designSystem';
+import { SemanticColors } from '../../tokens/types';
 import { COLOR_PALETTES, COLOR_FAMILIES } from '../../data/palettes';
 import { ColorWheelPicker } from '../common/ColorWheelPicker';
 import { extractDominantColorFromImage } from '../../utils/imageColorExtractor';
@@ -30,8 +34,10 @@ import {
 import {
   auditSemanticContrast,
   nudgeToContrast,
+  autoFixSemantic,
   ratio,
-  grade
+  grade,
+  computeApcaLc
 } from '../../tokens/contrastEngine';
 
 interface Step6ColorStudioProps {
@@ -57,9 +63,103 @@ export const Step6ColorStudio: React.FC<Step6ColorStudioProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isExtractingLogo, setIsExtractingLogo] = useState(false);
   const [autoFixMessage, setAutoFixMessage] = useState<string | null>(null);
+  const [themeTab, setThemeTab] = useState<'light' | 'dark'>('light');
 
   const brandHex = project.tokens?.color?.primitives?.brand?.[600] || project.colorPalette?.primary || '#B7410E';
   const accentHex = project.tokens?.color?.primitives?.accent?.[500] || project.colorPalette?.accent || '#2563EB';
+
+  // Active mode semantic tokens
+  const activeSemantic = useMemo(() => {
+    const existing = project.tokens?.color?.semantic?.[themeTab];
+    if (existing) return existing;
+    const prims = project.tokens?.color?.primitives || generateAllColorPrimitives(brandHex, accentHex);
+    return themeTab === 'light' ? createLightSemanticColors(prims) : createDarkSemanticColors(prims);
+  }, [project.tokens?.color?.semantic, themeTab, brandHex, accentHex]);
+
+  const textCanvasRatio = useMemo(() => {
+    return ratio(activeSemantic.fgDefault, activeSemantic.bgDefault);
+  }, [activeSemantic.fgDefault, activeSemantic.bgDefault]);
+
+  const textCanvasApca = useMemo(() => {
+    return computeApcaLc(activeSemantic.fgDefault, activeSemantic.bgDefault);
+  }, [activeSemantic.fgDefault, activeSemantic.bgDefault]);
+
+  const [inStepColorblindMode, setInStepColorblindMode] = useState<string>('none');
+  const handleColorblindChange = (mode: string) => {
+    setInStepColorblindMode(mode);
+    window.dispatchEvent(new CustomEvent('dss:set-colorblind-mode', { detail: mode }));
+  };
+
+  const textCanvasGrade = useMemo(() => {
+    return grade(textCanvasRatio);
+  }, [textCanvasRatio]);
+
+  const isTextContrastLow = textCanvasRatio < 4.5;
+
+  const handleSemanticColorChange = (
+    mode: 'light' | 'dark',
+    key: keyof SemanticColors,
+    value: string
+  ) => {
+    if (onClearDraft) onClearDraft();
+    const currentSemantic = project.tokens?.color?.semantic;
+    if (!currentSemantic) return;
+
+    const updatedMode = {
+      ...currentSemantic[mode],
+      [key]: value
+    };
+
+    const updatedPalette: ColorPaletteConfig = {
+      ...project.colorPalette,
+      ...(mode === 'light' && key === 'bgDefault' ? { background: value } : {}),
+      ...(mode === 'light' && key === 'bgSurface' ? { surface: value } : {}),
+      ...(mode === 'light' && key === 'fgDefault' ? { textPrimary: value } : {}),
+      ...(mode === 'light' && key === 'fgMuted' ? { textSecondary: value } : {}),
+      ...(mode === 'light' && key === 'borderDefault' ? { surfaceBorder: value } : {})
+    };
+
+    onChange({
+      colorPalette: updatedPalette,
+      tokens: {
+        ...project.tokens,
+        color: {
+          ...project.tokens.color,
+          semantic: {
+            ...currentSemantic,
+            [mode]: updatedMode
+          }
+        }
+      }
+    });
+  };
+
+  const handleNudgeCurrentThemeText = () => {
+    if (onClearDraft) onClearDraft();
+    const nudgedFg = nudgeToContrast(activeSemantic.fgDefault, activeSemantic.bgDefault, 4.5);
+    handleSemanticColorChange(themeTab, 'fgDefault', nudgedFg);
+  };
+
+  const handleResetCurrentThemeSemantic = () => {
+    if (onClearDraft) onClearDraft();
+    const prims = project.tokens?.color?.primitives || generateAllColorPrimitives(brandHex, accentHex);
+    const fresh = themeTab === 'light' ? createLightSemanticColors(prims) : createDarkSemanticColors(prims);
+    const currentSemantic = project.tokens?.color?.semantic;
+    if (!currentSemantic) return;
+
+    onChange({
+      tokens: {
+        ...project.tokens,
+        color: {
+          ...project.tokens.color,
+          semantic: {
+            ...currentSemantic,
+            [themeTab]: fresh
+          }
+        }
+      }
+    });
+  };
 
   // Compute live semantic audit on current light theme
   const currentSemantic = project.tokens?.color?.semantic?.light;
@@ -72,6 +172,7 @@ export const Step6ColorStudio: React.FC<Step6ColorStudioProps> = ({
 
   // Synchronize master tokens when colors change
   const applyColors = (newBrand: string, newAccent: string) => {
+    if (onClearDraft) onClearDraft();
     const primitives = generateAllColorPrimitives(newBrand, newAccent);
     const light = createLightSemanticColors(primitives);
     const dark = createDarkSemanticColors(primitives);
@@ -161,34 +262,13 @@ export const Step6ColorStudio: React.FC<Step6ColorStudioProps> = ({
     }
   };
 
-  // Auto-Fix contrast using nudgeToContrast
+  // Auto-Fix contrast using autoFixSemantic
   const handleAutoFixContrast = () => {
+    if (onClearDraft) onClearDraft();
     if (!project.tokens?.color?.semantic) return;
 
-    const light = { ...project.tokens.color.semantic.light };
-    const dark = { ...project.tokens.color.semantic.dark };
-
-    // Nudge light semantic pairs
-    light.fgDefault = nudgeToContrast(light.fgDefault, light.bgDefault, 4.5);
-    light.fgMuted = nudgeToContrast(light.fgMuted, light.bgDefault, 4.5);
-    light.actionPrimaryFg = nudgeToContrast(light.actionPrimaryFg, light.actionPrimary, 4.5);
-    light.borderDefault = nudgeToContrast(light.borderDefault, light.bgDefault, 3.0);
-    light.focusRing = nudgeToContrast(light.focusRing, light.bgDefault, 3.0);
-    light.statusSuccessFg = nudgeToContrast(light.statusSuccessFg, light.statusSuccessBg, 4.5);
-    light.statusWarningFg = nudgeToContrast(light.statusWarningFg, light.statusWarningBg, 4.5);
-    light.statusDangerFg = nudgeToContrast(light.statusDangerFg, light.statusDangerBg, 4.5);
-    light.statusInfoFg = nudgeToContrast(light.statusInfoFg, light.statusInfoBg, 4.5);
-
-    // Nudge dark semantic pairs
-    dark.fgDefault = nudgeToContrast(dark.fgDefault, dark.bgDefault, 4.5);
-    dark.fgMuted = nudgeToContrast(dark.fgMuted, dark.bgDefault, 4.5);
-    dark.actionPrimaryFg = nudgeToContrast(dark.actionPrimaryFg, dark.actionPrimary, 4.5);
-    dark.borderDefault = nudgeToContrast(dark.borderDefault, dark.bgDefault, 3.0);
-    dark.focusRing = nudgeToContrast(dark.focusRing, dark.bgDefault, 3.0);
-    dark.statusSuccessFg = nudgeToContrast(dark.statusSuccessFg, dark.statusSuccessBg, 4.5);
-    dark.statusWarningFg = nudgeToContrast(dark.statusWarningFg, dark.statusWarningBg, 4.5);
-    dark.statusDangerFg = nudgeToContrast(dark.statusDangerFg, dark.statusDangerBg, 4.5);
-    dark.statusInfoFg = nudgeToContrast(dark.statusInfoFg, dark.statusInfoBg, 4.5);
+    const light = autoFixSemantic(project.tokens.color.semantic.light);
+    const dark = autoFixSemantic(project.tokens.color.semantic.dark);
 
     onChange({
       tokens: {
@@ -283,7 +363,20 @@ export const Step6ColorStudio: React.FC<Step6ColorStudioProps> = ({
                   {isBrandLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
                 </button>
               </div>
-              <span className="font-mono text-xs text-neutral-500 font-semibold uppercase">{brandHex}</span>
+              <input
+                type="text"
+                value={brandHex}
+                disabled={isBrandLocked}
+                onChange={e => {
+                  let val = e.target.value.trim();
+                  if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+                  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                    handleBrandChange(val);
+                  }
+                }}
+                className="font-mono text-xs text-neutral-800 font-bold uppercase w-20 px-1.5 py-0.5 rounded border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                placeholder="#HEX"
+              />
             </div>
           </div>
 
@@ -315,7 +408,20 @@ export const Step6ColorStudio: React.FC<Step6ColorStudioProps> = ({
                   {isAccentLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
                 </button>
               </div>
-              <span className="font-mono text-xs text-neutral-500 font-semibold uppercase">{accentHex}</span>
+              <input
+                type="text"
+                value={accentHex}
+                disabled={isAccentLocked}
+                onChange={e => {
+                  let val = e.target.value.trim();
+                  if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+                  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                    handleAccentChange(val);
+                  }
+                }}
+                className="font-mono text-xs text-neutral-800 font-bold uppercase w-20 px-1.5 py-0.5 rounded border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                placeholder="#HEX"
+              />
             </div>
           </div>
 
@@ -344,14 +450,14 @@ export const Step6ColorStudio: React.FC<Step6ColorStudioProps> = ({
           </div>
           <div className="grid grid-cols-11 gap-1 rounded-xl overflow-hidden p-1 bg-neutral-100">
             {([50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const).map((step, idx) => {
-              const hex = project.tokens?.color?.primitives?.brand?.[step] || '#888888';
+              const hex = project.tokens?.color?.primitives?.brand?.[step] || project.colorPalette?.primary;
               return (
                 <div
                   key={step}
                   className="h-11 rounded flex flex-col justify-end p-1 text-[9px] font-mono tabular-nums shadow-2xs"
                   style={{
                     backgroundColor: hex,
-                    color: idx > 5 ? '#FFFFFF' : '#18181B'
+                    color: idx > 5 ? activeSemantic.bgDefault : activeSemantic.fgDefault
                   }}
                   title={`Step ${step}: ${hex}`}
                 >
@@ -359,6 +465,197 @@ export const Step6ColorStudio: React.FC<Step6ColorStudioProps> = ({
                 </div>
               );
             })}
+          </div>
+        </div>
+      </div>
+
+      {/* Direct Surface & Typography Color Calibration (Single Source of Truth) */}
+      <div className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 pb-3">
+          <div>
+            <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-neutral-700" />
+              <span>Canvas, Surfaces & Typography Colors</span>
+            </h3>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              Directly calibrate text contrast and background surfaces. Changes apply live to your preview.
+            </p>
+          </div>
+
+          {/* Theme Switcher & Colorblind Vision Quick-Toggle */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 bg-neutral-100 p-1 rounded-xl">
+              <span className="text-[10px] uppercase font-bold text-neutral-400 pl-1">Vision:</span>
+              <select
+                value={inStepColorblindMode}
+                onChange={(e) => handleColorblindChange(e.target.value)}
+                className="bg-white text-[11px] font-semibold text-neutral-800 rounded-lg px-2 py-1 border border-neutral-200 focus:outline-none cursor-pointer"
+                title="Colorblind Vision Simulation"
+              >
+                <option value="none">Normal Vision</option>
+                <option value="protanopia">Protanopia (Red-blind)</option>
+                <option value="deuteranopia">Deuteranopia (Green-blind)</option>
+                <option value="tritanopia">Tritanopia (Blue-blind)</option>
+                <option value="achromatopsia">Achromatopsia (Monochrome)</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setThemeTab('light')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  themeTab === 'light'
+                    ? 'bg-white text-neutral-900 shadow-2xs'
+                    : 'text-neutral-500 hover:text-neutral-900'
+                }`}
+              >
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <span>Light Theme</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setThemeTab('dark')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  themeTab === 'dark'
+                    ? 'bg-neutral-900 text-white shadow-2xs'
+                    : 'text-neutral-500 hover:text-neutral-900'
+                }`}
+              >
+                <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Dark Theme</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 5 Core Color Controls Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          {[
+            {
+              key: 'bgDefault' as keyof SemanticColors,
+              label: 'Canvas Background',
+              desc: 'Main page & viewport background',
+              value: activeSemantic.bgDefault,
+              badge: null
+            },
+            {
+              key: 'bgSurface' as keyof SemanticColors,
+              label: 'Card Surface',
+              desc: 'Cards, modals & floating panels',
+              value: activeSemantic.bgSurface,
+              badge: `${ratio(activeSemantic.fgDefault, activeSemantic.bgSurface).toFixed(1)}:1 vs Text`
+            },
+            {
+              key: 'fgDefault' as keyof SemanticColors,
+              label: 'Primary Text',
+              desc: 'Headings and high-contrast body',
+              value: activeSemantic.fgDefault,
+              badge: `${textCanvasRatio.toFixed(1)}:1 on Canvas`
+            },
+            {
+              key: 'fgMuted' as keyof SemanticColors,
+              label: 'Muted Text',
+              desc: 'Captions, subtitles & placeholders',
+              value: activeSemantic.fgMuted,
+              badge: `${ratio(activeSemantic.fgMuted, activeSemantic.bgDefault).toFixed(1)}:1 on Canvas`
+            },
+            {
+              key: 'borderDefault' as keyof SemanticColors,
+              label: 'Border UI',
+              desc: 'Card outlines, dividers & inputs',
+              value: activeSemantic.borderDefault,
+              badge: `${ratio(activeSemantic.borderDefault, activeSemantic.bgDefault).toFixed(1)}:1 vs Canvas`
+            }
+          ].map((item) => (
+            <div
+              key={item.key}
+              className="p-3 rounded-xl border border-neutral-150 bg-neutral-50/60 hover:bg-neutral-50 transition-colors flex flex-col justify-between space-y-2.5"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-1">
+                  <div className="text-xs font-bold text-neutral-900">{item.label}</div>
+                  {item.badge && (
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-white border border-neutral-200 text-neutral-600 shadow-2xs">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10px] text-neutral-400 leading-tight mt-0.5">{item.desc}</div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={item.value}
+                  onChange={(e) => handleSemanticColorChange(themeTab, item.key, e.target.value)}
+                  className="w-8 h-8 rounded-lg border border-black/10 p-0 cursor-pointer shrink-0"
+                  title={`Pick ${item.label}`}
+                />
+                <input
+                  type="text"
+                  value={item.value}
+                  onChange={(e) => {
+                    let val = e.target.value.trim();
+                    if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                      handleSemanticColorChange(themeTab, item.key, val);
+                    }
+                  }}
+                  className="font-mono text-xs font-bold uppercase w-full px-2 py-1 rounded-md border border-neutral-200 bg-white text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                  placeholder="#HEX"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Live Contrast Verification Banner for Active Theme */}
+        <div className="p-3 rounded-xl bg-neutral-100/70 border border-neutral-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div
+              className="px-3 py-1.5 rounded-lg border font-medium text-xs shadow-2xs"
+              style={{
+                backgroundColor: activeSemantic.bgDefault,
+                color: activeSemantic.fgDefault,
+                borderColor: activeSemantic.borderDefault
+              }}
+            >
+              Aa The quick brown fox jumps over the lazy dog
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-neutral-500 font-medium">Text/Canvas Contrast:</span>
+              <span
+                className={`font-mono font-bold px-2 py-0.5 rounded text-[11px] ${
+                  textCanvasRatio >= 4.5
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-rose-100 text-rose-800'
+                }`}
+              >
+                {textCanvasRatio.toFixed(1)}:1 ({textCanvasGrade}) · APCA Lc {textCanvasApca > 0 ? `+${textCanvasApca}` : textCanvasApca}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isTextContrastLow && (
+              <button
+                type="button"
+                onClick={handleNudgeCurrentThemeText}
+                className="px-2.5 py-1 rounded-lg bg-neutral-900 text-white text-[11px] font-bold hover:bg-neutral-800 cursor-pointer shadow-2xs"
+              >
+                Nudge Text to AA
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleResetCurrentThemeSemantic}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-neutral-200 hover:bg-white text-neutral-600 hover:text-neutral-900 text-[11px] font-semibold cursor-pointer transition-colors"
+              title="Reset this theme's semantic colors from primitive color scales"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Reset to OKLCH Defaults</span>
+            </button>
           </div>
         </div>
       </div>

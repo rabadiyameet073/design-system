@@ -10,6 +10,7 @@ export const PreviewFrame: React.FC = () => {
   const [tokens, setTokens] = useState<DesignTokens>(DEFAULT_DESIGN_TOKENS);
   const [genreId, setGenreId] = useState<string>('ceramics-atelier');
   const [mode, setMode] = useState<'light' | 'dark'>('light');
+  const [projectMeta, setProjectMeta] = useState<any>({});
   const [isReady, setIsReady] = useState(false);
 
   // Apply initial tokens on load
@@ -37,41 +38,63 @@ export const PreviewFrame: React.FC = () => {
       switch (data.type) {
         case 'INIT': {
           if (data.genreId) setGenreId(data.genreId);
+          if (data.project) setProjectMeta(data.project);
+          const activeMode = data.mode || mode;
+          if (data.mode) setMode(data.mode);
           if (data.tokens) {
             setTokens(data.tokens);
-            applyTokens(data.tokens, data.mode || mode);
-          }
-          if (data.mode) {
-            setMode(data.mode);
-            if (data.tokens) applyTokens(data.tokens, data.mode);
+            applyTokens(data.tokens, activeMode);
+
+            const semantic = data.tokens.color?.semantic?.[activeMode] || data.tokens.color?.semantic?.light;
+            if (semantic) {
+              const audit = auditSemanticContrast(semantic);
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage(
+                  {
+                    type: 'A11Y_RESULT',
+                    pass: audit.passCount,
+                    fail: audit.failCount,
+                    issues: audit.issues
+                  },
+                  window.location.origin
+                );
+              }
+            }
           }
           break;
         }
 
         case 'TOKENS': {
+          if (data.project) {
+            setProjectMeta(data.project);
+          }
           if (data.tokens) {
             setTokens(data.tokens);
-            if (data.tokens.meta?.genreId) {
-              setGenreId(data.tokens.meta.genreId);
+            const nextGenre = data.genreId || data.tokens.meta?.genreId;
+            if (nextGenre) {
+              setGenreId(nextGenre);
             }
+            const activeMode = data.mode || mode;
             // Throttle with rAF
             requestAnimationFrame(() => {
-              applyTokens(data.tokens, mode);
+              applyTokens(data.tokens, activeMode);
             });
 
             // Run audit and send back to studio
-            const semantic = data.tokens.color.semantic[mode];
-            const audit = auditSemanticContrast(semantic);
-            if (window.parent && window.parent !== window) {
-              window.parent.postMessage(
-                {
-                  type: 'A11Y_RESULT',
-                  pass: audit.passCount,
-                  fail: audit.failCount,
-                  issues: audit.issues
-                },
-                window.location.origin
-              );
+            const semantic = data.tokens.color?.semantic?.[activeMode] || data.tokens.color?.semantic?.light;
+            if (semantic) {
+              const audit = auditSemanticContrast(semantic);
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage(
+                  {
+                    type: 'A11Y_RESULT',
+                    pass: audit.passCount,
+                    fail: audit.failCount,
+                    issues: audit.issues
+                  },
+                  window.location.origin
+                );
+              }
             }
           }
           break;
@@ -101,6 +124,30 @@ export const PreviewFrame: React.FC = () => {
         case 'SCROLL_TO': {
           if (data.sectionId) {
             let el = document.getElementById(data.sectionId);
+            if (!el) {
+              const aliases: Record<string, string> = {
+                'components': 'components-showcase',
+                'components-showcase': 'components-showcase',
+                'type': 'type-specimen',
+                'type-specimen': 'type-specimen',
+                'pricing': 'pricing',
+                'pricing-table': 'pricing',
+                'features': 'features',
+                'feature-grid': 'features',
+                'products': 'products',
+                'product-grid': 'products',
+                'booking': 'booking',
+                'booking-widget': 'booking',
+                'courses': 'courses',
+                'course-cards': 'courses',
+                'projects': 'projects',
+                'project-grid': 'projects',
+                'gallery': 'gallery',
+                'hero': 'hero'
+              };
+              const resolved = aliases[data.sectionId];
+              if (resolved) el = document.getElementById(resolved);
+            }
             if (!el && data.sectionId !== 'hero') {
               el = document.getElementById('hero');
             }
@@ -124,11 +171,34 @@ export const PreviewFrame: React.FC = () => {
   const category: CategoryId = genre.category || 'commerce';
   const TemplateComponent = TEMPLATE_REGISTRY[category] || TEMPLATE_REGISTRY.commerce;
 
+  const brandName = projectMeta.business?.name || projectMeta.name || tokens.meta?.projectName || genre.label;
+  const headline = projectMeta.business?.offering || projectMeta.business?.primaryGoal || genre.description;
+  const subtitle = projectMeta.business?.audience
+    ? `Crafted for ${projectMeta.business.audience}. ${projectMeta.business.primaryGoal ? projectMeta.business.primaryGoal + '.' : ''}`
+    : undefined;
+  const badge = projectMeta.visualDirection?.archetype || genre.label;
+
+  // RTL Internationalization Detection (Doc 04 §Internationalization)
+  const isRtl = Boolean(
+    (tokens.meta as any)?.direction === 'rtl' ||
+    tokens.meta?.scripts?.some(s => ['arabic', 'hebrew', 'farsi', 'urdu', 'ar', 'he'].includes(s.toLowerCase()))
+  );
+
+  useEffect(() => {
+    document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+    document.documentElement.lang = isRtl ? 'ar' : 'en';
+  }, [isRtl]);
+
   return (
-    <div className="w-full min-h-screen overflow-x-hidden">
+    <div className="w-full min-h-screen overflow-x-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
       <TemplateComponent
-        brandName={tokens.meta?.projectName || genre.label}
+        brandName={brandName}
+        headline={headline}
+        subtitle={subtitle}
+        badge={badge}
         heroImage={genre.heroImage}
+        components={projectMeta.components}
+        buttonStyle={projectMeta.components?.buttonStyle || tokens.component?.buttonStyle}
       />
     </div>
   );

@@ -50,58 +50,113 @@ export function tokensToCssVars(
   vars['--color-status-info-fg'] = semantic.statusInfoFg;
 
   // 3. Spacing Scale
-  tokens.space.scale.forEach((px, i) => {
-    vars[`--space-${i}`] = `${px}px`;
-  });
+  if (tokens.space?.scale && Array.isArray(tokens.space.scale)) {
+    tokens.space.scale.forEach((px, i) => {
+      vars[`--space-${i}`] = `${px}px`;
+    });
+  }
 
   // 4. Border Radius
-  vars['--radius-none'] = `${tokens.radius.none}px`;
-  vars['--radius-sm'] = `${tokens.radius.sm}px`;
-  vars['--radius-md'] = `${tokens.radius.md}px`;
-  vars['--radius-lg'] = `${tokens.radius.lg}px`;
-  vars['--radius-xl'] = `${tokens.radius.xl}px`;
-  vars['--radius-full'] = `${tokens.radius.full}px`;
+  if (tokens.radius) {
+    if (tokens.radius.none !== undefined) vars['--radius-none'] = `${tokens.radius.none}px`;
+    if (tokens.radius.sm !== undefined) vars['--radius-sm'] = `${tokens.radius.sm}px`;
+    if (tokens.radius.md !== undefined) vars['--radius-md'] = `${tokens.radius.md}px`;
+    if (tokens.radius.lg !== undefined) vars['--radius-lg'] = `${tokens.radius.lg}px`;
+    if (tokens.radius.xl !== undefined) vars['--radius-xl'] = `${tokens.radius.xl}px`;
+    if (tokens.radius.full !== undefined) vars['--radius-full'] = `${tokens.radius.full}px`;
+  }
 
   // 5. Typography Roles
-  const roles = tokens.typography.roles;
+  const roles = tokens.typography?.roles || {};
+  const getFallbackString = (fb?: string[]) =>
+    Array.isArray(fb) && fb.length > 0 ? fb.join(', ') : 'system-ui, sans-serif';
+
   vars['--font-display'] = roles.display?.family
-    ? `"${roles.display.family}", ${roles.display.fallback.join(', ')}`
+    ? `"${roles.display.family}", ${getFallbackString(roles.display.fallback)}`
     : 'inherit';
   vars['--font-heading'] = roles.heading?.family
-    ? `"${roles.heading.family}", ${roles.heading.fallback.join(', ')}`
+    ? `"${roles.heading.family}", ${getFallbackString(roles.heading.fallback)}`
     : 'inherit';
   vars['--font-body'] = roles.body?.family
-    ? `"${roles.body.family}", ${roles.body.fallback.join(', ')}`
+    ? `"${roles.body.family}", ${getFallbackString(roles.body.fallback)}`
     : 'inherit';
   vars['--font-ui'] = roles.ui?.family
-    ? `"${roles.ui.family}", ${roles.ui.fallback.join(', ')}`
+    ? `"${roles.ui.family}", ${getFallbackString(roles.ui.fallback)}`
     : 'inherit';
   vars['--font-mono'] = roles.mono?.family
-    ? `"${roles.mono.family}", ${roles.mono.fallback.join(', ')}`
+    ? `"${roles.mono.family}", ${Array.isArray(roles.mono.fallback) && roles.mono.fallback.length > 0 ? roles.mono.fallback.join(', ') : 'ui-monospace, monospace'}`
     : 'monospace';
 
   // 6. Fluid Scale Steps
-  if (tokens.typography.scale) {
+  if (tokens.typography?.scale) {
     for (const [stepKey, entry] of Object.entries(tokens.typography.scale)) {
-      vars[`--text-${stepKey}`] = entry.css;
+      if (entry?.css) {
+        vars[`--text-${stepKey}`] = entry.css;
+      }
     }
   }
 
   // 7. Motion & Elevation
-  vars['--duration-fast'] = `${tokens.motion.duration.fast}ms`;
-  vars['--duration-base'] = `${tokens.motion.duration.base}ms`;
-  vars['--duration-slow'] = `${tokens.motion.duration.slow}ms`;
-  vars['--ease-standard'] = tokens.motion.easing.standard;
-  vars['--ease-emphasized'] = tokens.motion.easing.emphasized;
+  if (tokens.motion) {
+    if (tokens.motion.duration) {
+      vars['--duration-fast'] = `${tokens.motion.duration.fast ?? 150}ms`;
+      vars['--duration-base'] = `${tokens.motion.duration.base ?? 250}ms`;
+      vars['--duration-slow'] = `${tokens.motion.duration.slow ?? 400}ms`;
+    }
+    if (tokens.motion.easing) {
+      vars['--ease-standard'] = tokens.motion.easing.standard || 'cubic-bezier(0.2, 0, 0, 1)';
+      vars['--ease-emphasized'] = tokens.motion.easing.emphasized || 'cubic-bezier(0.2, 0, 0, 1)';
+    }
+  }
 
-  vars['--shadow-sm'] = tokens.shadow.sm;
-  vars['--shadow-md'] = tokens.shadow.md;
-  vars['--shadow-lg'] = tokens.shadow.lg;
+  if (tokens.shadow) {
+    if (tokens.shadow.sm) vars['--shadow-sm'] = tokens.shadow.sm;
+    if (tokens.shadow.md) vars['--shadow-md'] = tokens.shadow.md;
+    if (tokens.shadow.lg) vars['--shadow-lg'] = tokens.shadow.lg;
+  }
 
-  // 8. Components
-  vars['--radius-button'] = tokens.component.buttonRadius;
-  vars['--radius-card'] = tokens.component.cardRadius;
-  vars['--radius-input'] = tokens.component.inputRadius;
+  // 8. Components & Button Style
+  const buttonRad = tokens.component?.buttonRadius || (tokens.radius?.md !== undefined ? `${tokens.radius.md}px` : '8px');
+  const cardRad = tokens.component?.cardRadius || (tokens.radius?.lg !== undefined ? `${tokens.radius.lg}px` : '16px');
+  const inputRad = tokens.component?.inputRadius || (tokens.radius?.sm !== undefined ? `${tokens.radius.sm}px` : '6px');
+
+  vars['--radius-button'] = buttonRad;
+  vars['--radius-card'] = cardRad;
+  vars['--radius-input'] = inputRad;
+
+  const btnStyle = (tokens.component as any)?.buttonStyle || 'solid';
+  vars['--button-style'] = btnStyle;
+  if (btnStyle === 'outline') {
+    vars['--button-bg'] = 'transparent';
+    vars['--button-fg'] = 'var(--color-action-primary)';
+    vars['--button-border'] = '2px solid var(--color-action-primary)';
+  } else if (btnStyle === 'subtle') {
+    vars['--button-bg'] = 'var(--color-bg-surface)';
+    vars['--button-fg'] = 'var(--color-action-primary)';
+    vars['--button-border'] = '1px solid var(--color-border-default)';
+  } else if (btnStyle === 'minimal') {
+    vars['--button-bg'] = 'transparent';
+    vars['--button-fg'] = 'var(--color-action-primary)';
+    vars['--button-border'] = 'none';
+  } else {
+    // solid (default)
+    vars['--button-bg'] = 'var(--color-action-primary)';
+    vars['--button-fg'] = 'var(--color-action-primary-fg)';
+    vars['--button-border'] = 'none';
+  }
+
+  // 9. Imagery Treatment
+  const treatment = tokens.imagery?.treatment || 'natural';
+  if (treatment === 'duotone') {
+    vars['--image-filter'] = 'grayscale(100%) contrast(1.15) brightness(0.95)';
+    vars['--image-tint-opacity'] = '0.35';
+  } else if (treatment === 'mono') {
+    vars['--image-filter'] = 'grayscale(100%) contrast(1.1)';
+    vars['--image-tint-opacity'] = '0';
+  } else {
+    vars['--image-filter'] = 'none';
+    vars['--image-tint-opacity'] = '0';
+  }
 
   return vars;
 }

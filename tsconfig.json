@@ -24,5 +24,7 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "noEmit": true
-  }
+  },
+  "include": ["src", "tests", "api", "server.ts", "scripts"],
+  "exclude": ["node_modules", "dist", ".agents"]
 }

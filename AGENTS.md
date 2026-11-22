@@ -1,6 +1,11 @@
 # Design System Studio — Agent Guidelines
 
-See [GEMINI.md](file:///d:/desing%20system/GEMINI.md) and [.agents/rules/creative-3d-animated-uiux.md](file:///d:/desing%20system/.agents/rules/creative-3d-animated-uiux.md) for complete project guidelines.
+See [GEMINI.md](file:///d:/desing%20system/GEMINI.md), [.agents/rules/creative-3d-animated-uiux.md](file:///d:/desing%20system/.agents/rules/creative-3d-animated-uiux.md), and [.agents/rules/gsd-router-loop.md](file:///d:/desing%20system/.agents/rules/gsd-router-loop.md) for complete project guidelines.
+
+## Permanent Execution Protocols:
+- **Get Shit Done (GSD)**: Spec-driven, high-velocity, rigorous execution without fluff.
+- **Router Loop**: Scout -> Route -> Execute -> Verify (lint + test) -> Loop.
+
 
 ## Priority Checklist for UI/UX & Web Development:
 - **3D & WebGL**: Implement responsive, memory-safe Three.js interactive scenes.

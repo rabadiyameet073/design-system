@@ -16,7 +16,7 @@ export interface OAuthUser {
   name: string;
   email: string;
   avatar: string;
-  provider: 'google' | 'github' | 'oauth2' | 'custom';
+  provider: 'google' | 'github' | 'oauth2' | 'custom' | 'demo';
   accessToken?: string;
   idToken?: string;
   scope: string;

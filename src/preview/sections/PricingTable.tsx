@@ -68,12 +68,13 @@ export const PricingTable: React.FC<PricingTableProps> = ({
           {tiers.map((t, idx) => (
             <div
               key={idx}
-              className={`relative p-8 rounded-[var(--radius-xl)] border flex flex-col justify-between transition-all duration-300 ${
+              className={`relative p-8 border flex flex-col justify-between transition-all duration-300 ${
                 t.highlighted ? 'shadow-[var(--shadow-lg)] ring-2 ring-[var(--color-action-primary)]' : 'shadow-[var(--shadow-sm)]'
               }`}
               style={{
                 backgroundColor: 'var(--color-bg-default)',
-                borderColor: t.highlighted ? 'var(--color-action-primary)' : 'var(--color-border-default)'
+                borderColor: t.highlighted ? 'var(--color-action-primary)' : 'var(--color-border-default)',
+                borderRadius: 'var(--radius-card, var(--radius-xl))'
               }}
             >
               {t.highlighted && (
@@ -124,11 +125,11 @@ export const PricingTable: React.FC<PricingTableProps> = ({
                 <button
                   className="w-full py-2.5 text-xs font-semibold transition-all shadow-[var(--shadow-sm)] hover:opacity-90 active:scale-98 cursor-pointer"
                   style={{
-                    backgroundColor: t.highlighted ? 'var(--color-action-primary)' : 'var(--color-bg-surface)',
-                    color: t.highlighted ? 'var(--color-action-primary-fg)' : 'var(--color-fg-default)',
-                    borderColor: 'var(--color-border-default)',
-                    borderWidth: t.highlighted ? 0 : 1,
-                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: t.highlighted ? 'var(--button-bg, var(--color-action-primary))' : 'var(--color-bg-surface)',
+                    color: t.highlighted ? 'var(--button-fg, var(--color-action-primary-fg))' : 'var(--color-fg-default)',
+                    borderColor: t.highlighted ? undefined : 'var(--color-border-default)',
+                    border: t.highlighted ? 'var(--button-border, none)' : '1px solid var(--color-border-default)',
+                    borderRadius: 'var(--radius-button, var(--radius-md))',
                     fontFamily: 'var(--font-ui, var(--font-body))'
                   }}
                 >

@@ -468,7 +468,7 @@ export function buildShowcaseProject(typeDef: WebsiteTypeDefinition): DesignProj
       highContrast: false,
       reducedMotion: false,
       notes: [
-        `${selectedPalette.name} verified against WCAG 2.1 AA standards`,
+        `${selectedPalette.name} verified against WCAG 2.2 AA standards`,
         'Semantic tokens calibrated across all interactive breakpoints',
       ],
     },

@@ -12,6 +12,7 @@ export interface TypographyAuditResult {
   issues: TypographyGuardrailIssue[];
   estimatedPayloadKb: number;
   totalFamiliesCount: number;
+  totalFontFiles: number;
   hasErrors: boolean;
 }
 
@@ -28,6 +29,7 @@ export function auditTypographyTokens(
   // 1. Count distinct non-mono families
   const distinctFamilies = new Set<string>();
   const allFamilies = new Set<string>();
+  const roleWeightsByFamily = new Map<string, Set<number>>();
 
   (Object.keys(roles) as FontRole[]).forEach(role => {
     const style = roles[role];
@@ -35,6 +37,17 @@ export function auditTypographyTokens(
       allFamilies.add(style.family);
       if (role !== 'mono') {
         distinctFamilies.add(style.family);
+      }
+      if (!roleWeightsByFamily.has(style.family)) {
+        roleWeightsByFamily.set(style.family, new Set<number>());
+      }
+      if (style.weight) {
+        roleWeightsByFamily.get(style.family)!.add(style.weight);
+      }
+      // Body typically requires both 400 (regular) and 700 (bold) in production
+      if (role === 'body') {
+        roleWeightsByFamily.get(style.family)!.add(400);
+        roleWeightsByFamily.get(style.family)!.add(700);
       }
     }
   });
@@ -122,17 +135,32 @@ export function auditTypographyTokens(
     }
   }
 
-  // 5. Estimate payload (~35KB static woff2, ~70KB variable)
+  // 5. Total font files and payload estimation (Doc 03 §8)
+  // Variable font: 1 file (~70KB woff2). Static font: ~25KB per static weight file.
+  let totalFontFiles = 0;
   let estimatedPayloadKb = 0;
+
   allFamilies.forEach(family => {
     const meta = fontsMetaMap?.get(family);
     if (meta?.variable) {
+      totalFontFiles += 1;
       estimatedPayloadKb += 70;
     } else {
-      // 2–3 weights per static family
-      estimatedPayloadKb += 45;
+      const weightsSet = roleWeightsByFamily.get(family);
+      const fileCount = weightsSet && weightsSet.size > 0 ? weightsSet.size : 2;
+      totalFontFiles += fileCount;
+      estimatedPayloadKb += fileCount * 25;
     }
   });
+
+  if (totalFontFiles > 6) {
+    issues.push({
+      id: 'total-font-files',
+      severity: 'warning',
+      message: 'Consider fewer weights/styles to keep the page fast.',
+      recommendation: `You currently have ${totalFontFiles} font files scheduled. Reduce static weight variations or switch to variable fonts.`
+    });
+  }
 
   if (estimatedPayloadKb > 150) {
     issues.push({
@@ -149,6 +177,7 @@ export function auditTypographyTokens(
     issues,
     estimatedPayloadKb,
     totalFamiliesCount: allFamilies.size,
+    totalFontFiles,
     hasErrors
   };
 }

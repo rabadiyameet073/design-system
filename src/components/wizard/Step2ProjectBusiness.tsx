@@ -2,21 +2,17 @@ import React, { useState } from 'react';
 import {
   Sparkles,
   Globe,
-  Target,
   Users,
-  Shield,
-  Layers,
   Palette,
-  Upload,
   Link2,
   Monitor,
   Code2,
-  Moon
+  Moon,
+  AlertCircle,
+  Wand2,
+  Check
 } from 'lucide-react';
 import { DesignProject } from '../../types/designSystem';
-import { extractDominantColorFromImage } from '../../utils/imageColorExtractor';
-import { generateAllColorPrimitives } from '../../tokens/colorScale';
-import { createLightSemanticColors, createDarkSemanticColors } from '../../tokens/semanticMapping';
 import { generateFullTypeScale } from '../../utils/typeScale';
 
 interface Step2ProjectBusinessProps {
@@ -32,15 +28,112 @@ const AVAILABLE_SCRIPTS = [
   { id: 'cyrillic', label: 'Cyrillic (Russian, Ukrainian, Bulgarian)' }
 ];
 
+type AgeRange = '18-35' | '35-50' | '50+';
+type PlatformTarget = 'web' | 'web-app';
+type FrameworkTarget = 'tailwind' | 'shadcn' | 'css';
+type DarkModePolicy = 'auto' | 'manual' | 'none';
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ project, onChange }) => {
-  const [isExtractingColor, setIsExtractingColor] = useState(false);
   const currentScripts: string[] = project.tokens?.meta?.scripts || ['latin'];
-  const brandColor = project.tokens?.meta?.brandColorHex || project.colorPalette?.primary || '#B7410E';
-  const ageRange = project.tokens?.meta?.audienceAge || '18-35';
-  const platform = project.tokens?.meta?.platformTarget || 'web';
-  const framework = project.tokens?.meta?.frameworkTarget || 'tailwind';
-  const darkModePref = project.tokens?.meta?.darkMode || 'auto';
+  const ageRange: AgeRange = (project.tokens?.meta?.audienceAge as AgeRange) || '18-35';
+  const platform: PlatformTarget = (project.tokens?.meta?.platformTarget as PlatformTarget) || 'web';
+  const framework: FrameworkTarget = (project.tokens?.meta?.frameworkTarget as FrameworkTarget) || 'tailwind';
+  const darkModePref: DarkModePolicy = (project.tokens?.meta?.darkMode as DarkModePolicy) || 'auto';
   const inspirationUrls = (project.tokens?.meta?.inspirationUrls || []).join(', ');
+
+  const projectName = project.business?.name || project.name || '';
+  const currentSlug = project.tokens.meta.slug || '';
+  const description = project.business?.offering || project.tokens.meta.description || '';
+
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [urlValidationError, setUrlValidationError] = useState<string | null>(null);
+
+  const isNameEmpty = !projectName.trim();
+
+  const handleNameChange = (newName: string) => {
+    const trimmed = newName.slice(0, 60);
+    // If slug was empty or matched previous slugified name, keep it in sync
+    const previousSlugCandidate = slugify(projectName);
+    const shouldUpdateSlug = !currentSlug || currentSlug === previousSlugCandidate;
+    const newSlug = shouldUpdateSlug ? slugify(trimmed) : currentSlug;
+
+    onChange({
+      name: trimmed,
+      business: {
+        ...project.business,
+        name: trimmed
+      },
+      tokens: {
+        ...project.tokens,
+        meta: {
+          ...project.tokens.meta,
+          projectName: trimmed,
+          slug: newSlug,
+          updatedAt: Date.now()
+        }
+      }
+    });
+  };
+
+  const handleSlugChange = (val: string) => {
+    const cleanSlug = slugify(val);
+    onChange({
+      tokens: {
+        ...project.tokens,
+        meta: {
+          ...project.tokens.meta,
+          slug: cleanSlug
+        }
+      }
+    });
+  };
+
+  const handleDescriptionChange = (val: string) => {
+    const trimmed = val.slice(0, 180);
+    onChange({
+      business: {
+        ...project.business,
+        offering: trimmed
+      },
+      tokens: {
+        ...project.tokens,
+        meta: {
+          ...project.tokens.meta,
+          description: trimmed,
+          updatedAt: Date.now()
+        }
+      }
+    });
+  };
+
+  const handleInspirationUrlsChange = (raw: string) => {
+    const urls = raw.split(',').map(s => s.trim()).filter(Boolean);
+    // Lightweight validation check
+    const invalidUrl = urls.find(u => !u.includes('.') || u.includes(' '));
+    if (invalidUrl) {
+      setUrlValidationError(`"${invalidUrl}" doesn't look like a valid domain (e.g. stripe.com)`);
+    } else {
+      setUrlValidationError(null);
+    }
+
+    onChange({
+      tokens: {
+        ...project.tokens,
+        meta: {
+          ...project.tokens.meta,
+          inspirationUrls: urls
+        }
+      }
+    });
+  };
 
   const toggleScript = (scriptId: string) => {
     let nextScripts: string[];
@@ -66,8 +159,7 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
     });
   };
 
-  const handleAgeRangeChange = (age: '18-35' | '35-50' | '50+') => {
-    // Older audiences (50+) receive 18px base text size to guarantee high readability and comfort
+  const handleAgeRangeChange = (age: AgeRange) => {
     const newBasePx = age === '50+' ? 18 : 16;
     const newScale = generateFullTypeScale(
       newBasePx,
@@ -86,59 +178,82 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
         typography: {
           ...project.tokens.typography,
           baseSizePx: newBasePx,
-          scale: newScale as any
+          scale: newScale
         }
       }
     });
   };
 
-  const handleBrandColorChange = (newHex: string) => {
-    const primitives = generateAllColorPrimitives(newHex);
-    const light = createLightSemanticColors(primitives);
-    const dark = createDarkSemanticColors(primitives);
+  // AI-assisted context suggestion synthesizer
+  const handleAiAutofill = () => {
+    setIsAiGenerating(true);
+    const genre = project.websiteType?.name || 'Ceramics Atelier';
 
-    onChange({
-      colorPalette: {
-        ...project.colorPalette,
-        primary: newHex
-      },
-      tokens: {
-        ...project.tokens,
-        meta: {
-          ...project.tokens.meta,
-          brandColorHex: newHex
+    setTimeout(() => {
+      let suggestedDesc = `Handcrafted, bespoke design crafted for modern architectural collectors.`;
+      let suggestedAudience = `Design directors, architects, and discerning collectors`;
+      let suggestedGoal = `High-Trust Direct Sales (E-Commerce)`;
+
+      if (genre.toLowerCase().includes('saas') || genre.toLowerCase().includes('dev') || genre.toLowerCase().includes('api')) {
+        suggestedDesc = `Developer-first infrastructure designed for fast, type-safe API operations and cloud scale.`;
+        suggestedAudience = `Full-stack engineers, technical founders, and platform architects`;
+        suggestedGoal = `SaaS Free Trial & Subscription Velocity`;
+      } else if (genre.toLowerCase().includes('portfolio') || genre.toLowerCase().includes('agency')) {
+        suggestedDesc = `Award-winning independent creative studio specializing in bespoke digital identities and motion.`;
+        suggestedAudience = `Innovative brands, startup founders, and design leaders`;
+        suggestedGoal = `Lead Generation & Studio Inquiries`;
+      } else if (genre.toLowerCase().includes('magazine') || genre.toLowerCase().includes('press')) {
+        suggestedDesc = `Critical commentary on contemporary visual arts, architecture, and industrial design.`;
+        suggestedAudience = `Cultured intellectuals, editorial writers, and visual researchers`;
+        suggestedGoal = `Editorial Authority & Newsletter Readership`;
+      }
+
+      onChange({
+        business: {
+          ...project.business,
+          offering: suggestedDesc
         },
-        color: {
-          primitives,
-          semantic: { light, dark }
+        businessDiscovery: {
+          ...project.businessDiscovery,
+          targetAudience: suggestedAudience,
+          primaryOffering: suggestedGoal
+        },
+        tokens: {
+          ...project.tokens,
+          meta: {
+            ...project.tokens.meta,
+            description: suggestedDesc,
+            audience: suggestedAudience,
+            goal: suggestedGoal,
+            updatedAt: Date.now()
+          }
         }
-      }
-    });
-  };
-
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsExtractingColor(true);
-      const extractedHex = await extractDominantColorFromImage(file);
-      handleBrandColorChange(extractedHex);
-    } catch (err) {
-      console.warn('Logo color extraction error:', err);
-    } finally {
-      setIsExtractingColor(false);
-    }
+      });
+      setIsAiGenerating(false);
+    }, 450);
   };
 
   return (
     <div className="max-w-4xl mx-auto py-4 space-y-8">
       {/* Title */}
       <div className="space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-white text-xs font-semibold">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Step 2 of 11 · Project Scope & Business Context</span>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-white text-xs font-semibold">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Step 2 of 11 · Project Scope & Business Context</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAiAutofill}
+            disabled={isAiGenerating}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-neutral-300 bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-800 transition-colors shadow-2xs cursor-pointer"
+          >
+            <Wand2 className={`w-3.5 h-3.5 text-amber-500 ${isAiGenerating ? 'animate-spin' : ''}`} />
+            <span>{isAiGenerating ? 'Generating...' : 'AI Context Autofill'}</span>
+          </button>
         </div>
+
         <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
           Define your project scope and audience
         </h1>
@@ -151,38 +266,66 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs">
         {/* Project Name */}
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-neutral-700">Project / Brand Name</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-neutral-700">
+              Project / Brand Name <span className="text-rose-500">*</span>
+            </label>
+            <span className="text-[10px] font-mono text-neutral-400">
+              {projectName.length}/60
+            </span>
+          </div>
           <input
             type="text"
-            value={project.name}
-            onChange={e => onChange({ name: e.target.value, tokens: { ...project.tokens, meta: { ...project.tokens.meta, projectName: e.target.value } } })}
+            required
+            maxLength={60}
+            value={projectName}
+            onChange={e => handleNameChange(e.target.value)}
             placeholder="e.g. Maison Atelier"
-            className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            className={`w-full px-3.5 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 ${
+              isNameEmpty
+                ? 'border-rose-400 focus:ring-rose-500 bg-rose-50/20'
+                : 'border-neutral-300 focus:ring-neutral-900 bg-white'
+            }`}
           />
+          {isNameEmpty && (
+            <p className="flex items-center gap-1 text-[11px] text-rose-500 font-medium">
+              <AlertCircle className="w-3 h-3" />
+              <span>Project name is required to proceed.</span>
+            </p>
+          )}
         </div>
 
         {/* Slug */}
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-neutral-700">System Slug / Identifier</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-neutral-700">
+              System Slug / Identifier
+            </label>
+            <span className="text-[10px] font-mono text-neutral-400">auto-generated</span>
+          </div>
           <input
             type="text"
-            value={project.tokens.meta.slug || 'maison-atelier'}
-            onChange={e => onChange({ tokens: { ...project.tokens, meta: { ...project.tokens.meta, slug: e.target.value } } })}
-            className="w-full px-3.5 py-2 text-xs font-mono border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            value={currentSlug || 'maison-atelier'}
+            onChange={e => handleSlugChange(e.target.value)}
+            className="w-full px-3.5 py-2 text-xs font-mono border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-white"
           />
         </div>
 
         {/* One-Line Description */}
         <div className="space-y-1.5 sm:col-span-2">
-          <label className="text-xs font-bold text-neutral-700">One-Line Brand Description</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-neutral-700">One-Line Brand Description / Headline</label>
+            <span className="text-[10px] font-mono text-neutral-400">
+              {description.length}/180
+            </span>
+          </div>
           <input
             type="text"
-            value={project.tokens.meta.description || project.business?.offering || ''}
-            onChange={e => onChange({
-              tokens: { ...project.tokens, meta: { ...project.tokens.meta, description: e.target.value } }
-            })}
+            maxLength={180}
+            value={description}
+            onChange={e => handleDescriptionChange(e.target.value)}
             placeholder="e.g. Handcrafted architectural ceramics made from local stoneware clay."
-            className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-white"
           />
         </div>
 
@@ -227,7 +370,7 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
                 meta: { ...project.tokens.meta, audience: e.target.value }
               }
             })}
-            className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-white"
           />
         </div>
       </div>
@@ -255,7 +398,7 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
               <button
                 key={item.id}
                 type="button"
-                onClick={() => handleAgeRangeChange(item.id as any)}
+                onClick={() => handleAgeRangeChange(item.id as AgeRange)}
                 className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
                     ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
@@ -272,57 +415,18 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
         </div>
       </div>
 
-      {/* Brand Color Input & Logo Upload with Extraction */}
-      <div className="space-y-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs">
-        <div className="flex items-center gap-2">
-          <Palette className="w-4 h-4 text-neutral-700" />
-          <h2 className="text-sm font-bold text-neutral-900">
-            Existing Brand Color or Logo Upload
-          </h2>
+      {/* Visual & Color System Stage Info Banner */}
+      <div className="p-5 rounded-2xl bg-white border border-neutral-200 shadow-xs flex items-start gap-4">
+        <div className="w-10 h-10 rounded-xl bg-neutral-900 text-white flex items-center justify-center shrink-0 mt-0.5">
+          <Palette className="w-5 h-5 text-amber-400" />
         </div>
-        <p className="text-xs text-neutral-500">
-          Have an existing brand color or company logo? Enter your exact hex code or upload your logo image to extract your signature color instantly.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-          {/* Hex Input */}
-          <div className="flex items-center gap-3 p-3 rounded-xl border border-neutral-200 bg-neutral-50">
-            <input
-              type="color"
-              value={brandColor}
-              onChange={e => handleBrandColorChange(e.target.value)}
-              className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent p-0"
-              title="Pick brand color"
-            />
-            <div className="flex-1 min-w-0">
-              <label className="text-[11px] font-bold text-neutral-700 uppercase tracking-wider block">
-                Brand Hex Code
-              </label>
-              <input
-                type="text"
-                value={brandColor}
-                onChange={e => handleBrandColorChange(e.target.value)}
-                className="w-full font-mono text-xs font-bold text-neutral-900 bg-transparent focus:outline-none"
-              />
-            </div>
+        <div className="space-y-1">
+          <div className="text-sm font-bold text-neutral-900">
+            Dedicated Color Studio in Step 5
           </div>
-
-          {/* Logo Upload Button */}
-          <label className="flex items-center justify-center gap-2.5 p-3 rounded-xl border border-dashed border-neutral-300 hover:border-neutral-900 bg-neutral-50 hover:bg-neutral-100/80 cursor-pointer transition-all">
-            <Upload className="w-4 h-4 text-neutral-600" />
-            <div className="text-left">
-              <span className="text-xs font-bold text-neutral-900 block">
-                {isExtractingColor ? 'Sampling dominant color...' : 'Upload Logo (PNG/JPG)'}
-              </span>
-              <span className="text-[10px] text-neutral-500">Auto-samples dominant brand hue</span>
-            </div>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              onChange={handleLogoUpload}
-              className="hidden"
-            />
-          </label>
+          <p className="text-xs text-neutral-600 leading-relaxed">
+            All color calibration takes place in <strong>Step 5 (Color Studio)</strong> with an interactive OKLCH color wheel, logo image upload, curated harmonic presets, AI mood prompts, and real-time WCAG 2.2 AA contrast verification. Next up: dial in your brand personality!
+          </p>
         </div>
       </div>
 
@@ -337,7 +441,7 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
           <select
             value={platform}
             onChange={e => onChange({
-              tokens: { ...project.tokens, meta: { ...project.tokens.meta, platformTarget: e.target.value as any } }
+              tokens: { ...project.tokens, meta: { ...project.tokens.meta, platformTarget: e.target.value as PlatformTarget } }
             })}
             className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-white"
           >
@@ -355,7 +459,7 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
           <select
             value={framework}
             onChange={e => onChange({
-              tokens: { ...project.tokens, meta: { ...project.tokens.meta, frameworkTarget: e.target.value as any } }
+              tokens: { ...project.tokens, meta: { ...project.tokens.meta, frameworkTarget: e.target.value as FrameworkTarget } }
             })}
             className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-white"
           >
@@ -374,7 +478,7 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
           <select
             value={darkModePref}
             onChange={e => onChange({
-              tokens: { ...project.tokens, meta: { ...project.tokens.meta, darkMode: e.target.value as any } }
+              tokens: { ...project.tokens, meta: { ...project.tokens.meta, darkMode: e.target.value as DarkModePolicy } }
             })}
             className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-white"
           >
@@ -399,18 +503,17 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
         <input
           type="text"
           value={inspirationUrls}
-          onChange={e => {
-            const urls = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-            onChange({
-              tokens: {
-                ...project.tokens,
-                meta: { ...project.tokens.meta, inspirationUrls: urls }
-              }
-            });
-          }}
+          onChange={e => handleInspirationUrlsChange(e.target.value)}
           placeholder="e.g. stripe.com, linear.app, acorn.io"
-          className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900"
+          className={`w-full px-3.5 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 ${
+            urlValidationError ? 'border-amber-400 focus:ring-amber-500' : 'border-neutral-300 focus:ring-neutral-900'
+          }`}
         />
+        {urlValidationError && (
+          <p className="text-[11px] text-amber-600 font-medium">
+            {urlValidationError}
+          </p>
+        )}
       </div>
 
       {/* Language Scripts Selection */}

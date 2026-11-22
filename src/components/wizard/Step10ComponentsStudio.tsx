@@ -17,9 +17,16 @@ import { DesignProject, ComponentConfig } from '../../types/designSystem';
 interface Step10ComponentsStudioProps {
   project: DesignProject;
   onChange: (updated: Partial<DesignProject>) => void;
+  onPreviewDraft?: (draft: Partial<DesignProject>, label: string) => void;
+  onClearDraft?: () => void;
 }
 
-export const Step10ComponentsStudio: React.FC<Step10ComponentsStudioProps> = ({ project, onChange }) => {
+export const Step10ComponentsStudio: React.FC<Step10ComponentsStudioProps> = ({
+  project,
+  onChange,
+  onPreviewDraft,
+  onClearDraft
+}) => {
   const [customCompName, setCustomCompName] = useState('');
   const [activeTab, setActiveTab] = useState<'buttons' | 'inputs' | 'badges' | 'modules'>('buttons');
 
@@ -28,11 +35,60 @@ export const Step10ComponentsStudio: React.FC<Step10ComponentsStudioProps> = ({ 
   const radiusSm = project.tokens?.radius?.sm ?? 4;
   const radiusLg = project.tokens?.radius?.lg ?? 12;
 
+  const currentButtonSize = project.components?.buttonSize || 'default';
+  const currentButtonStyle = project.components?.buttonStyle || 'solid';
+
+  const handleSelectButtonSize = (size: 'compact' | 'default' | 'large', radiusPx: number) => {
+    if (onClearDraft) onClearDraft();
+    onChange({
+      components: {
+        ...project.components,
+        buttonSize: size
+      },
+      tokens: {
+        ...project.tokens,
+        component: {
+          ...project.tokens.component,
+          buttonRadius: `${radiusPx}px`
+        }
+      }
+    });
+  };
+
+  const handleSelectButtonVariant = (style: 'solid' | 'outline' | 'subtle' | 'minimal') => {
+    if (onClearDraft) onClearDraft();
+    onChange({
+      components: {
+        ...project.components,
+        buttonStyle: style
+      },
+      tokens: {
+        ...project.tokens,
+        component: {
+          ...project.tokens?.component,
+          buttonStyle: style
+        },
+        meta: {
+          ...project.tokens?.meta,
+          updatedAt: Date.now()
+        }
+      }
+    });
+  };
+
   const updateComponentConfig = (key: keyof ComponentConfig, val: any) => {
+    if (onClearDraft) onClearDraft();
     onChange({
       components: {
         ...project.components,
         [key]: val
+      },
+      tokens: {
+        ...project.tokens,
+        meta: {
+          ...project.tokens?.meta,
+          updatedAt: Date.now()
+        }
       }
     });
   };
@@ -110,75 +166,165 @@ export const Step10ComponentsStudio: React.FC<Step10ComponentsStudioProps> = ({ 
 
           {/* Sizes (sm, md, lg) */}
           <div className="space-y-2">
-            <span className="text-xs font-bold text-neutral-700 uppercase tracking-wider block">
-              Sizes (sm, md, lg)
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-neutral-700 uppercase tracking-wider block">
+                Sizes (sm, md, lg)
+              </span>
+              <span className="text-[11px] font-mono text-neutral-400">Click to apply button scale & radius</span>
+            </div>
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                className="px-3 py-1.5 text-xs font-bold text-white shadow-xs"
+                onClick={() => handleSelectButtonSize('compact', radiusSm)}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    onPreviewDraft({
+                      components: { ...project.components, buttonSize: 'compact' },
+                      tokens: { ...project.tokens, component: { ...project.tokens.component, buttonRadius: `${radiusSm}px` } }
+                    }, 'Small Button (32px)');
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
+                className={`px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer ${
+                  currentButtonSize === 'compact' ? 'ring-2 ring-neutral-900 ring-offset-2 scale-105' : 'hover:opacity-90'
+                }`}
                 style={{ backgroundColor: brandHex, borderRadius: `${radiusSm}px` }}
               >
-                Small (sm · 32px)
+                Small (sm · 32px) {currentButtonSize === 'compact' && '✓'}
               </button>
               <button
                 type="button"
-                className="px-4 py-2.5 text-sm font-bold text-white shadow-xs"
+                onClick={() => handleSelectButtonSize('default', radiusMd)}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    onPreviewDraft({
+                      components: { ...project.components, buttonSize: 'default' },
+                      tokens: { ...project.tokens, component: { ...project.tokens.component, buttonRadius: `${radiusMd}px` } }
+                    }, 'Medium Button (40px)');
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
+                className={`px-4 py-2.5 text-sm font-bold text-white shadow-xs transition-all cursor-pointer ${
+                  currentButtonSize === 'default' ? 'ring-2 ring-neutral-900 ring-offset-2 scale-105' : 'hover:opacity-90'
+                }`}
                 style={{ backgroundColor: brandHex, borderRadius: `${radiusMd}px` }}
               >
-                Medium (md · 40px)
+                Medium (md · 40px) {currentButtonSize === 'default' && '✓'}
               </button>
               <button
                 type="button"
-                className="px-6 py-3.5 text-base font-bold text-white shadow-sm"
+                onClick={() => handleSelectButtonSize('large', radiusLg)}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    onPreviewDraft({
+                      components: { ...project.components, buttonSize: 'large' },
+                      tokens: { ...project.tokens, component: { ...project.tokens.component, buttonRadius: `${radiusLg}px` } }
+                    }, 'Large Button (48px)');
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
+                className={`px-6 py-3.5 text-base font-bold text-white shadow-sm transition-all cursor-pointer ${
+                  currentButtonSize === 'large' ? 'ring-2 ring-neutral-900 ring-offset-2 scale-105' : 'hover:opacity-90'
+                }`}
                 style={{ backgroundColor: brandHex, borderRadius: `${radiusLg}px` }}
               >
-                Large (lg · 48px)
+                Large (lg · 48px) {currentButtonSize === 'large' && '✓'}
               </button>
             </div>
           </div>
 
           {/* Variants (Filled, Outline, Subtle, Ghost, Destructive) */}
           <div className="space-y-2 pt-2 border-t border-neutral-100">
-            <span className="text-xs font-bold text-neutral-700 uppercase tracking-wider block">
-              Variants (Filled, Outline, Subtle, Ghost, Destructive)
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-neutral-700 uppercase tracking-wider block">
+                Variants (Filled, Outline, Subtle, Ghost, Destructive)
+              </span>
+              <span className="text-[11px] font-mono text-neutral-400">Hover to preview · Click to set default button style</span>
+            </div>
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                className="px-4 py-2 text-xs font-bold text-white shadow-xs"
+                onClick={() => handleSelectButtonVariant('solid')}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    onPreviewDraft({
+                      components: { ...project.components, buttonStyle: 'solid' },
+                      tokens: { ...project.tokens, component: { ...project.tokens.component, buttonStyle: 'solid' } }
+                    }, 'Primary Filled Solid Button');
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
+                className={`px-4 py-2 text-xs font-bold text-white shadow-xs transition-all cursor-pointer ${
+                  currentButtonStyle === 'solid' ? 'ring-2 ring-neutral-900 ring-offset-2 scale-105' : 'hover:opacity-90'
+                }`}
                 style={{ backgroundColor: brandHex, borderRadius: `${radiusMd}px` }}
               >
-                Primary Filled
+                Primary Filled {currentButtonStyle === 'solid' && '✓'}
               </button>
               <button
                 type="button"
-                className="px-4 py-2 text-xs font-bold bg-white border-2 shadow-xs"
+                onClick={() => handleSelectButtonVariant('outline')}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    onPreviewDraft({
+                      components: { ...project.components, buttonStyle: 'outline' },
+                      tokens: { ...project.tokens, component: { ...project.tokens.component, buttonStyle: 'outline' } }
+                    }, 'Outline Hairline Button');
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
+                className={`px-4 py-2 text-xs font-bold bg-white border-2 shadow-xs transition-all cursor-pointer ${
+                  currentButtonStyle === 'outline' ? 'ring-2 ring-neutral-900 ring-offset-2 scale-105' : 'hover:bg-neutral-50'
+                }`}
                 style={{ color: brandHex, borderColor: brandHex, borderRadius: `${radiusMd}px` }}
               >
-                Outline Hairline
+                Outline Hairline {currentButtonStyle === 'outline' && '✓'}
               </button>
               <button
                 type="button"
-                className="px-4 py-2 text-xs font-bold shadow-2xs"
+                onClick={() => handleSelectButtonVariant('subtle')}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    onPreviewDraft({
+                      components: { ...project.components, buttonStyle: 'subtle' },
+                      tokens: { ...project.tokens, component: { ...project.tokens.component, buttonStyle: 'subtle' } }
+                    }, 'Subtle Tinted Button');
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
+                className={`px-4 py-2 text-xs font-bold shadow-2xs transition-all cursor-pointer ${
+                  currentButtonStyle === 'subtle' ? 'ring-2 ring-neutral-900 ring-offset-2 scale-105' : 'hover:opacity-90'
+                }`}
                 style={{
                   backgroundColor: `${brandHex}18`,
                   color: brandHex,
                   borderRadius: `${radiusMd}px`
                 }}
               >
-                Subtle Tinted
+                Subtle Tinted {currentButtonStyle === 'subtle' && '✓'}
               </button>
               <button
                 type="button"
-                className="px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100 transition-colors"
+                onClick={() => handleSelectButtonVariant('minimal')}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    onPreviewDraft({
+                      components: { ...project.components, buttonStyle: 'minimal' },
+                      tokens: { ...project.tokens, component: { ...project.tokens.component, buttonStyle: 'minimal' } }
+                    }, 'Ghost Minimal Button');
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
+                className={`px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer ${
+                  currentButtonStyle === 'minimal' ? 'ring-2 ring-neutral-900 ring-offset-2 scale-105' : ''
+                }`}
                 style={{ borderRadius: `${radiusMd}px` }}
               >
-                Ghost Minimal
+                Ghost Minimal {currentButtonStyle === 'minimal' && '✓'}
               </button>
               <button
                 type="button"
-                className="px-4 py-2 text-xs font-bold bg-rose-600 text-white shadow-xs hover:bg-rose-700"
+                className="px-4 py-2 text-xs font-bold bg-rose-600 text-white shadow-xs hover:bg-rose-700 cursor-pointer"
                 style={{ borderRadius: `${radiusMd}px` }}
               >
                 Destructive

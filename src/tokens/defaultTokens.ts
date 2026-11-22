@@ -157,7 +157,8 @@ export function createDefaultTokens(
       cardRadius: '12px',
       inputRadius: '8px',
       buttonPadding: '10px 20px',
-      cardPadding: '24px'
+      cardPadding: '24px',
+      buttonStyle: 'solid'
     }
   };
 }

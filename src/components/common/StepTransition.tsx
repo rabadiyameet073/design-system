@@ -1,5 +1,6 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
+import { MOTION_SPRINGS, getAccessibleTransition } from '../../tokens/motionConfig';
 
 interface StepTransitionProps {
   children: React.ReactNode;
@@ -7,16 +8,15 @@ interface StepTransitionProps {
 }
 
 export const StepTransition: React.FC<StepTransitionProps> = ({ children, stepKey }) => {
+  const reduceMotion = useReducedMotion();
+
   return (
     <motion.div
       key={stepKey}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={{
-        duration: 0.22,
-        ease: [0.16, 1, 0.3, 1]
-      }}
+      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+      animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
+      transition={getAccessibleTransition(MOTION_SPRINGS.base, Boolean(reduceMotion))}
       className="w-full"
     >
       {children}

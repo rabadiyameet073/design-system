@@ -146,6 +146,7 @@ export interface DesignTokens {
     frameworkTarget?: 'tailwind' | 'css' | 'shadcn';
     scripts: string[];
     darkMode: 'none' | 'auto' | 'manual';
+    updatedAt?: number;
     personality: {
       energy: number;
       craft: number;
@@ -211,6 +212,7 @@ export interface DesignTokens {
     inputRadius: string;
     buttonPadding: string;
     cardPadding: string;
+    buttonStyle?: 'solid' | 'outline' | 'subtle' | 'minimal';
   };
 }
 
@@ -231,6 +233,7 @@ export const DesignTokensSchema = z.object({
     frameworkTarget: z.enum(['tailwind', 'css', 'shadcn']).optional(),
     scripts: z.array(z.string()).default(['latin']),
     darkMode: z.enum(['none', 'auto', 'manual']).default('auto'),
+    updatedAt: z.number().optional(),
     personality: z.object({
       energy: z.number().min(0).max(100).default(50),
       craft: z.number().min(0).max(100).default(50),
@@ -307,6 +310,7 @@ export const DesignTokensSchema = z.object({
     cardRadius: z.string().default('12px'),
     inputRadius: z.string().default('8px'),
     buttonPadding: z.string().default('10px 20px'),
-    cardPadding: z.string().default('24px')
+    cardPadding: z.string().default('24px'),
+    buttonStyle: z.enum(['solid', 'outline', 'subtle', 'minimal']).default('solid')
   })
 });

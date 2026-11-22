@@ -1,0 +1,14 @@
+{
+  "category": "hospitality",
+  "hero": {
+    "badge": "Sanctuary in the Dolomite Alps",
+    "title": "Where ancient thermal mineral springs meet monolithic stone architecture",
+    "subtitle": "Secluded private suites, biodynamic alpine dining, and restorative thermal sanctuaries carved into living rock.",
+    "primaryAction": "Reserve Suite",
+    "secondaryAction": "The Sanctuary Story"
+  },
+  "booking": {
+    "title": "Bespoke Residence Reservations",
+    "subtitle": "Seasonal availability is strictly limited to preserve seclusion and tranquility."
+  }
+}

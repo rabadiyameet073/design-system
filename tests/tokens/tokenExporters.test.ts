@@ -19,6 +19,10 @@ describe('tokenExporters pure functions', () => {
     expect(css).toContain('@theme inline');
     expect(css).toContain('--color-action-primary');
     expect(css).toContain('@custom-variant dark');
+    expect(css).toContain('--font-heading:');
+    expect(css).toContain('--font-body:');
+    expect(css).toContain('--text-base: clamp(');
+    expect(css).toContain('--text-4xl: clamp(');
   });
 
   it('generates CSS custom properties with light and dark blocks', () => {
@@ -36,6 +40,9 @@ describe('tokenExporters pure functions', () => {
     expect(parsed.color.action.primary.$value).toBe('{color.brand.600}');
     expect(parsed.dimension.radius.md.$type).toBe('dimension');
     expect(parsed.dimension.space[1].$value).toBe('4px');
+    expect(parsed.typography.fontSize.base.$type).toBe('dimension');
+    expect(parsed.typography.fontSize.base.$value).toContain('clamp(');
+    expect(parsed.typography.fontWeight.bold.$value).toBe(700);
   });
 
   it('generates valid TypeScript output', () => {
@@ -88,6 +95,8 @@ describe('tokenExporters pure functions', () => {
     expect(filenames.some(f => f.includes('README.md'))).toBe(true);
     expect(filenames.some(f => f.includes('components/Button.tsx'))).toBe(true);
     expect(filenames.some(f => f.includes('components/Card.tsx'))).toBe(true);
+    expect(filenames.some(f => f.includes('components/Input.tsx'))).toBe(true);
+    expect(filenames.some(f => f.includes('components/Badge.tsx'))).toBe(true);
   });
 });
 

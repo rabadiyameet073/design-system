@@ -48,6 +48,7 @@ export const Gallery: React.FC<GalleryProps> = ({
                   alt={img.caption}
                   width={600}
                   height={400}
+                  style={{ filter: 'var(--image-filter, none)' }}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </div>

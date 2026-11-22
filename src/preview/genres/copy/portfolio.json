@@ -1,0 +1,14 @@
+{
+  "category": "portfolio",
+  "hero": {
+    "badge": "Design Direction & Spatial Systems",
+    "title": "Crafting digital flagships, typographic identities, and spatial tools",
+    "subtitle": "Multidisciplinary design practice partnering with visionary founders, architectural studios, and cultural institutions.",
+    "primaryAction": "View Selected Works",
+    "secondaryAction": "Monograph & Bio"
+  },
+  "projects": {
+    "title": "Selected Client Commissions",
+    "subtitle": "Case studies exploring tactile interactions, generative code, and editorial craft."
+  }
+}

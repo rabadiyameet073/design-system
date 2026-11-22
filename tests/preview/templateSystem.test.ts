@@ -30,7 +30,7 @@ describe('Template System & Genre Matrix (Doc 02)', () => {
     }
   });
 
-  it('declares exactly 32 genre configs with 4 genres per category', () => {
+  it('declares exactly 32 genre configs with 4 genres per category, each with rich defaults and copy', () => {
     const genreEntries = Object.entries(GENRE_CONFIGS);
     expect(genreEntries).toHaveLength(32);
 
@@ -42,8 +42,15 @@ describe('Template System & Genre Matrix (Doc 02)', () => {
         expect(g.label).toBeDefined();
         expect(g.description).toBeDefined();
         expect(g.heroImage).toBeDefined();
+        expect(g.copyFile).toBeDefined();
         expect(g.fontRecommendationTags.length).toBeGreaterThan(0);
         expect(['airy', 'balanced', 'compact']).toContain(g.density);
+        expect(g.defaults).toBeDefined();
+        expect(g.defaults?.color?.semantic).toBeDefined();
+        expect(g.defaults?.typography?.roles).toBeDefined();
+        expect(g.defaults?.radius).toBeDefined();
+        expect(g.defaults?.space).toBeDefined();
+        expect(g.defaults?.component?.buttonStyle).toBeDefined();
       }
     }
   });
@@ -82,5 +89,27 @@ describe('Template System & Genre Matrix (Doc 02)', () => {
 
     checkDir(sectionsDir);
     checkDir(templatesDir);
+  });
+
+  it('guarantees every template includes ComponentsShowcase and TypeSpecimen (Doc 02 §4.3)', () => {
+    const templatesDir = path.resolve(__dirname, '../../src/preview/templates');
+    const files = fs.readdirSync(templatesDir).filter(f => f.endsWith('.tsx') && f !== 'index.ts');
+
+    for (const file of files) {
+      const content = fs.readFileSync(path.join(templatesDir, file), 'utf8');
+      expect(content).toContain('ComponentsShowcase');
+      expect(content).toContain('TypeSpecimen');
+    }
+  });
+
+  it('verifies all 8 copy JSON files exist in src/preview/genres/copy/', () => {
+    const copyDir = path.resolve(__dirname, '../../src/preview/genres/copy');
+    for (const cat of EXPECTED_CATEGORIES) {
+      const copyFilePath = path.join(copyDir, `${cat}.json`);
+      expect(fs.existsSync(copyFilePath), `Missing copy file for ${cat}: ${copyFilePath}`).toBe(true);
+      const data = JSON.parse(fs.readFileSync(copyFilePath, 'utf8'));
+      expect(data.category).toBe(cat);
+      expect(data.hero).toBeDefined();
+    }
   });
 });

@@ -1,0 +1,18 @@
+{
+  "category": "commerce",
+  "hero": {
+    "badge": "Limited Edition Studio Drops",
+    "title": "Tactile objects designed to endure generations",
+    "subtitle": "Discover rare stoneware ceramics, bespoke glassware, and natural pigment glazes shaped by master artisans.",
+    "primaryAction": "Shop Catalog",
+    "secondaryAction": "Our Philosophy"
+  },
+  "features": {
+    "title": "Artisanal Integrity in Every Batch",
+    "subtitle": "Zero mass-production shortcuts. Each object carries the organic signature of human craftsmanship."
+  },
+  "products": {
+    "title": "Current Studio Collection",
+    "subtitle": "Hand-thrown in limited quantities. Delivered in sustainable, plastic-free packaging."
+  }
+}

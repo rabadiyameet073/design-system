@@ -13,9 +13,16 @@ import {
 interface Step9LayoutSpacingProps {
   project: DesignProject;
   onChange: (updated: Partial<DesignProject>) => void;
+  onPreviewDraft?: (draft: Partial<DesignProject>, label: string) => void;
+  onClearDraft?: () => void;
 }
 
-export const Step9LayoutSpacing: React.FC<Step9LayoutSpacingProps> = ({ project, onChange }) => {
+export const Step9LayoutSpacing: React.FC<Step9LayoutSpacingProps> = ({
+  project,
+  onChange,
+  onPreviewDraft,
+  onClearDraft
+}) => {
   const brandHex = project.tokens?.color?.primitives?.brand?.[600] || project.colorPalette?.primary || '#B7410E';
   const currentDensity = (project.layout?.density === 'spacious' ? 'airy' : project.layout?.density) || 'balanced';
   const currentRadius = (project.layout?.radius as RadiusPresetKey) || 'rounded';
@@ -167,6 +174,21 @@ export const Step9LayoutSpacing: React.FC<Step9LayoutSpacingProps> = ({ project,
                 key={d.id}
                 type="button"
                 onClick={() => handleDensityChange(d.id as DensityMultiplierKey)}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    const newScale = generateSpaceScale(currentBase, d.id as DensityMultiplierKey);
+                    onPreviewDraft({
+                      tokens: {
+                        ...project.tokens,
+                        space: {
+                          ...project.tokens.space,
+                          scale: newScale
+                        }
+                      }
+                    }, d.label);
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
                 className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
                     ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
@@ -208,6 +230,24 @@ export const Step9LayoutSpacing: React.FC<Step9LayoutSpacingProps> = ({ project,
                 key={r.id}
                 type="button"
                 onClick={() => handleRadiusChange(r.id as RadiusPresetKey)}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    const radii = RADIUS_PRESETS[r.id as RadiusPresetKey];
+                    onPreviewDraft({
+                      tokens: {
+                        ...project.tokens,
+                        radius: radii,
+                        component: {
+                          ...project.tokens.component,
+                          buttonRadius: `${radii.md}px`,
+                          cardRadius: `${radii.lg}px`,
+                          inputRadius: `${radii.sm}px`
+                        }
+                      }
+                    }, r.label);
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
                 className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                   isSelected
                     ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
@@ -260,6 +300,18 @@ export const Step9LayoutSpacing: React.FC<Step9LayoutSpacingProps> = ({ project,
                 key={e.id}
                 type="button"
                 onClick={() => handleElevationChange(e.id as ElevationPresetKey)}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    const shadows = generateElevationShadows(brandHex, e.id as ElevationPresetKey);
+                    onPreviewDraft({
+                      tokens: {
+                        ...project.tokens,
+                        shadow: shadows
+                      }
+                    }, e.label);
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
                 className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
                     ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'

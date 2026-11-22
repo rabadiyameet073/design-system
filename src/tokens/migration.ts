@@ -129,3 +129,8 @@ export function importDesignTokensFromJson(jsonString: string): DesignTokens {
   return migrateTokens(parsed);
 }
 
+/**
+ * Standard alias for migrateTokens per Doc 04 §1.1.
+ */
+export const migrate = migrateTokens;
+

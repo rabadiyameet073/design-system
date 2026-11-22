@@ -16,9 +16,16 @@ import { DesignProject } from '../../types/designSystem';
 interface Step8ImageryStudioProps {
   project: DesignProject;
   onChange: (updated: Partial<DesignProject>) => void;
+  onPreviewDraft?: (draft: Partial<DesignProject>, label: string) => void;
+  onClearDraft?: () => void;
 }
 
-export const Step8ImageryStudio: React.FC<Step8ImageryStudioProps> = ({ project, onChange }) => {
+export const Step8ImageryStudio: React.FC<Step8ImageryStudioProps> = ({
+  project,
+  onChange,
+  onPreviewDraft,
+  onClearDraft
+}) => {
   const currentTreatment = project.tokens?.imagery?.treatment || 'natural';
   const currentIconLib = project.tokens?.icon?.library || 'lucide';
   const currentIconStyle = project.tokens?.icon?.style || 'outline';
@@ -273,6 +280,20 @@ export const Step8ImageryStudio: React.FC<Step8ImageryStudioProps> = ({ project,
                 key={t.id}
                 type="button"
                 onClick={() => handleTreatmentChange(t.id as any)}
+                onMouseEnter={() => {
+                  if (onPreviewDraft) {
+                    onPreviewDraft({
+                      tokens: {
+                        ...project.tokens,
+                        imagery: {
+                          ...project.tokens.imagery,
+                          treatment: t.id as any
+                        }
+                      }
+                    }, t.label);
+                  }
+                }}
+                onMouseLeave={() => onClearDraft && onClearDraft()}
                 className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
                     ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'

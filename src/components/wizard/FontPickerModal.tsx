@@ -2,11 +2,14 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, X, Check, Filter, Sparkles, Globe, Sliders, ArrowUpDown } from 'lucide-react';
 import { FontMeta } from '../../utils/typeScale';
 import fontsSnapshot from '../../data/fonts.snapshot.json';
+import { useFocusTrap } from '../../utils/useFocusTrap';
 
 interface FontPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectFont: (font: FontMeta) => void;
+  onHoverFont?: (font: FontMeta) => void;
+  onClearHover?: () => void;
   selectedFamily: string;
   roleName: string;
   allowedScripts?: string[];
@@ -18,12 +21,22 @@ const loadedFontTags = new Set<string>();
 const LazyFontRow: React.FC<{
   font: FontMeta;
   isSelected: boolean;
+  isFocused?: boolean;
   previewText: string;
+  missingScripts?: string[];
   onSelect: () => void;
-}> = ({ font, isSelected, previewText, onSelect }) => {
+  onHover?: () => void;
+  onLeave?: () => void;
+}> = ({ font, isSelected, isFocused, previewText, missingScripts = [], onSelect, onHover, onLeave }) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const [isInView, setIsInView] = useState(false);
   const [isFontLoaded, setIsFontLoaded] = useState(false);
+
+  useEffect(() => {
+    if (isFocused && rowRef.current) {
+      rowRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [isFocused]);
 
   useEffect(() => {
     const el = rowRef.current;
@@ -72,14 +85,18 @@ const LazyFontRow: React.FC<{
     <div
       ref={rowRef}
       onClick={onSelect}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
       className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
         isSelected
           ? 'bg-neutral-900 text-white border-neutral-900 shadow-md ring-2 ring-neutral-900/10'
+          : isFocused
+          ? 'bg-neutral-100 border-neutral-400 ring-2 ring-neutral-900/20 text-neutral-900'
           : 'bg-white hover:bg-neutral-50 hover:border-neutral-300 border-neutral-200 text-neutral-800'
       }`}
     >
       <div className="space-y-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-sm tracking-tight">{font.family}</span>
           <span
             className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${
@@ -96,6 +113,14 @@ const LazyFontRow: React.FC<{
           {font.popularityRank && font.popularityRank <= 50 && (
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
               Top #{font.popularityRank}
+            </span>
+          )}
+          {missingScripts.length > 0 && (
+            <span
+              title={`Does not support required script: ${missingScripts.join(', ')}`}
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-semibold"
+            >
+              Missing {missingScripts.join(', ')}
             </span>
           )}
         </div>
@@ -127,6 +152,8 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
   isOpen,
   onClose,
   onSelectFont,
+  onHoverFont,
+  onClearHover,
   selectedFamily,
   roleName,
   allowedScripts = ['latin']
@@ -139,8 +166,10 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
     allowedScripts.find(s => s !== 'latin') || 'all'
   );
   const [variableOnly, setVariableOnly] = useState(false);
+  const [minWeightsOnly, setMinWeightsOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'popularity' | 'alpha'>('popularity');
   const [previewText, setPreviewText] = useState('Sphinx of black quartz, judge my vow.');
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -176,6 +205,11 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
         return false;
       }
 
+      // Has >= 4 weights filter (Doc 03 §5)
+      if (minWeightsOnly && !font.variable && font.variants.length < 4) {
+        return false;
+      }
+
       // Search query
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -192,26 +226,94 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
     }
 
     return result;
-  }, [fonts, search, selectedCategory, selectedScript, variableOnly, sortBy]);
+  }, [fonts, search, selectedCategory, selectedScript, variableOnly, minWeightsOnly, sortBy]);
+
+  // Reset keyboard focus index when filtered results change
+  useEffect(() => {
+    setFocusedIndex(-1);
+  }, [search, selectedCategory, selectedScript, variableOnly, minWeightsOnly]);
+
+  // Keyboard navigation per Doc 03 §5
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClearHover?.();
+        onClose();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocusedIndex(prev => {
+          const next = Math.min(prev + 1, filteredFonts.length - 1);
+          if (filteredFonts[next]) {
+            onHoverFont?.(filteredFonts[next]);
+          }
+          return next;
+        });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocusedIndex(prev => {
+          const next = Math.max(prev - 1, 0);
+          if (filteredFonts[next]) {
+            onHoverFont?.(filteredFonts[next]);
+          }
+          return next;
+        });
+      } else if (e.key === 'Enter' && focusedIndex >= 0 && filteredFonts[focusedIndex]) {
+        e.preventDefault();
+        onSelectFont(filteredFonts[focusedIndex]);
+        onClearHover?.();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, filteredFonts, focusedIndex, onClose, onSelectFont, onHoverFont, onClearHover]);
+
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen, () => {
+    onClearHover?.();
+    onClose();
+  });
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-neutral-200 flex flex-col max-h-[85vh] overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="font-picker-title"
+      onClick={e => {
+        if (e.target === e.currentTarget) {
+          onClearHover?.();
+          onClose();
+        }
+      }}
+    >
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-neutral-200 flex flex-col max-h-[85vh] overflow-hidden focus:outline-none"
+      >
         {/* Modal Header */}
         <div className="p-5 border-b border-neutral-200 flex items-center justify-between shrink-0">
           <div>
             <div className="text-[11px] font-mono uppercase font-bold text-neutral-500">
               Font Catalog · Choosing for {roleName.toUpperCase()}
             </div>
-            <h2 className="text-lg font-bold text-neutral-900">
+            <h2 id="font-picker-title" className="text-lg font-bold text-neutral-900">
               Select Verified Web Font
             </h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              onClearHover?.();
+              onClose();
+            }}
             className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer"
+            aria-label="Close font picker dialog"
           >
             <X className="w-5 h-5" />
           </button>
@@ -244,7 +346,7 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {/* Category Filter */}
             <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-neutral-200">
-              {['all', 'sans-serif', 'serif', 'monospace', 'display'].map(cat => (
+              {['all', 'sans-serif', 'serif', 'monospace', 'display', 'handwriting'].map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -281,20 +383,35 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
               <span>{sortBy === 'popularity' ? 'Popularity' : 'A–Z'}</span>
             </button>
 
-            <label className="flex items-center gap-1.5 ml-auto text-[11px] text-neutral-600 cursor-pointer">
+            {/* Variable Only Filter Checkbox */}
+            <label className="flex items-center gap-1.5 text-[11px] text-neutral-600 cursor-pointer">
               <input
                 type="checkbox"
                 checked={variableOnly}
                 onChange={e => setVariableOnly(e.target.checked)}
                 className="rounded text-neutral-900 focus:ring-0"
               />
-              <span>Variable Fonts Only</span>
+              <span>Variable</span>
+            </label>
+
+            {/* Has >= 4 weights Filter Checkbox (Doc 03 §5) */}
+            <label className="flex items-center gap-1.5 text-[11px] text-neutral-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={minWeightsOnly}
+                onChange={e => setMinWeightsOnly(e.target.checked)}
+                className="rounded text-neutral-900 focus:ring-0"
+              />
+              <span>≥ 4 weights</span>
             </label>
           </div>
         </div>
 
         {/* Font List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div
+          className="flex-1 overflow-y-auto p-4 space-y-2"
+          onMouseLeave={() => onClearHover?.()}
+        >
           {loading ? (
             <div className="py-12 text-center text-xs text-neutral-400 font-mono animate-pulse">
               Loading verified typography catalog...
@@ -304,18 +421,30 @@ export const FontPickerModal: React.FC<FontPickerModalProps> = ({
               No font families found matching your criteria.
             </div>
           ) : (
-            filteredFonts.map(font => (
-              <LazyFontRow
-                key={font.family}
-                font={font}
-                isSelected={selectedFamily === font.family}
-                previewText={previewText}
-                onSelect={() => {
-                  onSelectFont(font);
-                  onClose();
-                }}
-              />
-            ))
+            filteredFonts.map((font, idx) => {
+              // Calculate missing required scripts
+              const missing = (allowedScripts || []).filter(
+                req => req !== 'latin' && !font.subsets.some(s => s.toLowerCase().includes(req.toLowerCase()))
+              );
+
+              return (
+                <LazyFontRow
+                  key={font.family}
+                  font={font}
+                  isSelected={selectedFamily === font.family}
+                  isFocused={focusedIndex === idx}
+                  previewText={previewText}
+                  missingScripts={missing}
+                  onHover={() => onHoverFont?.(font)}
+                  onLeave={() => onClearHover?.()}
+                  onSelect={() => {
+                    onSelectFont(font);
+                    onClearHover?.();
+                    onClose();
+                  }}
+                />
+              );
+            })
           )}
         </div>
       </div>

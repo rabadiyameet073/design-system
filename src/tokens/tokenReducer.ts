@@ -22,6 +22,73 @@ export type TokenAction =
 
 const MAX_HISTORY = 30;
 
+/**
+ * Deeply merges a partial DesignTokens object on top of a base DesignTokens object
+ * without losing primitives, semantic colors, typography roles, or scales.
+ */
+export function mergeTokens(base: DesignTokens, partial?: Partial<DesignTokens> | null): DesignTokens {
+  if (!partial) return base;
+  return {
+    ...base,
+    ...partial,
+    meta: {
+      ...base.meta,
+      ...(partial.meta || {})
+    },
+    color: {
+      ...base.color,
+      ...(partial.color || {}),
+      primitives: {
+        ...base.color?.primitives,
+        ...(partial.color?.primitives || {})
+      },
+      semantic: {
+        light: {
+          ...base.color?.semantic?.light,
+          ...(partial.color?.semantic?.light || {})
+        },
+        dark: {
+          ...base.color?.semantic?.dark,
+          ...(partial.color?.semantic?.dark || {})
+        }
+      }
+    },
+    typography: {
+      ...base.typography,
+      ...(partial.typography || {}),
+      roles: {
+        ...base.typography?.roles,
+        ...(partial.typography?.roles || {})
+      },
+      scale: partial.typography?.scale || base.typography?.scale,
+      fluid: {
+        ...base.typography?.fluid,
+        ...(partial.typography?.fluid || {})
+      }
+    },
+    space: {
+      ...base.space,
+      ...(partial.space || {})
+    },
+    radius: {
+      ...base.radius,
+      ...(partial.radius || {})
+    },
+    shadow: {
+      ...base.shadow,
+      ...(partial.shadow || {})
+    },
+    motion: {
+      ...base.motion,
+      ...(partial.motion || {})
+    },
+    component: {
+      ...base.component,
+      ...(partial.component || {})
+    }
+  };
+}
+
 export function tokenReducer(
   state: WizardTokenState,
   action: TokenAction
@@ -35,23 +102,7 @@ export function tokenReducer(
 
     case 'APPLY_DRAFT': {
       if (!state.draft) return state;
-      const nextCommitted: DesignTokens = {
-        ...state.committed,
-        ...state.draft,
-        meta: {
-          ...state.committed.meta,
-          ...(state.draft.meta ?? {})
-        },
-        color: {
-          ...state.committed.color,
-          ...(state.draft.color ?? {})
-        },
-        typography: {
-          ...state.committed.typography,
-          ...(state.draft.typography ?? {})
-        }
-      };
-
+      const nextCommitted = mergeTokens(state.committed, state.draft);
       const newHistory = [...state.history, state.committed].slice(-MAX_HISTORY);
 
       return {
@@ -140,22 +191,6 @@ export function tokenReducer(
  * Calculates effective tokens by overlaying any active draft on top of committed tokens.
  */
 export function getEffectiveTokens(state: WizardTokenState): DesignTokens {
-  if (!state.draft) return state.committed;
-  return {
-    ...state.committed,
-    ...state.draft,
-    meta: {
-      ...state.committed.meta,
-      ...(state.draft.meta ?? {})
-    },
-    color: {
-      ...state.committed.color,
-      ...(state.draft.color ?? {})
-    },
-    typography: {
-      ...state.committed.typography,
-      ...(state.draft.typography ?? {})
-    }
-  };
+  return mergeTokens(state.committed, state.draft);
 }
 

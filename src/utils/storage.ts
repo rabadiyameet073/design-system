@@ -1,6 +1,8 @@
 import { DesignProject } from '../types/designSystem';
 import { SAMPLE_PROJECT_CERAMICS, SAMPLE_PROJECT_SAAS, createNewProject } from '../data/sampleProjects';
-import { migrateTokens, importDesignTokensFromJson, TokenMigrationError } from '../tokens/migration';
+import { migrateTokens } from '../tokens/migration';
+import { validateProjectData, validateTokensData } from './projectSchema';
+import { logger } from './logger';
 
 const STORAGE_KEY_PROJECTS = 'dss_projects_v1';
 const STORAGE_KEY_ACTIVE_ID = 'dss_active_project_id_v1';
@@ -9,7 +11,7 @@ export function getStoredProjects(): DesignProject[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PROJECTS);
     if (!raw) {
-      // Seed with sample projects so founder has high quality starting points
+      // Seed with sample projects so user has high quality starting points
       const defaultProjects = [SAMPLE_PROJECT_CERAMICS, SAMPLE_PROJECT_SAAS];
       saveProjects(defaultProjects);
       return defaultProjects;
@@ -20,7 +22,7 @@ export function getStoredProjects(): DesignProject[] {
     }
     return [SAMPLE_PROJECT_CERAMICS];
   } catch (e) {
-    console.error('Failed to load projects from storage:', e);
+    logger.error('Failed to load projects from storage:', e);
     return [SAMPLE_PROJECT_CERAMICS];
   }
 }
@@ -28,8 +30,13 @@ export function getStoredProjects(): DesignProject[] {
 export function saveProjects(projects: DesignProject[]): void {
   try {
     localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
-  } catch (e) {
-    console.error('Failed to persist projects to storage:', e);
+  } catch (e: any) {
+    if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+      window.dispatchEvent(new CustomEvent('dss:storage-quota-exceeded'));
+      logger.error('LocalStorage quota exceeded. Please export and remove older projects.', e);
+    } else {
+      logger.error('Failed to persist projects to storage:', e);
+    }
   }
 }
 
@@ -48,15 +55,20 @@ export function setActiveProjectId(id: string): void {
   try {
     localStorage.setItem(STORAGE_KEY_ACTIVE_ID, id);
   } catch (e) {
-    console.error('Failed to set active project id:', e);
+    logger.error('Failed to set active project id:', e);
   }
 }
 
-export function saveProject(project: DesignProject): void {
+// Immediate synchronous write
+export function saveProjectImmediately(
+  project: DesignProject,
+  opts: { makeActive?: boolean } = { makeActive: true }
+): void {
   const projects = getStoredProjects();
   const existingIdx = projects.findIndex(p => p.id === project.id);
   const updatedProject = {
     ...project,
+    schemaVersion: project.schemaVersion || 1,
     updatedAt: Date.now()
   };
 
@@ -67,10 +79,51 @@ export function saveProject(project: DesignProject): void {
   }
 
   saveProjects(projects);
-  setActiveProjectId(project.id);
+  if (opts.makeActive !== false) {
+    setActiveProjectId(project.id);
+  }
+}
+
+// Debounce timer for continuous slider updates (Doc 03 §3)
+let debounceSaveTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingProjectToSave: DesignProject | null = null;
+
+export function saveProject(
+  project: DesignProject,
+  debounceMs: number = 350,
+  opts: { makeActive?: boolean } = { makeActive: true }
+): void {
+  pendingProjectToSave = project;
+
+  if (debounceMs <= 0) {
+    if (debounceSaveTimer) {
+      clearTimeout(debounceSaveTimer);
+      debounceSaveTimer = null;
+    }
+    saveProjectImmediately(project, opts);
+    pendingProjectToSave = null;
+    return;
+  }
+
+  if (debounceSaveTimer) {
+    clearTimeout(debounceSaveTimer);
+  }
+
+  debounceSaveTimer = setTimeout(() => {
+    if (pendingProjectToSave) {
+      saveProjectImmediately(pendingProjectToSave, opts);
+      pendingProjectToSave = null;
+    }
+    debounceSaveTimer = null;
+  }, debounceMs);
 }
 
 export function deleteProject(id: string): DesignProject[] {
+  if (debounceSaveTimer) {
+    clearTimeout(debounceSaveTimer);
+    debounceSaveTimer = null;
+  }
+
   const projects = getStoredProjects().filter(p => p.id !== id);
   if (projects.length === 0) {
     const fallback = createNewProject('My New Website', 'ecommerce');
@@ -115,16 +168,27 @@ export function importProjectFromJson(jsonString: string): DesignProject {
     throw new Error('Project file exceeds maximum size limit of 2 MB.');
   }
 
-  let parsed: any;
+  let parsed: unknown;
   try {
     parsed = JSON.parse(jsonString);
   } catch {
     throw new Error('Invalid JSON structure.');
   }
 
-  // Case A: Standalone DesignTokens file (e.g., project.dss.json)
-  if (parsed.schemaVersion || (parsed.color && parsed.typography && !parsed.websiteType)) {
-    const tokens = migrateTokens(parsed);
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Imported JSON is not a valid object.');
+  }
+
+  const rawObj = parsed as Record<string, any>;
+
+  // Case A: Standalone DesignTokens file (e.g. project.dss.json)
+  if (rawObj.schemaVersion || (rawObj.color && rawObj.typography && !rawObj.websiteType)) {
+    const tokensValidation = validateTokensData(rawObj);
+    if (!tokensValidation.success) {
+      throw new Error(`Token validation failed: ${tokensValidation.error.issues.map(i => i.message).join(', ')}`);
+    }
+
+    const tokens = migrateTokens(tokensValidation.data as any);
     const projectName = tokens.meta?.projectName || 'Imported Design System';
     const genreId = tokens.meta?.genreId || 'ceramics-atelier';
     const baseProject = createNewProject(projectName, genreId);
@@ -137,32 +201,35 @@ export function importProjectFromJson(jsonString: string): DesignProject {
       updatedAt: Date.now()
     };
 
-    saveProject(project);
+    saveProjectImmediately(project);
     return project;
   }
 
-  // Case B: Full DesignProject structure
-  if (!parsed.name && !parsed.tokens) {
-    throw new Error('Invalid design system file structure: missing name and token properties.');
+  // Case B: Full DesignProject structure validated via Zod
+  const projectValidation = validateProjectData(rawObj);
+  if (!projectValidation.success) {
+    throw new Error(`Project schema validation failed: ${projectValidation.error.issues.map(i => i.message).join(', ')}`);
   }
 
+  const validData = projectValidation.data;
+
   // Migrate tokens inside project if present
-  let tokens = parsed.tokens;
+  let tokens: any = validData.tokens;
   try {
     if (tokens) {
       tokens = migrateTokens(tokens);
     }
   } catch (err) {
-    console.warn('Could not fully migrate nested tokens, using fallback:', err);
+    logger.warn('Could not fully migrate nested tokens, using fallback:', err);
   }
 
   const newProject: DesignProject = {
-    ...parsed,
+    ...(validData as any),
     id: `project_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    tokens: tokens || parsed.tokens,
+    tokens: (tokens || validData.tokens) as any,
     updatedAt: Date.now()
   };
 
-  saveProject(newProject);
+  saveProjectImmediately(newProject);
   return newProject;
 }

@@ -10,6 +10,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useFocusTrap } from '../../utils/useFocusTrap';
 
 export const OAuthModal: React.FC = () => {
   const {
@@ -30,6 +31,14 @@ export const OAuthModal: React.FC = () => {
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
   const isGsiInitialized = React.useRef(false);
+
+  const handleClose = () => {
+    clearAuthError();
+    setShowEmailOption(false);
+    setIsOAuthModalOpen(false);
+  };
+
+  const modalRef = useFocusTrap<HTMLDivElement>(isOAuthModalOpen, handleClose);
 
   // Auto-initialize Google Identity Services (One Tap & ID Token) in background
   useEffect(() => {
@@ -71,26 +80,27 @@ export const OAuthModal: React.FC = () => {
     loginWithCustomAccount(userName || userEmail.split('@')[0], userEmail.trim());
   };
 
-  const handleClose = () => {
-    clearAuthError();
-    setShowEmailOption(false);
-    setIsOAuthModalOpen(false);
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-modal-title"
+    >
       <motion.div
+        ref={modalRef}
         initial={{ opacity: 0, scale: 0.96, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 8 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-white rounded-2xl shadow-2xl border border-neutral-200/80 max-w-[390px] w-full p-6 sm:p-7 relative overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl border border-neutral-200/80 max-w-[390px] w-full p-6 sm:p-7 relative overflow-hidden focus:outline-none"
+        tabIndex={-1}
       >
         {/* Close Button */}
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700 p-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
-          aria-label="Close"
+          aria-label="Close authentication modal"
         >
           <X className="w-4 h-4" />
         </button>
@@ -105,7 +115,7 @@ export const OAuthModal: React.FC = () => {
             />
           </div>
 
-          <h2 className="text-xl font-bold tracking-tight text-neutral-900">
+          <h2 id="auth-modal-title" className="text-xl font-bold tracking-tight text-neutral-900">
             {user ? 'Account Signed In' : 'Sign in to Studio'}
           </h2>
           <p className="text-xs text-neutral-500 mt-1 max-w-[280px] mx-auto leading-relaxed">

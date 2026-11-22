@@ -1,4 +1,4 @@
-import { wcagContrast, oklch, formatHex, clampChroma, type Oklch } from 'culori';
+import { wcagContrast, oklch, rgb, formatHex, clampChroma, type Oklch } from 'culori';
 import { SemanticColors } from './types';
 
 /**
@@ -36,9 +36,11 @@ export function nudgeToContrast(fg: string, bg: string, target = 4.5): string {
   const bgOklch = oklch(bg);
   if (!fgOklch || !bgOklch) return fg;
 
-  const bgLightness = bgOklch.l ?? 0.5;
-  // If background is bright, step foreground toward 0 (darker); if dark, step toward 1 (brighter)
-  const stepDirection = bgLightness > 0.5 ? -0.01 : 0.01;
+  // Pick the direction (darker/lighter) that can actually reach the target: compare black vs white ceiling
+  const blackR = ratio('#000000', bg);
+  const whiteR = ratio('#FFFFFF', bg);
+  const goDarker = blackR >= whiteR;
+  const stepDirection = goDarker ? -0.01 : 0.01;
 
   let candidateL = fgOklch.l ?? 0.5;
   let iterations = 0;
@@ -69,45 +71,46 @@ export function nudgeToContrast(fg: string, bg: string, target = 4.5): string {
     iterations++;
   }
 
-  // Extreme fallback: black or white
-  return bgLightness > 0.5 ? '#0A0A0A' : '#FFFFFF';
+  // Extreme fallback: whichever of near-black / white has more contrast
+  return goDarker ? '#0A0A0A' : '#FFFFFF';
 }
 
 /**
  * Calculates APCA (Accessible Perceptual Contrast Algorithm) Lightness Contrast (Lc)
  * value (-108 to +106) as an informational perceptual second opinion per Doc 04 §2.4.
+ * Uses culori for robust color parsing (supports hex, rgb, rgba, hsl, oklch) with APCA-W3 soft black clamping.
  */
 export function computeApcaLc(fg: string, bg: string): number {
   try {
-    const parseRgb = (hex: string) => {
-      const clean = hex.replace('#', '');
-      const num = parseInt(clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean, 16);
-      return {
-        r: ((num >> 16) & 255) / 255,
-        g: ((num >> 8) & 255) / 255,
-        b: (num & 255) / 255
-      };
-    };
+    const cFg = rgb(fg);
+    const cBg = rgb(bg);
+    if (!cFg || !cBg) return 0;
 
     const sRgbToY = (c: { r: number; g: number; b: number }) => {
-      const r = Math.pow(c.r, 2.4);
-      const g = Math.pow(c.g, 2.4);
-      const b = Math.pow(c.b, 2.4);
+      const r = Math.pow(Math.max(0, Math.min(1, c.r ?? 0)), 2.4);
+      const g = Math.pow(Math.max(0, Math.min(1, c.g ?? 0)), 2.4);
+      const b = Math.pow(Math.max(0, Math.min(1, c.b ?? 0)), 2.4);
       return 0.2126729 * r + 0.7151522 * g + 0.072175 * b;
     };
 
-    const yTxt = sRgbToY(parseRgb(fg));
-    const yBg = sRgbToY(parseRgb(bg));
+    let yTxt = sRgbToY(cFg);
+    let yBg = sRgbToY(cBg);
+
+    // Soft black clamping per APCA-W3
+    const blkThrs = 0.022;
+    const blkClmp = 1.414;
+    if (yTxt <= blkThrs) yTxt += Math.pow(blkThrs - yTxt, blkClmp);
+    if (yBg <= blkThrs) yBg += Math.pow(blkThrs - yBg, blkClmp);
 
     if (Math.abs(yBg - yTxt) < 0.0005) return 0;
 
     let lc = 0;
     if (yBg > yTxt) {
       // Dark text on light background
-      lc = (Math.pow(yBg, 0.56) - Math.pow(yTxt, 0.57)) * 1.14 * 100;
+      lc = (Math.pow(yBg, 0.56) - Math.pow(yTxt, 0.57)) * 1.14 * 100 - 0.027;
     } else {
       // Light text on dark background
-      lc = (Math.pow(yBg, 0.65) - Math.pow(yTxt, 0.62)) * 1.14 * 100;
+      lc = (Math.pow(yBg, 0.65) - Math.pow(yTxt, 0.62)) * 1.14 * 100 - 0.027;
     }
 
     return Math.round(lc * 10) / 10;
@@ -118,6 +121,7 @@ export function computeApcaLc(fg: string, bg: string): number {
 
 export interface A11yAuditIssue {
   id: string;
+  fgKey: keyof SemanticColors;
   name: string;
   fg: string;
   bg: string;
@@ -144,6 +148,7 @@ export interface A11yAuditSummary {
 export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummary {
   const auditPairs: Array<{
     id: string;
+    fgKey: keyof SemanticColors;
     name: string;
     fg: string;
     bg: string;
@@ -152,6 +157,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
   }> = [
     {
       id: 'body-default',
+      fgKey: 'fgDefault',
       name: 'Body Text on Canvas',
       fg: semantic.fgDefault,
       bg: semantic.bgDefault,
@@ -160,6 +166,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     },
     {
       id: 'body-surface',
+      fgKey: 'fgDefault',
       name: 'Body Text on Card Surface',
       fg: semantic.fgDefault,
       bg: semantic.bgSurface,
@@ -168,6 +175,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     },
     {
       id: 'muted-default',
+      fgKey: 'fgMuted',
       name: 'Muted Text on Canvas',
       fg: semantic.fgMuted,
       bg: semantic.bgDefault,
@@ -176,6 +184,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     },
     {
       id: 'action-primary',
+      fgKey: 'actionPrimaryFg',
       name: 'Primary Button Label',
       fg: semantic.actionPrimaryFg,
       bg: semantic.actionPrimary,
@@ -184,6 +193,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     },
     {
       id: 'border-ui',
+      fgKey: 'borderDefault',
       name: 'Card & Control Border (UI Components)',
       fg: semantic.borderDefault,
       bg: semantic.bgDefault,
@@ -192,6 +202,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     },
     {
       id: 'focus-ring',
+      fgKey: 'focusRing',
       name: 'Focus Ring Indicator',
       fg: semantic.focusRing,
       bg: semantic.bgDefault,
@@ -200,6 +211,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     },
     {
       id: 'status-success',
+      fgKey: 'statusSuccessFg',
       name: 'Success Badge Label',
       fg: semantic.statusSuccessFg,
       bg: semantic.statusSuccessBg,
@@ -208,6 +220,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     },
     {
       id: 'status-warning',
+      fgKey: 'statusWarningFg',
       name: 'Warning Badge Label',
       fg: semantic.statusWarningFg,
       bg: semantic.statusWarningBg,
@@ -216,6 +229,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     },
     {
       id: 'status-danger',
+      fgKey: 'statusDangerFg',
       name: 'Danger Badge Label',
       fg: semantic.statusDangerFg,
       bg: semantic.statusDangerBg,
@@ -224,6 +238,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     },
     {
       id: 'status-info',
+      fgKey: 'statusInfoFg',
       name: 'Info Badge Label',
       fg: semantic.statusInfoFg,
       bg: semantic.statusInfoBg,
@@ -239,6 +254,7 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
 
     return {
       id: item.id,
+      fgKey: item.fgKey,
       name: item.name,
       fg: item.fg,
       bg: item.bg,
@@ -264,4 +280,26 @@ export function auditSemanticContrast(semantic: SemanticColors): A11yAuditSummar
     issues
   };
 }
+
+/**
+ * Auto-fixes all failing contrast pairs in a semantic color set by nudging
+ * foreground colors to meet WCAG AA standards.
+ * Two passes ensure that any interdependent pairs are mutually satisfied.
+ */
+export function autoFixSemantic(semantic: SemanticColors): SemanticColors {
+  const next = { ...semantic };
+  for (let pass = 0; pass < 2; pass++) {
+    for (const issue of auditSemanticContrast(next).issues) {
+      if (!issue.passed) {
+        (next as Record<string, string>)[issue.fgKey] = nudgeToContrast(
+          (next as Record<string, string>)[issue.fgKey],
+          issue.bg,
+          issue.targetRatio
+        );
+      }
+    }
+  }
+  return next;
+}
+
 

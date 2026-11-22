@@ -153,33 +153,49 @@ export const Interactive3DCanvas: React.FC<Interactive3DCanvasProps> = ({
     });
     resizeObserver.observe(container);
 
-    // 7. Render Loop
-    const startTime = performance.now();
+    // 7. Render Loop with Reduced Motion Support (Doc 04 §Accessibility)
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-      const elapsedTime = (performance.now() - startTime) * 0.001;
-
-      // Smooth lerp mouse parallax
-      currentX += (targetX - currentX) * 0.05;
-      currentY += (targetY - currentY) * 0.05;
-
-      mainGroup.rotation.x = currentY * 0.7 + Math.sin(elapsedTime * 0.4) * 0.12;
-      mainGroup.rotation.y = currentX * 0.9 + elapsedTime * 0.28;
-
-      cageMesh.rotation.x = -elapsedTime * 0.15;
-      cageMesh.rotation.y = -elapsedTime * 0.2;
-
-      particleSystem.rotation.y = elapsedTime * 0.08;
-
+    if (prefersReducedMotion) {
+      // In reduced motion mode, render a calm, stationary frame with no continuous loop
+      mainGroup.rotation.x = 0.2;
+      mainGroup.rotation.y = 0.4;
+      cageMesh.rotation.x = 0.1;
+      cageMesh.rotation.y = 0.15;
       renderer.render(scene, camera);
-    };
+    } else {
+      const startTime = performance.now();
 
-    animate();
+      const animate = () => {
+        animationFrameId = requestAnimationFrame(animate);
+        const elapsedTime = (performance.now() - startTime) * 0.001;
+
+        // Smooth lerp mouse parallax
+        currentX += (targetX - currentX) * 0.05;
+        currentY += (targetY - currentY) * 0.05;
+
+        mainGroup.rotation.x = currentY * 0.7 + Math.sin(elapsedTime * 0.4) * 0.12;
+        mainGroup.rotation.y = currentX * 0.9 + elapsedTime * 0.28;
+
+        cageMesh.rotation.x = -elapsedTime * 0.15;
+        cageMesh.rotation.y = -elapsedTime * 0.2;
+
+        particleSystem.rotation.y = elapsedTime * 0.08;
+
+        renderer.render(scene, camera);
+      };
+
+      animate();
+    }
 
     // 8. Cleanup
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
       container.removeEventListener('mousemove', handleMouseMove);
       container.removeEventListener('mouseleave', handleMouseLeave);
       resizeObserver.disconnect();
@@ -200,7 +216,7 @@ export const Interactive3DCanvas: React.FC<Interactive3DCanvasProps> = ({
       className={`relative w-full h-full overflow-hidden select-none ${className}`}
       style={{ touchAction: 'none' }}
     >
-      <canvas ref={canvasRef} className="w-full h-full block" />
+      <canvas ref={canvasRef} aria-hidden="true" className="w-full h-full block" />
     </div>
   );
 };

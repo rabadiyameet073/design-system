@@ -1,4 +1,12 @@
 import { CategoryId, DesignTokens } from '../../tokens/types';
+import { SECTION_REGISTRY } from '../sections';
+import { createGenreDefaults } from './defaultsHelper';
+
+export interface SectionRef {
+  id: string;
+  component: keyof typeof SECTION_REGISTRY;
+  props?: Record<string, unknown>;
+}
 
 export interface GenreConfig {
   id: string;
@@ -9,11 +17,13 @@ export interface GenreConfig {
   fontRecommendationTags: string[];
   density: 'airy' | 'balanced' | 'compact';
   componentPack: string[];
+  copyFile?: string;
+  sections?: SectionRef[];
   defaults?: Partial<DesignTokens>;
 }
 
 export const GENRE_CONFIGS: Record<string, GenreConfig> = {
-  // 1. Commerce (4)
+  // ================= 1. COMMERCE (4) =================
   'ceramics-atelier': {
     id: 'ceramics-atelier',
     category: 'commerce',
@@ -22,7 +32,20 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_ecommerce_ceramics_1792316645917.jpg',
     fontRecommendationTags: ['luxury', 'editorial', 'humanist'],
     density: 'airy',
-    componentPack: ['cards', 'buttons', 'badges']
+    componentPack: ['cards', 'buttons', 'badges'],
+    copyFile: 'commerce.json',
+    defaults: createGenreDefaults({
+      brandHex: '#B7410E',
+      accentHex: '#2563EB',
+      displayFont: 'Cormorant Garamond',
+      headingFont: 'Cormorant Garamond',
+      bodyFont: 'Lato',
+      scaleRatio: 1.333,
+      radiusKey: 'subtle',
+      density: 'airy',
+      buttonStyle: 'solid',
+      imageryTreatment: 'natural'
+    })
   },
   'fashion-store': {
     id: 'fashion-store',
@@ -32,7 +55,20 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
     fontRecommendationTags: ['luxury', 'editorial', 'minimal'],
     density: 'airy',
-    componentPack: ['cards', 'buttons', 'badges']
+    componentPack: ['cards', 'buttons', 'badges'],
+    copyFile: 'commerce.json',
+    defaults: createGenreDefaults({
+      brandHex: '#18181B',
+      accentHex: '#A1824A',
+      displayFont: 'Playfair Display',
+      headingFont: 'Playfair Display',
+      bodyFont: 'DM Sans',
+      scaleRatio: 1.333,
+      radiusKey: 'subtle',
+      density: 'airy',
+      buttonStyle: 'minimal',
+      imageryTreatment: 'mono'
+    })
   },
   'electronics-hardware': {
     id: 'electronics-hardware',
@@ -42,7 +78,21 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['tech', 'geometric', 'minimal'],
     density: 'compact',
-    componentPack: ['badges', 'buttons', 'tables']
+    componentPack: ['badges', 'buttons', 'tables'],
+    copyFile: 'commerce.json',
+    defaults: createGenreDefaults({
+      brandHex: '#1E293B',
+      accentHex: '#06B6D4',
+      displayFont: 'Outfit',
+      headingFont: 'Outfit',
+      bodyFont: 'JetBrains Mono',
+      monoFont: 'JetBrains Mono',
+      scaleRatio: 1.2,
+      radiusKey: 'rounded',
+      density: 'compact',
+      buttonStyle: 'solid',
+      imageryTreatment: 'natural'
+    })
   },
   'beauty-skincare': {
     id: 'beauty-skincare',
@@ -52,10 +102,23 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_ecommerce_ceramics_1792316645917.jpg',
     fontRecommendationTags: ['soft', 'luxury', 'humanist'],
     density: 'balanced',
-    componentPack: ['cards', 'badges', 'buttons']
+    componentPack: ['cards', 'badges', 'buttons'],
+    copyFile: 'commerce.json',
+    defaults: createGenreDefaults({
+      brandHex: '#9F4A54',
+      accentHex: '#4D7C0F',
+      displayFont: 'Fraunces',
+      headingFont: 'Fraunces',
+      bodyFont: 'Plus Jakarta Sans',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'subtle',
+      imageryTreatment: 'natural'
+    })
   },
 
-  // 2. SaaS (4)
+  // ================= 2. SAAS (4) =================
   'dashboard-app': {
     id: 'dashboard-app',
     category: 'saas',
@@ -64,7 +127,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['tech', 'geometric', 'neutral'],
     density: 'compact',
-    componentPack: ['tables', 'badges', 'inputs']
+    componentPack: ['tables', 'badges', 'inputs'],
+    copyFile: 'saas.json',
+    defaults: createGenreDefaults({
+      brandHex: '#4F46E5',
+      accentHex: '#10B981',
+      displayFont: 'Inter',
+      headingFont: 'Inter',
+      bodyFont: 'Inter',
+      scaleRatio: 1.2,
+      radiusKey: 'rounded',
+      density: 'compact',
+      buttonStyle: 'solid'
+    })
   },
   'dev-tools': {
     id: 'dev-tools',
@@ -74,7 +149,20 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['tech', 'mono', 'geometric'],
     density: 'compact',
-    componentPack: ['code', 'inputs', 'buttons']
+    componentPack: ['code', 'inputs', 'buttons'],
+    copyFile: 'saas.json',
+    defaults: createGenreDefaults({
+      brandHex: '#0F172A',
+      accentHex: '#8B5CF6',
+      displayFont: 'JetBrains Mono',
+      headingFont: 'Inter',
+      bodyFont: 'Inter',
+      monoFont: 'JetBrains Mono',
+      scaleRatio: 1.2,
+      radiusKey: 'subtle',
+      density: 'compact',
+      buttonStyle: 'outline'
+    })
   },
   'ai-product': {
     id: 'ai-product',
@@ -84,7 +172,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/hero_founder_studio_1792316645323.jpg',
     fontRecommendationTags: ['tech', 'bold', 'futuristic'],
     density: 'balanced',
-    componentPack: ['inputs', 'buttons', 'badges']
+    componentPack: ['inputs', 'buttons', 'badges'],
+    copyFile: 'saas.json',
+    defaults: createGenreDefaults({
+      brandHex: '#6366F1',
+      accentHex: '#06B6D4',
+      displayFont: 'Plus Jakarta Sans',
+      headingFont: 'Plus Jakarta Sans',
+      bodyFont: 'Inter',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   },
   'b2b-platform': {
     id: 'b2b-platform',
@@ -94,10 +194,22 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['formal', 'neutral', 'geometric'],
     density: 'balanced',
-    componentPack: ['tables', 'inputs', 'buttons']
+    componentPack: ['tables', 'inputs', 'buttons'],
+    copyFile: 'saas.json',
+    defaults: createGenreDefaults({
+      brandHex: '#1E3A8A',
+      accentHex: '#0284C7',
+      displayFont: 'Inter',
+      headingFont: 'Inter',
+      bodyFont: 'Inter',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   },
 
-  // 3. Portfolio (4)
+  // ================= 3. PORTFOLIO (4) =================
   'designer-portfolio': {
     id: 'designer-portfolio',
     category: 'portfolio',
@@ -106,7 +218,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
     fontRecommendationTags: ['editorial', 'luxury', 'geometric'],
     density: 'airy',
-    componentPack: ['gallery', 'cards']
+    componentPack: ['gallery', 'cards'],
+    copyFile: 'portfolio.json',
+    defaults: createGenreDefaults({
+      brandHex: '#09090B',
+      accentHex: '#F59E0B',
+      displayFont: 'Space Grotesk',
+      headingFont: 'Space Grotesk',
+      bodyFont: 'Plus Jakarta Sans',
+      scaleRatio: 1.333,
+      radiusKey: 'rounded',
+      density: 'airy',
+      buttonStyle: 'minimal'
+    })
   },
   'photographer-portfolio': {
     id: 'photographer-portfolio',
@@ -116,7 +240,20 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/hero_founder_studio_1792316645323.jpg',
     fontRecommendationTags: ['minimal', 'editorial', 'neutral'],
     density: 'airy',
-    componentPack: ['gallery', 'cards']
+    componentPack: ['gallery', 'cards'],
+    copyFile: 'portfolio.json',
+    defaults: createGenreDefaults({
+      brandHex: '#121212',
+      accentHex: '#E5E7EB',
+      displayFont: 'Playfair Display',
+      headingFont: 'Playfair Display',
+      bodyFont: 'Lato',
+      scaleRatio: 1.333,
+      radiusKey: 'sharp',
+      density: 'airy',
+      buttonStyle: 'minimal',
+      imageryTreatment: 'duotone'
+    })
   },
   'developer-portfolio': {
     id: 'developer-portfolio',
@@ -126,7 +263,20 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['mono', 'tech', 'geometric'],
     density: 'compact',
-    componentPack: ['code', 'badges']
+    componentPack: ['code', 'badges'],
+    copyFile: 'portfolio.json',
+    defaults: createGenreDefaults({
+      brandHex: '#18181B',
+      accentHex: '#10B981',
+      displayFont: 'JetBrains Mono',
+      headingFont: 'JetBrains Mono',
+      bodyFont: 'Inter',
+      monoFont: 'JetBrains Mono',
+      scaleRatio: 1.2,
+      radiusKey: 'rounded',
+      density: 'compact',
+      buttonStyle: 'outline'
+    })
   },
   'creative-agency': {
     id: 'creative-agency',
@@ -136,10 +286,22 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
     fontRecommendationTags: ['bold', 'editorial', 'luxury'],
     density: 'balanced',
-    componentPack: ['gallery', 'buttons']
+    componentPack: ['gallery', 'buttons'],
+    copyFile: 'portfolio.json',
+    defaults: createGenreDefaults({
+      brandHex: '#E11D48',
+      accentHex: '#2563EB',
+      displayFont: 'Space Grotesk',
+      headingFont: 'Space Grotesk',
+      bodyFont: 'DM Sans',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   },
 
-  // 4. Publishing (4)
+  // ================= 4. PUBLISHING (4) =================
   'literary-magazine': {
     id: 'literary-magazine',
     category: 'publishing',
@@ -148,7 +310,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
     fontRecommendationTags: ['editorial', 'serif', 'luxury'],
     density: 'airy',
-    componentPack: ['article', 'badges']
+    componentPack: ['article', 'badges'],
+    copyFile: 'publishing.json',
+    defaults: createGenreDefaults({
+      brandHex: '#1C1917',
+      accentHex: '#991B1B',
+      displayFont: 'Newsreader',
+      headingFont: 'Newsreader',
+      bodyFont: 'Georgia',
+      scaleRatio: 1.333,
+      radiusKey: 'subtle',
+      density: 'airy',
+      buttonStyle: 'minimal'
+    })
   },
   'tech-blog': {
     id: 'tech-blog',
@@ -158,7 +332,20 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['geometric', 'mono', 'tech'],
     density: 'balanced',
-    componentPack: ['code', 'article']
+    componentPack: ['code', 'article'],
+    copyFile: 'publishing.json',
+    defaults: createGenreDefaults({
+      brandHex: '#262626',
+      accentHex: '#0891B2',
+      displayFont: 'Outfit',
+      headingFont: 'Outfit',
+      bodyFont: 'JetBrains Mono',
+      monoFont: 'JetBrains Mono',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'subtle'
+    })
   },
   'news-journal': {
     id: 'news-journal',
@@ -168,7 +355,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
     fontRecommendationTags: ['editorial', 'formal', 'serif'],
     density: 'compact',
-    componentPack: ['article', 'badges']
+    componentPack: ['article', 'badges'],
+    copyFile: 'publishing.json',
+    defaults: createGenreDefaults({
+      brandHex: '#0A0A0A',
+      accentHex: '#1D4ED8',
+      displayFont: 'Merriweather',
+      headingFont: 'Merriweather',
+      bodyFont: 'Inter',
+      scaleRatio: 1.2,
+      radiusKey: 'sharp',
+      density: 'compact',
+      buttonStyle: 'solid'
+    })
   },
   'curated-newsletter': {
     id: 'curated-newsletter',
@@ -178,10 +377,22 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/hero_founder_studio_1792316645323.jpg',
     fontRecommendationTags: ['humanist', 'friendly', 'editorial'],
     density: 'balanced',
-    componentPack: ['inputs', 'buttons']
+    componentPack: ['inputs', 'buttons'],
+    copyFile: 'publishing.json',
+    defaults: createGenreDefaults({
+      brandHex: '#44403C',
+      accentHex: '#C2410C',
+      displayFont: 'Fraunces',
+      headingFont: 'Fraunces',
+      bodyFont: 'DM Sans',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   },
 
-  // 5. Hospitality (4)
+  // ================= 5. HOSPITALITY (4) =================
   'boutique-hotel': {
     id: 'boutique-hotel',
     category: 'hospitality',
@@ -190,7 +401,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/hero_founder_studio_1792316645323.jpg',
     fontRecommendationTags: ['luxury', 'editorial', 'serif'],
     density: 'airy',
-    componentPack: ['booking', 'gallery']
+    componentPack: ['booking', 'gallery'],
+    copyFile: 'hospitality.json',
+    defaults: createGenreDefaults({
+      brandHex: '#365314',
+      accentHex: '#A16207',
+      displayFont: 'Playfair Display',
+      headingFont: 'Playfair Display',
+      bodyFont: 'Cormorant Garamond',
+      scaleRatio: 1.333,
+      radiusKey: 'subtle',
+      density: 'airy',
+      buttonStyle: 'outline'
+    })
   },
   'fine-dining': {
     id: 'fine-dining',
@@ -200,7 +423,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_ecommerce_ceramics_1792316645917.jpg',
     fontRecommendationTags: ['luxury', 'serif', 'formal'],
     density: 'airy',
-    componentPack: ['booking', 'cards']
+    componentPack: ['booking', 'cards'],
+    copyFile: 'hospitality.json',
+    defaults: createGenreDefaults({
+      brandHex: '#020617',
+      accentHex: '#CA8A04',
+      displayFont: 'Cormorant Garamond',
+      headingFont: 'Cormorant Garamond',
+      bodyFont: 'Lato',
+      scaleRatio: 1.333,
+      radiusKey: 'sharp',
+      density: 'airy',
+      buttonStyle: 'minimal'
+    })
   },
   'artisanal-cafe': {
     id: 'artisanal-cafe',
@@ -210,7 +445,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_ecommerce_ceramics_1792316645917.jpg',
     fontRecommendationTags: ['friendly', 'humanist', 'playful'],
     density: 'balanced',
-    componentPack: ['cards', 'buttons']
+    componentPack: ['cards', 'buttons'],
+    copyFile: 'hospitality.json',
+    defaults: createGenreDefaults({
+      brandHex: '#451A03',
+      accentHex: '#D97706',
+      displayFont: 'Outfit',
+      headingFont: 'Outfit',
+      bodyFont: 'Plus Jakarta Sans',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   },
   'luxury-resort': {
     id: 'luxury-resort',
@@ -220,10 +467,22 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/hero_founder_studio_1792316645323.jpg',
     fontRecommendationTags: ['luxury', 'editorial', 'soft'],
     density: 'airy',
-    componentPack: ['booking', 'gallery']
+    componentPack: ['booking', 'gallery'],
+    copyFile: 'hospitality.json',
+    defaults: createGenreDefaults({
+      brandHex: '#134E4A',
+      accentHex: '#D97706',
+      displayFont: 'Fraunces',
+      headingFont: 'Fraunces',
+      bodyFont: 'DM Sans',
+      scaleRatio: 1.333,
+      radiusKey: 'rounded',
+      density: 'airy',
+      buttonStyle: 'subtle'
+    })
   },
 
-  // 6. Education (4)
+  // ================= 6. EDUCATION (4) =================
   'online-masterclass': {
     id: 'online-masterclass',
     category: 'education',
@@ -232,7 +491,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['editorial', 'bold', 'geometric'],
     density: 'balanced',
-    componentPack: ['courses', 'pricing']
+    componentPack: ['courses', 'pricing'],
+    copyFile: 'education.json',
+    defaults: createGenreDefaults({
+      brandHex: '#1D4ED8',
+      accentHex: '#F59E0B',
+      displayFont: 'Plus Jakarta Sans',
+      headingFont: 'Plus Jakarta Sans',
+      bodyFont: 'Inter',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   },
   'university-school': {
     id: 'university-school',
@@ -242,7 +513,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
     fontRecommendationTags: ['formal', 'serif', 'academic'],
     density: 'balanced',
-    componentPack: ['courses', 'article']
+    componentPack: ['courses', 'article'],
+    copyFile: 'education.json',
+    defaults: createGenreDefaults({
+      brandHex: '#881337',
+      accentHex: '#1E3A8A',
+      displayFont: 'Merriweather',
+      headingFont: 'Merriweather',
+      bodyFont: 'Plus Jakarta Sans',
+      scaleRatio: 1.25,
+      radiusKey: 'subtle',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   },
   'developer-bootcamp': {
     id: 'developer-bootcamp',
@@ -252,7 +535,20 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['tech', 'geometric', 'mono'],
     density: 'compact',
-    componentPack: ['courses', 'badges']
+    componentPack: ['courses', 'badges'],
+    copyFile: 'education.json',
+    defaults: createGenreDefaults({
+      brandHex: '#090D16',
+      accentHex: '#10B981',
+      displayFont: 'JetBrains Mono',
+      headingFont: 'JetBrains Mono',
+      bodyFont: 'Inter',
+      monoFont: 'JetBrains Mono',
+      scaleRatio: 1.2,
+      radiusKey: 'rounded',
+      density: 'compact',
+      buttonStyle: 'solid'
+    })
   },
   'coaching-academy': {
     id: 'coaching-academy',
@@ -262,10 +558,22 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/hero_founder_studio_1792316645323.jpg',
     fontRecommendationTags: ['humanist', 'friendly', 'bold'],
     density: 'balanced',
-    componentPack: ['pricing', 'testimonials']
+    componentPack: ['pricing', 'testimonials'],
+    copyFile: 'education.json',
+    defaults: createGenreDefaults({
+      brandHex: '#7C3AED',
+      accentHex: '#D97706',
+      displayFont: 'Outfit',
+      headingFont: 'Outfit',
+      bodyFont: 'DM Sans',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   },
 
-  // 7. Architecture (4)
+  // ================= 7. ARCHITECTURE (4) =================
   'spatial-studio': {
     id: 'spatial-studio',
     category: 'architecture',
@@ -274,7 +582,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
     fontRecommendationTags: ['minimal', 'editorial', 'geometric'],
     density: 'airy',
-    componentPack: ['projects', 'gallery']
+    componentPack: ['projects', 'gallery'],
+    copyFile: 'architecture.json',
+    defaults: createGenreDefaults({
+      brandHex: '#27272A',
+      accentHex: '#FAFAFA',
+      displayFont: 'Space Grotesk',
+      headingFont: 'Space Grotesk',
+      bodyFont: 'Inter',
+      scaleRatio: 1.333,
+      radiusKey: 'sharp',
+      density: 'airy',
+      buttonStyle: 'minimal'
+    })
   },
   'real-estate-estate': {
     id: 'real-estate-estate',
@@ -284,7 +604,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/hero_founder_studio_1792316645323.jpg',
     fontRecommendationTags: ['luxury', 'formal', 'serif'],
     density: 'airy',
-    componentPack: ['cards', 'gallery']
+    componentPack: ['cards', 'gallery'],
+    copyFile: 'architecture.json',
+    defaults: createGenreDefaults({
+      brandHex: '#0F172A',
+      accentHex: '#B45309',
+      displayFont: 'Playfair Display',
+      headingFont: 'Playfair Display',
+      bodyFont: 'DM Sans',
+      scaleRatio: 1.333,
+      radiusKey: 'subtle',
+      density: 'airy',
+      buttonStyle: 'outline'
+    })
   },
   'interior-design': {
     id: 'interior-design',
@@ -294,7 +626,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_ecommerce_ceramics_1792316645917.jpg',
     fontRecommendationTags: ['luxury', 'humanist', 'soft'],
     density: 'airy',
-    componentPack: ['gallery', 'testimonials']
+    componentPack: ['gallery', 'testimonials'],
+    copyFile: 'architecture.json',
+    defaults: createGenreDefaults({
+      brandHex: '#57534E',
+      accentHex: '#65A30D',
+      displayFont: 'Fraunces',
+      headingFont: 'Fraunces',
+      bodyFont: 'Plus Jakarta Sans',
+      scaleRatio: 1.333,
+      radiusKey: 'rounded',
+      density: 'airy',
+      buttonStyle: 'subtle'
+    })
   },
   'landscape-pavilion': {
     id: 'landscape-pavilion',
@@ -304,10 +648,22 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
     fontRecommendationTags: ['organic', 'humanist', 'editorial'],
     density: 'balanced',
-    componentPack: ['projects', 'gallery']
+    componentPack: ['projects', 'gallery'],
+    copyFile: 'architecture.json',
+    defaults: createGenreDefaults({
+      brandHex: '#14532D',
+      accentHex: '#B45309',
+      displayFont: 'Outfit',
+      headingFont: 'Outfit',
+      bodyFont: 'Lato',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   },
 
-  // 8. Finance (4)
+  // ================= 8. FINANCE (4) =================
   'fintech-app': {
     id: 'fintech-app',
     category: 'finance',
@@ -316,7 +672,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['geometric', 'tech', 'neutral'],
     density: 'compact',
-    componentPack: ['stats', 'pricing', 'tables']
+    componentPack: ['stats', 'pricing', 'tables'],
+    copyFile: 'finance.json',
+    defaults: createGenreDefaults({
+      brandHex: '#2563EB',
+      accentHex: '#059669',
+      displayFont: 'Plus Jakarta Sans',
+      headingFont: 'Plus Jakarta Sans',
+      bodyFont: 'Inter',
+      scaleRatio: 1.2,
+      radiusKey: 'rounded',
+      density: 'compact',
+      buttonStyle: 'solid'
+    })
   },
   'venture-capital': {
     id: 'venture-capital',
@@ -326,7 +694,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/hero_founder_studio_1792316645323.jpg',
     fontRecommendationTags: ['formal', 'editorial', 'bold'],
     density: 'balanced',
-    componentPack: ['stats', 'testimonials']
+    componentPack: ['stats', 'testimonials'],
+    copyFile: 'finance.json',
+    defaults: createGenreDefaults({
+      brandHex: '#09090B',
+      accentHex: '#D97706',
+      displayFont: 'Newsreader',
+      headingFont: 'Newsreader',
+      bodyFont: 'DM Sans',
+      scaleRatio: 1.25,
+      radiusKey: 'subtle',
+      density: 'balanced',
+      buttonStyle: 'minimal'
+    })
   },
   'asset-custody': {
     id: 'asset-custody',
@@ -336,7 +716,20 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
     fontRecommendationTags: ['tech', 'formal', 'mono'],
     density: 'compact',
-    componentPack: ['stats', 'badges']
+    componentPack: ['stats', 'badges'],
+    copyFile: 'finance.json',
+    defaults: createGenreDefaults({
+      brandHex: '#0F172A',
+      accentHex: '#0284C7',
+      displayFont: 'JetBrains Mono',
+      headingFont: 'JetBrains Mono',
+      bodyFont: 'Inter',
+      monoFont: 'JetBrains Mono',
+      scaleRatio: 1.2,
+      radiusKey: 'rounded',
+      density: 'compact',
+      buttonStyle: 'outline'
+    })
   },
   'neobank': {
     id: 'neobank',
@@ -346,7 +739,19 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
     heroImage: '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
     fontRecommendationTags: ['luxury', 'geometric', 'formal'],
     density: 'balanced',
-    componentPack: ['stats', 'pricing']
+    componentPack: ['stats', 'pricing'],
+    copyFile: 'finance.json',
+    defaults: createGenreDefaults({
+      brandHex: '#4F46E5',
+      accentHex: '#10B981',
+      displayFont: 'Outfit',
+      headingFont: 'Outfit',
+      bodyFont: 'Plus Jakarta Sans',
+      scaleRatio: 1.25,
+      radiusKey: 'rounded',
+      density: 'balanced',
+      buttonStyle: 'solid'
+    })
   }
 };
 
@@ -368,4 +773,3 @@ export function getGenresForCategory(category: CategoryId): GenreConfig[] {
 export function getGenreById(id: string): GenreConfig {
   return GENRE_CONFIGS[id] || GENRE_CONFIGS['ceramics-atelier'];
 }
-

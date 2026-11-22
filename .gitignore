@@ -4,9 +4,14 @@ dist/
 coverage/
 .DS_Store
 *.log
+# Secrets and archives
 .env*
 !.env.example
 client_secret*.json
+*.zip
+*.rar
+*.tar.gz
+*.tgz
 .vercel
 
 # Lyzo AI memory index

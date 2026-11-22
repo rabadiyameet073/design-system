@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { AuthContext, AuthContextType, OAuthUser } from './auth-context';
+import { generateInitialsAvatar } from '../utils/avatar';
 
 export type { OAuthUser, AuthContextType };
 
@@ -7,10 +8,8 @@ const STORAGE_KEY_AUTH = 'dss_google_user_session_v2';
 const STORAGE_KEY_CLIENT_ID = 'dss_google_client_id_custom';
 const AUTH_CHANNEL_NAME = 'google_auth_realtime_channel';
 
-// Default Google OAuth Client ID configured in environment
-const DEFAULT_GOOGLE_CLIENT_ID =
-  (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ||
-  '392976489628-iik084o59qhv5ootq0f3isa13l7kp2o3.apps.googleusercontent.com';
+// Default Google OAuth Client ID configured in environment (no hardcoded fallback)
+const DEFAULT_GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '';
 
 function broadcastAuthChange(type: 'LOGIN' | 'LOGOUT', user?: OAuthUser) {
   try {
@@ -160,30 +159,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [user]);
 
-  // 3. Listen for OAuth popup postMessage callback events
+  // 3. Listen for OAuth popup postMessage callback events with strict same-origin check per S7
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (
-        event.origin !== window.location.origin &&
-        !event.origin.includes('localhost') &&
-        !event.origin.endsWith('.run.app')
-      ) {
+      // Strictly enforce exact same-origin validation per S7
+      if (event.origin !== window.location.origin) {
         return;
       }
 
       if (event.data?.type === 'OAUTH_AUTH_SUCCESS' && event.data.user) {
+        // Never store or accept accessToken on the client per S8
         const authedUser: OAuthUser = {
           id: event.data.user.id || `google_${Date.now()}`,
           uid: event.data.user.id || `google_${Date.now()}`,
           name: event.data.user.name,
           email: event.data.user.email,
-          avatar: event.data.user.avatar,
+          avatar: event.data.user.avatar || generateInitialsAvatar(event.data.user.name || event.data.user.email),
           provider: event.data.user.provider || 'google',
-          accessToken: event.data.user.accessToken,
-          idToken: event.data.user.idToken,
-          scope: event.data.user.scope || 'openid profile email',
-          emailVerified: event.data.user.emailVerified ?? true,
-          authenticatedAt: Date.now()
+          scope: 'openid profile email',
+          emailVerified: true,
+          authenticatedAt: event.data.user.authenticatedAt || Date.now()
         };
         setUser(authedUser);
         localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(authedUser));
@@ -197,53 +192,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // 4. Real-time Google Credential Login from Google Identity Services 1-Click / One-Tap
+  // 4. Server-verified Google Credential Login (Google Identity Services ID Token) per S4
   const loginWithGoogleCredential = useCallback(async (credential: string): Promise<OAuthUser> => {
     setIsLoading(true);
     setAuthError(null);
     try {
-      // Decode JWT ID token payload safely
-      const base64Url = credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      const payload = JSON.parse(jsonPayload);
+      // Verify Google ID token server-side upstream via /api/auth/google-session
+      const res = await fetch('/api/auth/google-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential })
+      });
+
+      if (!res.ok) {
+        const errData = (await res.json().catch(() => ({}))) as any;
+        throw new Error(errData.error || 'Server rejected Google ID credential token');
+      }
+
+      const data = await res.json();
+      const verified = data.user;
 
       const realUser: OAuthUser = {
-        id: payload.sub,
-        uid: payload.sub,
-        name: payload.name || payload.given_name || 'Google User',
-        email: payload.email,
-        avatar:
-          payload.picture ||
-          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(payload.name || payload.email)}`,
+        id: verified.id,
+        uid: verified.id,
+        name: verified.name || 'Google User',
+        email: verified.email,
+        avatar: verified.avatar || generateInitialsAvatar(verified.name || verified.email),
         provider: 'google',
-        idToken: credential,
         scope: 'openid email profile',
-        emailVerified: payload.email_verified ?? true,
-        authenticatedAt: Date.now()
+        emailVerified: true,
+        authenticatedAt: verified.authenticatedAt || Date.now()
       };
 
       setUser(realUser);
       localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(realUser));
       broadcastAuthChange('LOGIN', realUser);
 
-      // Sync active session with server
-      fetch('/api/auth/google-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: realUser })
-      }).catch(err => console.warn('Server session sync notice:', err));
-
       setIsOAuthModalOpen(false);
       return realUser;
     } catch (err: any) {
-      console.error('Failed to parse Google ID token credential:', err);
-      setAuthError('Could not verify Google ID credential token.');
+      console.error('Google ID token verification failed:', err);
+      const msg = err.message || 'Could not verify Google ID credential token.';
+      setAuthError(msg);
       throw err;
     } finally {
       setIsLoading(false);
@@ -305,16 +295,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 const profile = await userRes.json();
 
+                // Never store accessToken on client per S8
                 const realUser: OAuthUser = {
                   id: profile.sub || `google_${Date.now()}`,
                   uid: profile.sub || `google_${Date.now()}`,
                   name: profile.name || profile.given_name || 'Google User',
                   email: profile.email,
-                  avatar:
-                    profile.picture ||
-                    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name || profile.email)}`,
+                  avatar: profile.picture || generateInitialsAvatar(profile.name || profile.email),
                   provider: 'google',
-                  accessToken: tokenResponse.access_token,
                   scope: 'openid email profile',
                   emailVerified: profile.email_verified ?? true,
                   authenticatedAt: Date.now()
@@ -323,13 +311,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(realUser);
                 localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(realUser));
                 broadcastAuthChange('LOGIN', realUser);
-
-                // Notify backend server to store active session
-                fetch('/api/auth/google-session', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ user: realUser })
-                }).catch(() => {});
 
                 setIsOAuthModalOpen(false);
                 setIsLoading(false);
@@ -432,34 +413,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const cleanEmail = email.trim();
         const cleanName = name.trim() || cleanEmail.split('@')[0];
-        const userAvatar =
-          avatar ||
-          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanName)}`;
+        const userAvatar = avatar || generateInitialsAvatar(cleanName);
+
+        // Sync with server session
+        const res = await fetch('/api/auth/custom-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: cleanName, email: cleanEmail, avatar: userAvatar })
+        });
+
+        if (!res.ok) {
+          const errData = (await res.json().catch(() => ({}))) as any;
+          throw new Error(errData.error || 'Custom login is disabled in this environment.');
+        }
+
+        const data = await res.json();
+        const serverUser = data.user;
 
         const customUser: OAuthUser = {
-          id: `usr_${Date.now()}`,
-          uid: `usr_${Date.now()}`,
-          name: cleanName,
-          email: cleanEmail,
-          avatar: userAvatar,
-          provider: cleanEmail.endsWith('@gmail.com') ? 'google' : 'custom',
+          id: serverUser.id || `usr_${Date.now()}`,
+          uid: serverUser.id || `usr_${Date.now()}`,
+          name: serverUser.name || cleanName,
+          email: serverUser.email || cleanEmail,
+          avatar: serverUser.avatar || userAvatar,
+          provider: 'demo',
           scope: 'openid profile email',
           emailVerified: true,
-          authenticatedAt: Date.now()
+          authenticatedAt: serverUser.authenticatedAt || Date.now()
         };
 
         setUser(customUser);
         localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(customUser));
         broadcastAuthChange('LOGIN', customUser);
 
-        // Sync with server session
-        fetch('/api/auth/custom-login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: cleanName, email: cleanEmail, avatar: userAvatar })
-        }).catch(() => {});
-
         setIsOAuthModalOpen(false);
+      } catch (err: any) {
+        console.error('Custom login error:', err);
+        setAuthError(err.message || 'Login failed.');
+        throw err;
       } finally {
         setIsLoading(false);
       }

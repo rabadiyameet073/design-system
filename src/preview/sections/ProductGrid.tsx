@@ -63,7 +63,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             style={{
               borderColor: 'var(--color-border-default)',
               color: 'var(--color-fg-default)',
-              borderRadius: 'var(--radius-md)'
+              borderRadius: 'var(--radius-button, var(--radius-md))'
             }}
           >
             View Full Inventory
@@ -74,10 +74,11 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           {products.map((item, idx) => (
             <div
               key={idx}
-              className="group relative rounded-[var(--radius-lg)] border overflow-hidden transition-all duration-300 hover:shadow-[var(--shadow-md)] flex flex-col"
+              className="group relative border overflow-hidden transition-all duration-300 hover:shadow-[var(--shadow-md)] flex flex-col"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
-                borderColor: 'var(--color-border-default)'
+                borderColor: 'var(--color-border-default)',
+                borderRadius: 'var(--radius-card, var(--radius-lg))'
               }}
             >
               <div className="relative h-64 overflow-hidden bg-[var(--color-bg-default)]">
@@ -86,6 +87,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                   alt={item.title}
                   width={600}
                   height={400}
+                  style={{ filter: 'var(--image-filter, none)' }}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <span
@@ -115,9 +117,10 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                 <button
                   className="w-full py-2.5 text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-[var(--shadow-sm)] hover:opacity-90 active:scale-98 cursor-pointer"
                   style={{
-                    backgroundColor: 'var(--color-action-primary)',
-                    color: 'var(--color-action-primary-fg)',
-                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: 'var(--button-bg, var(--color-action-primary))',
+                    color: 'var(--button-fg, var(--color-action-primary-fg))',
+                    border: 'var(--button-border, none)',
+                    borderRadius: 'var(--radius-button, var(--radius-md))',
                     fontFamily: 'var(--font-ui, var(--font-body))'
                   }}
                 >

@@ -66,7 +66,7 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
             <div className="space-y-2 pt-1">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-white/80 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Tokens Engine: v1.4.2 · All 14 Steps Active</span>
+                <span>Tokens Engine: v1.6.0 · All 11 Steps Active</span>
               </div>
               <div className="flex items-center gap-2 text-[11px] font-mono text-white/45 pl-1">
                 <span>⚡ Built on Vite 8 & React 19</span>
@@ -82,73 +82,94 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
                 className="group inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-clay hover:bg-clay-deep text-white text-xs font-bold font-sans transition-all shadow-md hover:shadow-clay/30 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5 text-white/90" />
-                <span>Launch 14-Step Wizard</span>
+                <span>Launch 11-Step Studio</span>
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
               </button>
             </div>
           </div>
 
-          {/* Col 2: The 14 Decisions (2 Cols) */}
+          {/* Col 2: The 11 Decisions (2 Cols) */}
           <div className="lg:col-span-2 space-y-3">
             <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-clay">
-              The 14 Steps
+              The 11 Decisions
             </h4>
             <ul className="space-y-2 text-xs text-white/70 font-light">
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <span>01. Project Scope</span>
+                <span>01. Category & Genre</span>
                 <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q01</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <span>02. Website Genre</span>
+                <span>02. Project Scope</span>
                 <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q02</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <span>04. Brand Soul</span>
+                <span>03. Brand Personality</span>
+                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q03</span>
+              </li>
+              <li
+                onClick={onStartNew}
+                className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
+              >
+                <span>04. Visual Direction</span>
                 <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q04</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <span>06. Color Studio</span>
+                <span>05. Color Studio</span>
+                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q05</span>
+              </li>
+              <li
+                onClick={onStartNew}
+                className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
+              >
+                <span>06. Typography</span>
                 <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q06</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <span>07. Typography</span>
+                <span>07. Shape & Spacing</span>
                 <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q07</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <span>09. Spatial Rhythm</span>
+                <span>08. Components</span>
+                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q08</span>
+              </li>
+              <li
+                onClick={onStartNew}
+                className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
+              >
+                <span>09. Imagery & Motion</span>
                 <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q09</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <span>10. UI Kit Studio</span>
+                <span>10. Review & Audit</span>
                 <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q10</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
-                <span>14. Export Center</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q14</span>
+                <span>11. Export Center</span>
+                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q11</span>
               </li>
             </ul>
           </div>
@@ -236,7 +257,7 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
               Core Standards
             </h4>
             <ul className="space-y-2 text-xs text-white/70 font-light">
-              <li className="hover:text-white transition-colors">WCAG 2.1 AA Audit</li>
+              <li className="hover:text-white transition-colors">WCAG 2.2 AA Audit</li>
               <li className="hover:text-white transition-colors">OKLCH Color Math</li>
               <li className="hover:text-white transition-colors">8px Harmonic Grid</li>
               <li className="hover:text-white transition-colors">Major Third Ratio</li>

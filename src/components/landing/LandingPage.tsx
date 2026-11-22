@@ -111,7 +111,7 @@ const DECISIONS = [
     icon: ShieldCheck,
     accent: 'from-emerald-500/10 to-green-500/10 text-emerald-600 border-emerald-200/60',
     iconColor: 'text-emerald-600',
-    title: 'WCAG AA 2.1 verified',
+    title: 'WCAG 2.2 AA verified',
     badge: 'dark mode audit',
   },
 ];
@@ -125,7 +125,7 @@ const DELIVERABLES = [
     kicker: 'PDF · 4 pages',
     title: 'Design System Specification',
     category: 'Specification',
-    detail: '4 Pages · WCAG 2.1 AA Audit',
+    detail: '4 Pages · WCAG 2.2 AA Audit',
     year: '2025',
     format: 'PDF Vector Document',
     body: 'A typeset document with exact hex values, shade ramps, the type hierarchy, spacing rules and a WCAG AA contrast audit.',
@@ -228,6 +228,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [hoveredDeliverableId, setHoveredDeliverableId] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [architectureTab, setArchitectureTab] = useState<'tokens' | '3d'>('tokens');
+  const [importError, setImportError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
 
@@ -266,7 +267,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             onExploreSample(imported);
           }
         } catch (err) {
-          alert('Could not import design system JSON file. Please ensure it is a valid tokens JSON package.');
+          setImportError('Could not import design system JSON file. Please ensure it is a valid tokens JSON package.');
         }
       };
       reader.readAsText(file);
@@ -422,22 +423,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <button
                       type="button"
                       onClick={() => setArchitectureTab('tokens')}
-                      className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                        architectureTab === 'tokens'
+                      className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${architectureTab === 'tokens'
                           ? 'bg-white text-ink shadow-2xs font-bold'
                           : 'text-ink/60 hover:text-ink'
-                      }`}
+                        }`}
                     >
                       Tokens
                     </button>
                     <button
                       type="button"
                       onClick={() => setArchitectureTab('3d')}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                        architectureTab === '3d'
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${architectureTab === '3d'
                           ? 'bg-white text-ink shadow-2xs font-bold'
                           : 'text-ink/60 hover:text-ink'
-                      }`}
+                        }`}
                       title="Explore in real-time interactive 3D WebGL space"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-clay animate-pulse" />
@@ -624,9 +623,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                   {/* Chevron */}
                   <ChevronDown
-                    className={`w-3.5 h-3.5 text-ink/50 group-hover:text-ink transition-transform duration-200 shrink-0 ${
-                      isDropdownOpen ? 'rotate-180' : ''
-                    }`}
+                    className={`w-3.5 h-3.5 text-ink/50 group-hover:text-ink transition-transform duration-200 shrink-0 ${isDropdownOpen ? 'rotate-180' : ''
+                      }`}
                   />
                 </button>
 
@@ -680,11 +678,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                 else if (catKey === 'Local') setActiveCategory('Local & Services');
                                 else setActiveCategory(catKey);
                               }}
-                              className={`px-2.5 py-1 rounded-full whitespace-nowrap font-medium transition-all cursor-pointer ${
-                                isCatActive
+                              className={`px-2.5 py-1 rounded-full whitespace-nowrap font-medium transition-all cursor-pointer ${isCatActive
                                   ? 'bg-ink text-white font-semibold'
                                   : 'bg-stone-100/70 text-ink/65 hover:bg-stone-200/70'
-                              }`}
+                                }`}
                             >
                               {label}
                             </button>
@@ -711,11 +708,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                 setIsDropdownOpen(false);
                                 setSearchQuery('');
                               }}
-                              className={`w-full group flex items-start gap-3 p-2.5 rounded-xl transition-all cursor-pointer text-left ${
-                                isSelected
+                              className={`w-full group flex items-start gap-3 p-2.5 rounded-xl transition-all cursor-pointer text-left ${isSelected
                                   ? 'bg-clay-wash/80 border border-clay/25'
                                   : 'hover:bg-stone-100/80 border border-transparent'
-                              }`}
+                                }`}
                             >
                               <span
                                 className="w-3 h-3 rounded-full shrink-0 mt-0.5 shadow-2xs"
@@ -987,7 +983,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="text-white/30">•</span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
-                  <span>WCAG 2.1 AA Verified</span>
+                  <span>WCAG 2.2 AA Verified</span>
                 </span>
               </div>
             </div>
@@ -1020,6 +1016,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         onExploreSample={() => onExploreSample(activeSample)}
         onOpenLegal={onOpenLegal}
       />
+
+      {/* Floating Import Error Toast */}
+      <AnimatePresence>
+        {importError && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            className="fixed bottom-6 right-6 z-50 bg-neutral-900/95 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-2xl border border-rose-500/50 backdrop-blur-md flex items-center gap-3"
+          >
+            <span className="text-rose-400 font-bold">Import Notice:</span>
+            <span>{importError}</span>
+            <button
+              onClick={() => setImportError(null)}
+              className="text-neutral-400 hover:text-white cursor-pointer font-bold ml-2"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

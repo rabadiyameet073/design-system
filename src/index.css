@@ -186,8 +186,266 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Cloud drift keyframe animations from ai_studio_code.html */
+@keyframes driftA {
+  to {
+    transform: translateX(26px) translateY(4px);
+  }
+}
+.drift-a {
+  animation: driftA 14s ease-in-out infinite alternate;
+}
+
+/* Pristine Interactive Hover Accordion from ai_studio_code.html */
+.dss-accordion-track {
+  position: relative;
+  z-index: 10;
+  flex-grow: 1;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+.dss-accordion-panel {
+  position: relative;
+  flex: 0 0 clamp(52px, 5.2vw, 84px);
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid #EEF0EA;
+  cursor: pointer;
+  outline: none;
+  background: rgba(250, 249, 245, 0.45);
+  transition: flex-grow 0.85s cubic-bezier(0.77, 0, 0.18, 1), background-color 0.4s ease;
+}
+.dss-accordion-panel:last-child {
+  border-right: none;
+}
+.dss-accordion-panel.is-active {
+  flex-grow: 1;
+  cursor: default;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+}
+
+.dss-panel-in {
+  position: absolute;
+  left: clamp(18px, 2.8vw, 52px);
+  right: clamp(18px, 2.8vw, 52px);
+  bottom: clamp(16px, 3vh, 40px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 1fr);
+  align-items: end;
+  gap: clamp(20px, 2.8vw, 48px);
+  width: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.dss-accordion-panel.is-active .dss-panel-in {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.65s 0.2s ease;
+}
+
+.dss-num-badge {
+  font-family: var(--font-display, "Fraunces", serif);
+  font-size: clamp(48px, 7vw, 84px);
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -0.06em;
+  user-select: none;
+  flex-shrink: 0;
+  transition: opacity 0.4s ease, transform 0.5s ease;
+}
+
+.dss-step {
+  position: relative;
+  width: 100%;
+  padding-bottom: 2px;
+  opacity: 0;
+  transform: translateX(-20px);
+  filter: blur(4px);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.4s ease, filter 0.35s ease;
+}
+.dss-accordion-panel.is-active .dss-step {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  pointer-events: auto;
+  transition: opacity 0.7s 0.25s ease, transform 0.85s 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.7s 0.25s ease;
+}
+
+.dss-specimen {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(4px);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.4s ease, filter 0.35s ease;
+}
+.dss-accordion-panel.is-active .dss-specimen {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  pointer-events: auto;
+  transition: opacity 0.7s 0.35s ease, transform 0.85s 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.7s 0.35s ease;
+}
+
+/* Collapsed panel vertical label */
+.dss-vertical-label {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(90px, 22vh, 260px);
+  transform: translateX(-50%) rotate(-90deg);
+  transform-origin: center center;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(18, 20, 16, 0.45);
+  pointer-events: none;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+.dss-accordion-panel:hover .dss-vertical-label {
+  color: rgba(18, 20, 16, 0.85);
+}
+.dss-accordion-panel.is-active .dss-vertical-label {
+  opacity: 0;
+}
+
+/* Collapsed panel bottom number badge */
+.dss-collapsed-num {
+  position: absolute;
+  bottom: clamp(16px, 3vh, 32px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: rgba(18, 20, 16, 0.35);
+  transition: opacity 0.3s ease, color 0.3s ease;
+  pointer-events: none;
+}
+.dss-accordion-panel:hover .dss-collapsed-num {
+  color: rgba(18, 20, 16, 0.8);
+}
+.dss-accordion-panel.is-active .dss-collapsed-num {
+  opacity: 0;
+}
+
+@media (max-width: 1024px) {
+  .dss-panel-in {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    bottom: 20px;
+  }
+  .dss-specimen {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .dss-accordion-track {
+    flex-direction: column;
+  }
+  .dss-accordion-panel {
+    flex: none;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #EEF0EA;
+  }
+  .dss-panel-in {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    padding: 24px 16px;
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  .dss-step {
+    max-width: 100%;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    pointer-events: auto !important;
+  }
+  .dss-vertical-label,
+  .dss-collapsed-num {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
+  .drift-a {
+    animation: none !important;
+  }
+  .dss-accordion-panel,
+  .dss-num,
+  .dss-step,
+  .dss-specimen {
+    transition: none !important;
+  }
 }
+
+/* ============================================================
+   Accessibility & Focus-Visible Standards (WCAG 2.2 SC 2.4.11 / 2.4.13)
+   Guarantees minimum 3:1 contrast focus rings for keyboard users
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid #b7410e !important;
+  outline-offset: 2px !important;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[role="slider"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 2px solid #b7410e !important;
+  outline-offset: 2px !important;
+}
+
+/* Screen Reader Only Utility */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border-width: 0 !important;
+}
+
+.focus\:not-sr-only:focus,
+.focus\:not-sr-only:focus-visible {
+  position: fixed !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  white-space: normal !important;
+  z-index: 100 !important;
+}
+

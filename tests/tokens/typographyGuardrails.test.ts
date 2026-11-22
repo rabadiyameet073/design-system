@@ -193,4 +193,29 @@ describe('typographyGuardrails', () => {
     expect(issue?.severity).toBe('warning');
     expect(result.estimatedPayloadKb).toBeGreaterThan(150);
   });
+
+  it('flags warning when total font files exceeds 6 (Doc 03 §8)', () => {
+    const customMap = new Map(mockFontsMap);
+    // Add 4 static fonts with multiple weights
+    customMap.set('Static1', { family: 'Static1', category: 'serif', variants: ['400', '700'], subsets: ['latin'], variable: false, source: 'google' });
+    customMap.set('Static2', { family: 'Static2', category: 'sans-serif', variants: ['400', '600', '700'], subsets: ['latin'], variable: false, source: 'google' });
+    customMap.set('Static3', { family: 'Static3', category: 'sans-serif', variants: ['400', '500'], subsets: ['latin'], variable: false, source: 'google' });
+    customMap.set('Static4', { family: 'Static4', category: 'monospace', variants: ['400'], subsets: ['latin'], variable: false, source: 'google' });
+
+    const typo = createBaseTypography();
+    typo.roles.display = { family: 'Static1', fallback: ['serif'], weight: 700, lineHeight: 1.15, letterSpacing: '0' };
+    typo.roles.heading = { family: 'Static2', fallback: ['sans-serif'], weight: 600, lineHeight: 1.25, letterSpacing: '0' };
+    typo.roles.body = { family: 'Static3', fallback: ['sans-serif'], weight: 400, lineHeight: 1.6, letterSpacing: '0' }; // body adds 400 and 700
+    typo.roles.ui = { family: 'Static2', fallback: ['sans-serif'], weight: 500, lineHeight: 1.4, letterSpacing: '0' }; // adds 500 to Static2
+    typo.roles.accent = { family: 'Static1', fallback: ['serif'], weight: 400, lineHeight: 1.2, letterSpacing: '0' }; // adds 400 to Static1
+    typo.roles.mono = { family: 'Static4', fallback: ['monospace'], weight: 400, lineHeight: 1.5, letterSpacing: '0' };
+
+    const result = auditTypographyTokens(typo, customMap);
+    const issue = result.issues.find(i => i.id === 'total-font-files');
+
+    expect(issue).toBeDefined();
+    expect(issue?.severity).toBe('warning');
+    expect(issue?.message).toBe('Consider fewer weights/styles to keep the page fast.');
+    expect(result.totalFontFiles).toBeGreaterThan(6);
+  });
 });

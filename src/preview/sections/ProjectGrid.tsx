@@ -45,10 +45,11 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({
           {projects.map((p, idx) => (
             <div
               key={idx}
-              className="rounded-[var(--radius-xl)] border overflow-hidden shadow-[var(--shadow-md)] group"
+              className="border overflow-hidden shadow-[var(--shadow-md)] group"
               style={{
                 backgroundColor: 'var(--color-bg-surface)',
-                borderColor: 'var(--color-border-default)'
+                borderColor: 'var(--color-border-default)',
+                borderRadius: 'var(--radius-card, var(--radius-xl))'
               }}
             >
               <div className="h-72 overflow-hidden">
@@ -57,6 +58,7 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({
                   alt={p.name}
                   width={800}
                   height={600}
+                  style={{ filter: 'var(--image-filter)' }}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </div>

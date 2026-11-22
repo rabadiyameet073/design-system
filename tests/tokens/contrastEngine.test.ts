@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ratio, grade, nudgeToContrast, auditSemanticContrast, computeApcaLc } from '../../src/tokens/contrastEngine';
+import { ratio, grade, nudgeToContrast, auditSemanticContrast, computeApcaLc, autoFixSemantic } from '../../src/tokens/contrastEngine';
 import { createDefaultTokens } from '../../src/tokens/defaultTokens';
 import { oklch } from 'culori';
 
@@ -29,6 +29,13 @@ describe('WCAG 2.2 Contrast Engine', () => {
     const fixedRatio = ratio(fixed, '#FFFFFF');
 
     expect(fixedRatio).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('correctly handles mid-grey background contrast direction toward achievable contrast', () => {
+    // On mid-grey #808080, black reaches ~5.3:1 while white can never reach 4.5:1
+    const fixed = nudgeToContrast('#777777', '#808080', 4.5);
+    const r = ratio(fixed, '#808080');
+    expect(r).toBeGreaterThanOrEqual(4.5);
   });
 
   it('fixes failing chromatic pair to target contrast without changing hue by > 3 degrees', () => {
@@ -70,6 +77,49 @@ describe('WCAG 2.2 Contrast Engine', () => {
 
     const identicalLc = computeApcaLc('#FFFFFF', '#FFFFFF');
     expect(identicalLc).toBe(0);
+
+    // Supports named colors and rgb strings without NaN
+    const rgbLc = computeApcaLc('rgb(0, 0, 0)', 'rgb(255, 255, 255)');
+    expect(rgbLc).toBeGreaterThan(95);
+
+    const namedLc = computeApcaLc('black', 'white');
+    expect(namedLc).toBeGreaterThan(95);
+  });
+
+  it('autoFixSemantic fixes failing semantic colors to 100% WCAG AA compliance', () => {
+    const badSemantic = {
+      bgDefault: '#FFFFFF',
+      bgSurface: '#F5F5F5',
+      bgElevated: '#FFFFFF',
+      fgDefault: '#999999', // Low contrast on white ~2.8:1
+      fgMuted: '#BBBBBB',   // Low contrast on white ~1.8:1
+      borderDefault: '#EEEEEE',
+      actionPrimary: '#7799CC',
+      actionPrimaryFg: '#FFFFFF',
+      actionPrimaryHover: '#6688BB',
+      focusRing: '#DDDDDD',
+      statusSuccess: '#0a0',
+      statusSuccessBg: '#E6FFE6',
+      statusSuccessFg: '#88CC88',
+      statusWarning: '#fa0',
+      statusWarningBg: '#FFF3CC',
+      statusWarningFg: '#DDCC66',
+      statusDanger: '#f00',
+      statusDangerBg: '#FFE5E5',
+      statusDangerFg: '#FF9999',
+      statusInfo: '#06f',
+      statusInfoBg: '#E5F0FF',
+      statusInfoFg: '#99BBFF'
+    };
+
+    const before = auditSemanticContrast(badSemantic as any);
+    expect(before.failCount).toBeGreaterThan(0);
+
+    const fixed = autoFixSemantic(badSemantic as any);
+    const after = auditSemanticContrast(fixed);
+
+    expect(after.failCount).toBe(0);
+    expect(after.scorePercent).toBe(100);
   });
 });
 

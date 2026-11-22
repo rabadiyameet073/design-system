@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { DesignProject } from '../../types/designSystem';
 import { useAuth } from '../../context/auth-context';
+import { StudioView } from '../../utils/router';
 
 interface HeaderProps {
-  currentView: 'landing' | 'wizard' | 'dashboard' | 'workspace';
-  onNavigate: (view: 'landing' | 'wizard' | 'dashboard' | 'workspace') => void;
+  currentView: StudioView;
+  onNavigate: (view: StudioView) => void;
   activeProject?: DesignProject;
   onTogglePreviewDrawer?: () => void;
   isPreviewDrawerOpen?: boolean;
@@ -30,13 +31,14 @@ export const Header: React.FC<HeaderProps> = ({
     }`;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-rule font-sans shadow-2xs">
+    <header role="banner" className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-rule font-sans shadow-2xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-4 sm:gap-6">
         {/* Zone 1: brand logo */}
         <button
           onClick={() => onNavigate('landing')}
           className="hover:opacity-90 transition-opacity text-left flex items-center shrink-0 cursor-pointer py-1"
           title="Design System Studio Home"
+          aria-label="Design System Studio Home"
         >
           <img
             src="/logo.png"
@@ -46,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* Zone 2: text navigation links — Luxury Editorial font */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8 font-sans">
+        <nav aria-label="Main studio navigation" className="hidden md:flex items-center gap-6 lg:gap-8 font-sans">
           <button
             onClick={() => onNavigate('landing')}
             className={navLink(currentView === 'landing')}

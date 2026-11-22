@@ -85,4 +85,74 @@ describe('typeScale utilities', () => {
     expect(families).toContain('DM Sans');
     expect(families).not.toContain('Michroma');
   });
+
+  it('filters body recommendations by required non-latin scripts (Doc 03 §6.1)', () => {
+    const heading: FontMeta = {
+      family: 'Noto Serif Gujarati',
+      category: 'serif',
+      variants: ['400', '700'],
+      subsets: ['latin', 'gujarati'],
+      variable: true,
+      source: 'google'
+    };
+
+    const allFonts: FontMeta[] = [
+      {
+        family: 'DM Sans',
+        category: 'sans-serif',
+        variants: ['400', '700'],
+        subsets: ['latin'],
+        variable: true,
+        source: 'google'
+      },
+      {
+        family: 'Noto Sans Gujarati',
+        category: 'sans-serif',
+        variants: ['400', '700'],
+        subsets: ['latin', 'gujarati'],
+        variable: true,
+        source: 'google'
+      }
+    ];
+
+    const recommended = getRecommendedBodyFonts(heading, allFonts, ['modern'], ['latin', 'gujarati']);
+    const families = recommended.map(f => f.family);
+    expect(families).toContain('Noto Sans Gujarati');
+    expect(families).not.toContain('DM Sans');
+  });
+
+  it('penalizes two different families of the same category per Doc 03 §6.2', () => {
+    const headingSans: FontMeta = {
+      family: 'Inter',
+      category: 'sans-serif',
+      variants: ['400', '700'],
+      subsets: ['latin'],
+      variable: true,
+      source: 'google'
+    };
+
+    const bodySameCategoryDifferentFamily: FontMeta = {
+      family: 'Roboto',
+      category: 'sans-serif',
+      variants: ['400', '700'],
+      subsets: ['latin'],
+      variable: true,
+      source: 'google'
+    };
+
+    const bodyDifferentCategory: FontMeta = {
+      family: 'Merriweather',
+      category: 'serif',
+      variants: ['400', '700'],
+      subsets: ['latin'],
+      variable: true,
+      source: 'google'
+    };
+
+    const scoreSameCat = scorePair(headingSans, bodySameCategoryDifferentFamily, { tags: [], pairs: [] });
+    const scoreDiffCat = scorePair(headingSans, bodyDifferentCategory, { tags: [], pairs: [] });
+
+    // Contrast bonus (+15) vs same-category penalty (-15)
+    expect(scoreDiffCat).toBeGreaterThan(scoreSameCat);
+  });
 });

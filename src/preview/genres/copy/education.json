@@ -1,0 +1,14 @@
+{
+  "category": "education",
+  "hero": {
+    "badge": "Cohort VII · Applications Now Open",
+    "title": "Master the rigorous craft of high-velocity systems engineering",
+    "subtitle": "An intensive 12-week fellowship for engineers and designers mastering compilers, design systems, and distributed infrastructure.",
+    "primaryAction": "Examine Curriculum",
+    "secondaryAction": "Tuition & Fellowships"
+  },
+  "courses": {
+    "title": "Core Studio Seminars",
+    "subtitle": "Small cohorts of 18 practitioners mentored directly by industry pioneers."
+  }
+}

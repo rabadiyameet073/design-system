@@ -163,6 +163,35 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
     onColorChange(hex);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
+    let newHue = hsl.h;
+    let newSat = hsl.s;
+    let changed = false;
+
+    if (e.key === 'ArrowRight') {
+      newHue = (newHue + 5) % 360;
+      changed = true;
+    } else if (e.key === 'ArrowLeft') {
+      newHue = (newHue - 5 + 360) % 360;
+      changed = true;
+    } else if (e.key === 'ArrowUp') {
+      newSat = Math.min(100, newSat + 5);
+      changed = true;
+    } else if (e.key === 'ArrowDown') {
+      newSat = Math.max(0, newSat - 5);
+      changed = true;
+    }
+
+    if (changed) {
+      e.preventDefault();
+      const nextHsl = { ...hsl, h: newHue, s: newSat };
+      setHsl(nextHsl);
+      const nextHex = hslToHex(nextHsl.h, nextHsl.s, nextHsl.l);
+      setHexInput(nextHex);
+      onColorChange(nextHex);
+    }
+  };
+
   const currentHex = hslToHex(hsl.h, hsl.s, hsl.l);
 
   return (
@@ -179,7 +208,7 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
             </span>
           </div>
           <p className="text-xs text-neutral-500 mt-0.5">
-            Click or drag across the wheel to choose your exact brand color, or pick a recommended hue below.
+            Click, drag, or use arrow keys across the wheel to select your brand color.
           </p>
         </div>
 
@@ -188,6 +217,7 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
           <div
             className="w-10 h-10 rounded-xl border border-black/10 shadow-xs shrink-0 transition-transform active:scale-95"
             style={{ backgroundColor: currentHex }}
+            aria-hidden="true"
           />
           <div>
             <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">
@@ -195,6 +225,7 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
             </span>
             <input
               type="text"
+              aria-label="Hex color value"
               value={hexInput}
               onChange={e => handleHexInputChange(e.target.value)}
               className="w-24 px-2 py-0.5 text-xs font-mono font-bold text-neutral-900 bg-neutral-50 border border-neutral-200 rounded uppercase focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
@@ -211,7 +242,15 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
               ref={canvasRef}
               width={wheelSize}
               height={wheelSize}
-              className="rounded-full cursor-crosshair touch-none"
+              role="slider"
+              tabIndex={0}
+              aria-label="Color hue and saturation wheel. Use arrow keys to adjust hue and saturation."
+              aria-valuemin={0}
+              aria-valuemax={360}
+              aria-valuenow={hsl.h}
+              aria-valuetext={`Hue ${hsl.h} degrees, Saturation ${hsl.s} percent`}
+              onKeyDown={handleKeyDown}
+              className="rounded-full cursor-crosshair touch-none focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
               onMouseDown={e => {
                 setIsDragging(true);
                 handleWheelInteraction(e);
@@ -232,7 +271,7 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
             />
           </div>
           <span className="text-[11px] text-neutral-400 mt-2">
-            Hue: {hsl.h}° · Saturation: {hsl.s}%
+            Hue: {hsl.h}° · Saturation: {hsl.s}% · Arrow keys to tune
           </span>
         </div>
 
@@ -249,6 +288,11 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
               min="15"
               max="85"
               value={hsl.l}
+              aria-label="Lightness percentage"
+              aria-valuemin={15}
+              aria-valuemax={85}
+              aria-valuenow={hsl.l}
+              aria-valuetext={`${hsl.l}% lightness`}
               onChange={e => handleLightnessChange(Number(e.target.value))}
               className="w-full accent-neutral-900 cursor-pointer h-2 bg-neutral-200 rounded-lg"
             />
@@ -294,6 +338,8 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
                     key={preset.name}
                     type="button"
                     onClick={() => handleSelectPreset(preset.hex)}
+                    aria-label={`${preset.name}, hex ${preset.hex}`}
+                    aria-pressed={isSelected}
                     className={`h-9 rounded-lg border relative transition-all flex items-center justify-center ${
                       isSelected
                         ? 'ring-2 ring-neutral-900 ring-offset-2 scale-105 shadow-sm'

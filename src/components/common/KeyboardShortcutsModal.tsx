@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Command, Keyboard } from 'lucide-react';
+import { X, Keyboard } from 'lucide-react';
+import { useFocusTrap } from '../../utils/useFocusTrap';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -8,15 +9,7 @@ interface KeyboardShortcutsModalProps {
 }
 
 export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen, onClose }) => {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -36,13 +29,22 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-modal-title"
+        onClick={onClose}
+      >
         <motion.div
+          ref={modalRef}
           initial={{ opacity: 0, scale: 0.95, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 8 }}
           transition={{ duration: 0.18 }}
-          className="relative w-full max-w-md bg-white rounded-2xl border border-neutral-200 shadow-2xl p-6 overflow-hidden"
+          className="relative w-full max-w-md bg-white rounded-2xl border border-neutral-200 shadow-2xl p-6 overflow-hidden text-left focus:outline-none"
+          tabIndex={-1}
+          onClick={e => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
@@ -51,13 +53,14 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
                 <Keyboard className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-neutral-900">Studio Keyboard Shortcuts</h3>
+                <h3 id="shortcuts-modal-title" className="text-sm font-bold text-neutral-900">Studio Keyboard Shortcuts</h3>
                 <span className="text-[11px] text-neutral-500">Power-user navigation & controls</span>
               </div>
             </div>
             <button
               onClick={onClose}
               className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+              aria-label="Close keyboard shortcuts dialog"
             >
               <X className="w-4 h-4" />
             </button>

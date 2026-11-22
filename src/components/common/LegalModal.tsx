@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ShieldCheck, FileText, Lock, Globe, Check } from 'lucide-react';
+import { useFocusTrap } from '../../utils/useFocusTrap';
 
 interface LegalModalProps {
   isOpen: boolean;
@@ -14,12 +15,18 @@ export const LegalModal: React.FC<LegalModalProps> = ({
   initialTab = 'privacy'
 }) => {
   const [tab, setTab] = useState<'terms' | 'privacy'>(initialTab);
+  const modalRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="legal-modal-title"
+      >
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -31,48 +38,51 @@ export const LegalModal: React.FC<LegalModalProps> = ({
 
         {/* Modal Window */}
         <motion.div
+          ref={modalRef}
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden z-10 flex flex-col max-h-[85vh]"
+          className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden z-10 flex flex-col max-h-[85vh] focus:outline-none"
+          tabIndex={-1}
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/50">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-neutral-800" />
-              <h2 className="font-bold text-sm text-neutral-900">
+              <h2 id="legal-modal-title" className="font-bold text-sm text-neutral-900">
                 Design System Studio · Legal & Privacy
               </h2>
             </div>
             <button
               onClick={onClose}
               className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+              aria-label="Close legal modal"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Tab Switcher */}
-          <div className="px-6 pt-4 flex gap-2 border-b border-neutral-100">
+          <div className="px-6 pt-4 flex gap-2 border-b border-neutral-100" role="tablist" aria-label="Legal document tabs">
             <button
+              role="tab"
+              aria-selected={tab === 'privacy'}
               onClick={() => setTab('privacy')}
-              className={`flex items-center gap-1.5 pb-3 px-1 text-xs font-bold transition-all border-b-2 cursor-pointer ${
-                tab === 'privacy'
-                  ? 'border-neutral-900 text-neutral-900'
-                  : 'border-transparent text-neutral-400 hover:text-neutral-700'
-              }`}
+              className={`flex items-center gap-1.5 pb-3 px-1 text-xs font-bold transition-all border-b-2 cursor-pointer ${tab === 'privacy'
+                ? 'border-neutral-900 text-neutral-900'
+                : 'border-transparent text-neutral-400 hover:text-neutral-700'
+                }`}
             >
               <Lock className="w-3.5 h-3.5" />
               <span>Privacy Policy</span>
             </button>
             <button
               onClick={() => setTab('terms')}
-              className={`flex items-center gap-1.5 pb-3 px-1 text-xs font-bold transition-all border-b-2 cursor-pointer ${
-                tab === 'terms'
-                  ? 'border-neutral-900 text-neutral-900'
-                  : 'border-transparent text-neutral-400 hover:text-neutral-700'
-              }`}
+              className={`flex items-center gap-1.5 pb-3 px-1 text-xs font-bold transition-all border-b-2 cursor-pointer ${tab === 'terms'
+                ? 'border-neutral-900 text-neutral-900'
+                : 'border-transparent text-neutral-400 hover:text-neutral-700'
+                }`}
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Terms of Service</span>

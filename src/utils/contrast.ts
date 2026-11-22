@@ -1,5 +1,5 @@
 /**
- * Calculates WCAG 2.1 Contrast Ratio and Accessibility recommendations.
+ * Calculates WCAG 2.2 Contrast Ratio and Accessibility recommendations.
  */
 
 export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {

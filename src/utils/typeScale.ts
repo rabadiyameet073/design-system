@@ -19,21 +19,60 @@ export interface CuratedPair {
 }
 
 export const CURATED_PAIRS: CuratedPair[] = [
+  // Luxury hospitality, editorial
   { genre: 'luxury', heading: 'Fraunces', body: 'DM Sans' },
+  { genre: 'luxury', heading: 'Fraunces', body: 'Inter' },
   { genre: 'luxury', heading: 'Playfair Display', body: 'Inter' },
+  { genre: 'luxury', heading: 'Playfair Display', body: 'DM Sans' },
+  { genre: 'luxury', heading: 'Cormorant Garamond', body: 'Inter' },
   { genre: 'luxury', heading: 'Cormorant Garamond', body: 'Plus Jakarta Sans' },
+
+  // SaaS, dev tools
+  { genre: 'saas', heading: 'Geist', body: 'Geist', mono: 'Geist Mono' },
+  { genre: 'saas', heading: 'Geist', body: 'Inter', mono: 'Geist Mono' },
   { genre: 'saas', heading: 'Inter', body: 'Inter', mono: 'JetBrains Mono' },
   { genre: 'saas', heading: 'Plus Jakarta Sans', body: 'Plus Jakarta Sans', mono: 'JetBrains Mono' },
+
+  // Tech / futuristic
   { genre: 'tech', heading: 'Michroma', body: 'Plus Jakarta Sans', mono: 'JetBrains Mono' },
+  { genre: 'tech', heading: 'Michroma', body: 'Inter', mono: 'JetBrains Mono' },
   { genre: 'tech', heading: 'Space Grotesk', body: 'Inter', mono: 'JetBrains Mono' },
+  { genre: 'tech', heading: 'Space Grotesk', body: 'Plus Jakarta Sans', mono: 'JetBrains Mono' },
+
+  // Portfolio, creative
   { genre: 'creative', heading: 'Syne', body: 'Inter' },
+  { genre: 'creative', heading: 'Bricolage Grotesque', body: 'Inter' },
   { genre: 'creative', heading: 'Bricolage Grotesque', body: 'DM Sans' },
+
+  // Publishing, magazine
   { genre: 'publishing', heading: 'Newsreader', body: 'Inter' },
   { genre: 'publishing', heading: 'Source Serif 4', body: 'Inter' },
+  { genre: 'publishing', heading: 'Instrument Serif', body: 'Inter' },
+
+  // Finance, trust
+  { genre: 'finance', heading: 'IBM Plex Sans', body: 'IBM Plex Sans', mono: 'IBM Plex Mono' },
+  { genre: 'finance', heading: 'IBM Plex Serif', body: 'IBM Plex Sans', mono: 'IBM Plex Mono' },
   { genre: 'finance', heading: 'Plus Jakarta Sans', body: 'Inter', mono: 'IBM Plex Mono' },
+
+  // Education, friendly
+  { genre: 'education', heading: 'Nunito', body: 'Lexend' },
   { genre: 'education', heading: 'Outfit', body: 'Lexend' },
+  { genre: 'education', heading: 'Outfit', body: 'Atkinson Hyperlegible' },
+
+  // Commerce, modern
   { genre: 'commerce', heading: 'Manrope', body: 'DM Sans' },
+  { genre: 'commerce', heading: 'Manrope', body: 'Inter' },
+  { genre: 'commerce', heading: 'DM Sans', body: 'Inter' },
+
+  // Architecture, minimal
   { genre: 'architecture', heading: 'Outfit', body: 'Inter' },
+  { genre: 'architecture', heading: 'Inter Tight', body: 'Inter' },
+
+  // Warm artisanal
+  { genre: 'artisanal', heading: 'Fraunces', body: 'Plus Jakarta Sans' },
+  { genre: 'artisanal', heading: 'Fraunces', body: 'Nunito Sans' },
+
+  // Indic / Multi-script
   { genre: 'devanagari', heading: 'Poppins', body: 'Noto Sans Devanagari' },
   { genre: 'gujarati', heading: 'Noto Serif Gujarati', body: 'Noto Sans Gujarati' }
 ];
@@ -88,8 +127,7 @@ function intersection(a: string[], b: string[]): string[] {
 }
 
 /**
- * Evaluates pairing suitability between heading font and body font based on contrast,
- * legibility, weight variety, and tag resonance.
+ * Evaluates pairing suitability between heading font and body font per Doc 03 §6.2.
  */
 export function scorePair(
   h: FontMeta,
@@ -101,22 +139,20 @@ export function scorePair(
   const curated = pairs.find(p => p.heading === h.family && p.body === b.family);
   if (curated) s += 50;
 
-  // Contrast principle: pair different categories (e.g. Serif Heading + Sans Body)
+  // Contrast principle: pair different categories, avoid two similar ones
   if (h.category !== b.category) s += 15;
-  // Two different sans-serif fonts often feel mismatched or muddy
-  if (h.category === b.category && h.family !== b.family) s -= 12;
-  // Single-family system (same family for heading and body) is always safe & unified
-  if (h.family === b.family) s += 10;
+  if (h.category === b.category && h.family !== b.family) s -= 15; // two near-identical sans = muddy
+  if (h.family === b.family) s += 8; // single-family system is always safe
 
-  // Body font must have regular and 700 bold
-  if (b.variants.includes('regular') || b.variants.includes('400')) s += 5;
-  if (b.variants.includes('700') || b.variants.includes('600')) s += 5;
-  if (b.variable) s += 4;
+  // Body quality
+  const hasReg = b.variants.some(v => v === 'regular' || v === '400');
+  const hasBold = b.variants.some(v => v === '700' || v === '600' || v === 'bold');
+  if (hasReg && hasBold) s += 5;
+  if (b.variants.some(v => v.includes('italic'))) s += 3;
+  if (b.variable) s += 3;
 
-  // Popularity ranking bonus
-  if (b.popularityRank) {
-    s += Math.max(0, 10 - b.popularityRank / 30);
-  }
+  // Popularity ranking bonus (proven readability)
+  s += Math.max(0, 10 - (b.popularityRank ?? 999) / 30);
 
   // Genre / personality tag overlap
   const hTags = tagsFor(h.family, h.category);
@@ -128,17 +164,37 @@ export function scorePair(
 }
 
 /**
- * Returns top recommended body fonts for a selected heading font.
+ * Returns top recommended body fonts for a selected heading font,
+ * respecting hard filters (sans/serif only, supported scripts, required weights)
+ * and ranking by scorePair().
  */
 export function getRecommendedBodyFonts(
   headingFont: FontMeta,
   allFonts: FontMeta[],
-  tags: string[] = ['modern', 'editorial']
+  tags: string[] = ['modern', 'editorial'],
+  requiredScripts: string[] = ['latin']
 ): FontMeta[] {
-  // Hard filters: Body font cannot be display or handwriting
-  const candidates = allFonts.filter(
-    f => f.category === 'sans-serif' || f.category === 'serif'
-  );
+  // Hard filters per Doc 03 §6.1:
+  // 1. Body role: category in {sans-serif, serif}; not display/handwriting
+  // 2. Supports all required scripts
+  // 3. Has weights 400 and 700 (or variable)
+  const candidates = allFonts.filter(f => {
+    if (f.category !== 'sans-serif' && f.category !== 'serif') return false;
+
+    if (requiredScripts && requiredScripts.length > 0) {
+      const allSupported = requiredScripts.every(reqScript => {
+        if (reqScript === 'latin') return true;
+        return f.subsets.some(s => s.toLowerCase().includes(reqScript.toLowerCase()));
+      });
+      if (!allSupported) return false;
+    }
+
+    const hasReg = f.variants.some(v => v === 'regular' || v === '400');
+    const hasBold = f.variants.some(v => v === '700' || v === '600' || v === 'bold');
+    if (!f.variable && (!hasReg || !hasBold)) return false;
+
+    return true;
+  });
 
   const scored = candidates.map(font => ({
     font,
@@ -147,7 +203,17 @@ export function getRecommendedBodyFonts(
 
   scored.sort((a, b) => b.score - a.score);
 
-  // Return top 6 distinct recommendations
-  return scored.slice(0, 6).map(item => item.font);
+  // Return top 6 distinct recommendations ensuring variety
+  const results: FontMeta[] = [];
+  const seenFamilies = new Set<string>();
+  for (const item of scored) {
+    if (!seenFamilies.has(item.font.family)) {
+      seenFamilies.add(item.font.family);
+      results.push(item.font);
+      if (results.length >= 6) break;
+    }
+  }
+
+  return results;
 }
 

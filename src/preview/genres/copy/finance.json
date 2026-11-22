@@ -1,0 +1,14 @@
+{
+  "category": "finance",
+  "hero": {
+    "badge": "Cryptographic Vault Infrastructure",
+    "title": "Institutional treasury custody and multi-currency capital liquidity",
+    "subtitle": "Secure digital asset custody with hardware isolation, multi-signatory quorum, and real-time continuous audit verification.",
+    "primaryAction": "Open Institutional Account",
+    "secondaryAction": "Security Audit Report"
+  },
+  "stats": {
+    "title": "Global Settlement Telemetry",
+    "subtitle": "Audited proof of reserves refreshed every block with zero counterparty exposure."
+  }
+}
