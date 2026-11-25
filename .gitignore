@@ -13,6 +13,7 @@ client_secret*.json
 *.tar.gz
 *.tgz
 .vercel
+.data/
 
 # Lyzo AI memory index
 .lyzo/memory.db

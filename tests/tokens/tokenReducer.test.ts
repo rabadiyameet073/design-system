@@ -64,5 +64,36 @@ describe('Token Reducer & History Stack', () => {
     expect(stateRedo.committed.radius.md).toBe(32);
     expect(stateRedo.future.length).toBe(0);
   });
+
+  it('deep merges imagery, motion, layout, component, and border tokens without dropping them', () => {
+    const updatedState = tokenReducer(baseState, {
+      type: 'PREVIEW_DRAFT',
+      draft: {
+        imagery: {
+          treatment: 'duotone',
+          overlay: 40,
+          grain: 15,
+          radius: 'lg'
+        },
+        component: {
+          buttonStyle: 'outline',
+          buttonRadius: '12px',
+          cardStyle: 'elevated'
+        }
+      } as any
+    });
+
+    const effective = getEffectiveTokens(updatedState);
+    expect(effective.imagery?.treatment).toBe('duotone');
+    expect(effective.imagery?.overlay).toBe(40);
+    expect(effective.imagery?.grain).toBe(15);
+    expect(effective.component?.buttonStyle).toBe('outline');
+    expect((effective.component as any)?.cardStyle).toBe('elevated');
+
+    // After applying draft
+    const committedState = tokenReducer(updatedState, { type: 'APPLY_DRAFT' });
+    expect(committedState.committed.imagery?.treatment).toBe('duotone');
+    expect(committedState.committed.component?.buttonStyle).toBe('outline');
+  });
 });
 

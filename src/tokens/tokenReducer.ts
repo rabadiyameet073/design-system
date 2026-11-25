@@ -78,9 +78,25 @@ export function mergeTokens(base: DesignTokens, partial?: Partial<DesignTokens> 
       ...base.shadow,
       ...(partial.shadow || {})
     },
+    border: {
+      ...base.border,
+      ...(partial.border || {})
+    },
+    layout: {
+      ...base.layout,
+      ...(partial.layout || {})
+    },
     motion: {
       ...base.motion,
       ...(partial.motion || {})
+    },
+    imagery: {
+      ...base.imagery,
+      ...(partial.imagery || {})
+    },
+    icon: {
+      ...base.icon,
+      ...(partial.icon || {})
     },
     component: {
       ...base.component,

@@ -36,8 +36,9 @@ export const Gallery: React.FC<GalleryProps> = ({
           {images.map((img, idx) => (
             <div
               key={idx}
-              className="rounded-[var(--radius-lg)] border overflow-hidden shadow-[var(--shadow-sm)] group"
+              className="border overflow-hidden shadow-[var(--shadow-sm)] group"
               style={{
+                borderRadius: 'var(--radius-card, var(--radius-lg))',
                 borderColor: 'var(--color-border-default)',
                 backgroundColor: 'var(--color-bg-surface)'
               }}

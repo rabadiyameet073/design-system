@@ -67,8 +67,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             className="px-4 py-2 text-xs font-semibold tracking-wide transition-all shadow-[var(--shadow-sm)] hover:opacity-90 active:scale-95 cursor-pointer"
             style={{
-              backgroundColor: 'var(--color-action-primary)',
-              color: 'var(--color-action-primary-fg)',
+              backgroundColor: 'var(--button-bg, var(--color-action-primary))',
+              color: 'var(--button-fg, var(--color-action-primary-fg))',
+              border: 'var(--button-border, none)',
               borderRadius: 'var(--radius-button, var(--radius-md))',
               fontFamily: 'var(--font-ui, var(--font-body))'
             }}

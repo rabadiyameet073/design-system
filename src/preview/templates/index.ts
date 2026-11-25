@@ -14,6 +14,7 @@ export interface TemplateProps {
   subtitle?: string;
   heroImage?: string;
   badge?: string;
+  genreId?: string;
   components?: {
     buttonStyle?: 'solid' | 'outline' | 'subtle' | 'minimal';
     buttonSize?: 'compact' | 'default' | 'large';

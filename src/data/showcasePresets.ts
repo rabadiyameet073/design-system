@@ -1,4 +1,5 @@
 import { DesignProject } from '../types/designSystem';
+import { CategoryId } from '../tokens/types';
 import { COLOR_PALETTES } from './palettes';
 import { TYPOGRAPHY_PAIRINGS } from './typographyPairs';
 import { VISUAL_DIRECTIONS } from './visualDirections';
@@ -12,6 +13,7 @@ export interface ShowcasePreset {
   label: string; // Brand Name
   typeName: string; // Website Type Title
   category: string;
+  canonicalCategory?: CategoryId;
   meta: string;
   description: string;
   project: DesignProject;
@@ -355,7 +357,26 @@ const BRAND_PROFILES: Record<string, BrandProfile> = {
 /**
  * Builds a complete, production-ready DesignProject tailored for any given website type.
  */
-export function buildShowcaseProject(typeDef: WebsiteTypeDefinition): DesignProject {
+export function getCategoryIdForWebsiteType(id: string, categoryName: string): CategoryId {
+  const cat = (categoryName || '').toLowerCase();
+  if (['ecommerce', 'fashion', 'electronics', 'beauty', 'luxury', 'membership', 'marketplace'].includes(id)) return 'commerce';
+  if (['saas-product', 'ai-tool', 'admin-dashboard', 'startup-landing', 'job-board', 'community', 'custom'].includes(id)) return 'saas';
+  if (['education-platform', 'online-course', 'university', 'academic-research'].includes(id)) return 'education';
+  if (['personal-portfolio', 'developer-portfolio', 'creative-portfolio', 'digital-agency', 'corporate-business'].includes(id)) return 'portfolio';
+  if (['restaurant', 'travel-booking', 'healthcare', 'event-website'].includes(id)) return 'hospitality';
+  if (['fintech'].includes(id) || cat.includes('finance') || cat.includes('legal')) return 'finance';
+  if (['real-estate'].includes(id) || cat.includes('property') || cat.includes('space') || cat.includes('architecture')) return 'architecture';
+  if (['blog-editorial', 'news-media', 'documentation', 'nonprofit'].includes(id) || cat.includes('publishing') || cat.includes('media') || cat.includes('mission')) return 'publishing';
+  
+  if (cat.includes('commerce') || cat.includes('retail')) return 'commerce';
+  if (cat.includes('software') || cat.includes('technology') || cat.includes('tech')) return 'saas';
+  if (cat.includes('education')) return 'education';
+  if (cat.includes('portfolio') || cat.includes('creative') || cat.includes('agency')) return 'portfolio';
+  if (cat.includes('local') || cat.includes('service') || cat.includes('hospitality')) return 'hospitality';
+  return 'commerce';
+}
+
+function buildShowcaseProject(typeDef: WebsiteTypeDefinition): DesignProject {
   // Use pre-existing hand-crafted samples for ceramics & saas if exact matches
   if (typeDef.id === 'ecommerce') return SAMPLE_PROJECT_CERAMICS;
   if (typeDef.id === 'saas-product') return SAMPLE_PROJECT_SAAS;
@@ -385,6 +406,11 @@ export function buildShowcaseProject(typeDef: WebsiteTypeDefinition): DesignProj
     TYPOGRAPHY_PAIRINGS.find((tp) => tp.id === profile.pairingId) ||
     TYPOGRAPHY_PAIRINGS[0];
 
+  const resolvedCategory = getCategoryIdForWebsiteType(typeDef.id, typeDef.category);
+  const defaultTokens = createDefaultTokens(resolvedCategory, typeDef.id, profile.brandName, selectedPalette.primary);
+  defaultTokens.meta.category = resolvedCategory;
+  defaultTokens.meta.genreId = typeDef.id;
+
   return {
     id: `showcase_${typeDef.id}`,
     schemaVersion: 1,
@@ -393,11 +419,11 @@ export function buildShowcaseProject(typeDef: WebsiteTypeDefinition): DesignProj
     updatedAt: Date.now() - 3600000 * 2,
     currentStep: 1,
     completedSteps: [1],
-    tokens: createDefaultTokens('commerce', typeDef.id, profile.brandName, selectedPalette.primary),
+    tokens: defaultTokens,
     websiteType: {
       id: typeDef.id,
       name: typeDef.name,
-      category: typeDef.category,
+      category: resolvedCategory,
       description: typeDef.description,
       characteristics: [typeDef.category, typeDef.recommendedDirection, 'Production Verified'],
     },
@@ -480,12 +506,14 @@ export function buildShowcaseProject(typeDef: WebsiteTypeDefinition): DesignProj
  */
 export const ALL_SHOWCASE_PRESETS: ShowcasePreset[] = WEBSITE_TYPES.map((typeDef) => {
   const project = buildShowcaseProject(typeDef);
+  const canonicalCategory = getCategoryIdForWebsiteType(typeDef.id, typeDef.category);
   return {
     id: typeDef.id,
     projectId: project.id,
     label: project.business.name || project.name,
     typeName: typeDef.name,
     category: typeDef.category,
+    canonicalCategory,
     meta: `${typeDef.category} · ${typeDef.name}`,
     description: typeDef.description,
     project,

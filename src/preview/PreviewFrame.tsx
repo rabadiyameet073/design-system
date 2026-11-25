@@ -3,12 +3,12 @@ import { DesignTokens, CategoryId } from '../tokens/types';
 import { DEFAULT_DESIGN_TOKENS } from '../tokens/defaultTokens';
 import { applyTokens } from './tokens/applyTokens';
 import { TEMPLATE_REGISTRY } from './templates';
-import { getGenreById } from './genres';
+import { getGenreById, GENRE_CONFIGS } from './genres';
 import { auditSemanticContrast } from '../tokens/contrastEngine';
 
 export const PreviewFrame: React.FC = () => {
   const [tokens, setTokens] = useState<DesignTokens>(DEFAULT_DESIGN_TOKENS);
-  const [genreId, setGenreId] = useState<string>('ceramics-atelier');
+  const [genreId, setGenreId] = useState<string>('');
   const [mode, setMode] = useState<'light' | 'dark'>('light');
   const [projectMeta, setProjectMeta] = useState<any>({});
   const [isReady, setIsReady] = useState(false);
@@ -167,16 +167,92 @@ export const PreviewFrame: React.FC = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, [tokens, mode]);
 
-  const genre = getGenreById(genreId || tokens.meta?.genreId || 'ceramics-atelier');
-  const category: CategoryId = genre.category || 'commerce';
+  // 1. Determine active genre ID candidate from most explicit current inputs
+  const genreCandidate = (
+    projectMeta.websiteType?.id ||
+    genreId ||
+    tokens.meta?.genreId ||
+    ''
+  ).toString().trim();
+
+  const candidateGenreObj = genreCandidate ? getGenreById(genreCandidate) : null;
+
+  // 2. Determine active category candidate: projectMeta category/websiteType take top priority
+  const rawCatCandidate = (
+    projectMeta.category ||
+    projectMeta.websiteType?.category ||
+    (candidateGenreObj?.category) ||
+    tokens.meta?.category ||
+    genreCandidate ||
+    ''
+  ).toString().toLowerCase().trim();
+
+  let matchedCategory: CategoryId | null = null;
+  if (rawCatCandidate in TEMPLATE_REGISTRY) {
+    matchedCategory = rawCatCandidate as CategoryId;
+  } else if (candidateGenreObj && candidateGenreObj.category in TEMPLATE_REGISTRY) {
+    matchedCategory = candidateGenreObj.category;
+  } else {
+    for (const catKey of Object.keys(TEMPLATE_REGISTRY) as CategoryId[]) {
+      if (rawCatCandidate.includes(catKey)) {
+        matchedCategory = catKey;
+        break;
+      }
+    }
+  }
+
+  // 3. Resolve Genre (ensuring genre belongs to matched category if matchedCategory exists)
+  const resolvedGenreId = (
+    (genreCandidate && (!matchedCategory || candidateGenreObj?.category === matchedCategory) ? genreCandidate : '') ||
+    (matchedCategory ? Object.values(GENRE_CONFIGS).find(g => g.category === matchedCategory)?.id : '') ||
+    'ceramics-atelier'
+  );
+
+  const genre = getGenreById(resolvedGenreId);
+  const category: CategoryId = matchedCategory || genre.category || 'commerce';
   const TemplateComponent = TEMPLATE_REGISTRY[category] || TEMPLATE_REGISTRY.commerce;
 
-  const brandName = projectMeta.business?.name || projectMeta.name || tokens.meta?.projectName || genre.label;
-  const headline = projectMeta.business?.offering || projectMeta.business?.primaryGoal || genre.description;
-  const subtitle = projectMeta.business?.audience
-    ? `Crafted for ${projectMeta.business.audience}. ${projectMeta.business.primaryGoal ? projectMeta.business.primaryGoal + '.' : ''}`
+  // 3. Resolve Brand Name with dynamic category fallbacks
+  const defaultBrandForCategory =
+    category === 'commerce' ? 'AETHER Sound & Precision Gear' :
+    category === 'education' ? 'AURELIA Research Scholar Institute' :
+    category === 'saas' ? 'APEX Systems Engine' :
+    category === 'architecture' ? 'ATELIER MONOLITH Spatial Architecture' :
+    category === 'finance' ? 'STRATA Wealth & Global Treasury' :
+    category === 'hospitality' ? 'SANCTUARY Reserve & Retreats' :
+    category === 'portfolio' ? 'STUDIO VORTEX Design & Direction' :
+    category === 'publishing' ? 'CHRONICLE Journal of Ideas & Culture' :
+    genre.label;
+
+  const isGenericDefault = (n?: string) =>
+    !n ||
+    n === 'My New Website' ||
+    n === 'Untitled Project' ||
+    n === 'New Design System' ||
+    (n === 'Ceramics Atelier' && category !== 'commerce') ||
+    (n === 'Komorebi Ceramics' && category !== 'commerce') ||
+    (n === 'Komorebi Studio & Ceramics' && category !== 'commerce');
+
+  const customName =
+    (!isGenericDefault(projectMeta.business?.name) ? projectMeta.business?.name : null) ||
+    (!isGenericDefault(projectMeta.name) ? projectMeta.name : null) ||
+    (!isGenericDefault(tokens.meta?.projectName) ? tokens.meta?.projectName : null);
+
+  const brandName = customName || defaultBrandForCategory;
+
+  const isSamplePotteryOffering =
+    projectMeta.business?.offering?.includes('Hand-thrown stoneware') ||
+    projectMeta.business?.offering?.includes('tactile tea sets');
+
+  const headline = (projectMeta.business?.offering && (!isSamplePotteryOffering || category === 'commerce'))
+    ? projectMeta.business.offering
     : undefined;
-  const badge = projectMeta.visualDirection?.archetype || genre.label;
+
+  const subtitle = (projectMeta.business?.audience && (!isSamplePotteryOffering || category === 'commerce'))
+    ? `Crafted for ${projectMeta.business.audience}.`
+    : undefined;
+
+  const badge = projectMeta.visualDirection?.archetype || projectMeta.visualDirection?.name || genre.label;
 
   // RTL Internationalization Detection (Doc 04 §Internationalization)
   const isRtl = Boolean(
@@ -189,6 +265,14 @@ export const PreviewFrame: React.FC = () => {
     document.documentElement.lang = isRtl ? 'ar' : 'en';
   }, [isRtl]);
 
+  const effectiveComponents = {
+    ...tokens.component,
+    ...projectMeta.components,
+    buttonStyle: projectMeta.components?.buttonStyle || tokens.component?.buttonStyle,
+    cardStyle: projectMeta.components?.cardStyle || (tokens.component as any)?.cardStyle,
+    enabledComponents: projectMeta.components?.enabledComponents || (tokens.component as any)?.enabledComponents
+  };
+
   return (
     <div className="w-full min-h-screen overflow-x-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
       <TemplateComponent
@@ -197,8 +281,9 @@ export const PreviewFrame: React.FC = () => {
         subtitle={subtitle}
         badge={badge}
         heroImage={genre.heroImage}
-        components={projectMeta.components}
-        buttonStyle={projectMeta.components?.buttonStyle || tokens.component?.buttonStyle}
+        genreId={resolvedGenreId}
+        components={effectiveComponents}
+        buttonStyle={effectiveComponents.buttonStyle}
       />
     </div>
   );

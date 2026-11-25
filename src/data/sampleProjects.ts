@@ -17,7 +17,7 @@ export const SAMPLE_PROJECT_CERAMICS: DesignProject = {
   websiteType: {
     id: 'ecommerce',
     name: 'Online Store & E-commerce',
-    category: 'Commerce',
+    category: 'commerce',
     description: 'Sell physical or artisan products with high-trust checkout, product showcases, and clear shopping flows.',
     characteristics: ['Artisan ceramics', 'Direct-to-consumer', 'Sustainable packaging']
   },
@@ -103,7 +103,7 @@ export const SAMPLE_PROJECT_SAAS: DesignProject = {
   websiteType: {
     id: 'saas-product',
     name: 'SaaS Product',
-    category: 'Software & Technology',
+    category: 'saas',
     description: 'Cloud software, productivity tools, automation workflows, and subscription web apps.',
     characteristics: ['Real-time pipeline', 'Developer-first', 'Enterprise scale']
   },

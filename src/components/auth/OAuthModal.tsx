@@ -12,6 +12,12 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useFocusTrap } from '../../utils/useFocusTrap';
 
+const DEMO_PERSONAS = [
+  { name: 'Alex Rivers', email: 'alex.rivers@designstudio.local', role: 'Design Lead' },
+  { name: 'Elena Vance', email: 'elena.vance@atelier.design', role: 'Creative Dir' },
+  { name: 'Jordan Hayes', email: 'jordan.hayes@saas.tech', role: 'Founder' }
+];
+
 export const OAuthModal: React.FC = () => {
   const {
     isOAuthModalOpen,
@@ -27,14 +33,12 @@ export const OAuthModal: React.FC = () => {
     googleClientId
   } = useAuth();
 
-  const [showEmailOption, setShowEmailOption] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
   const isGsiInitialized = React.useRef(false);
 
   const handleClose = () => {
     clearAuthError();
-    setShowEmailOption(false);
     setIsOAuthModalOpen(false);
   };
 
@@ -77,12 +81,16 @@ export const OAuthModal: React.FC = () => {
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!userEmail.trim()) return;
-    loginWithCustomAccount(userName || userEmail.split('@')[0], userEmail.trim());
+    loginWithCustomAccount(userName.trim() || userEmail.split('@')[0], userEmail.trim());
+  };
+
+  const handlePersonaSelect = (persona: typeof DEMO_PERSONAS[0]) => {
+    loginWithCustomAccount(persona.name, persona.email);
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans"
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
@@ -93,13 +101,13 @@ export const OAuthModal: React.FC = () => {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 8 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-white rounded-2xl shadow-2xl border border-neutral-200/80 max-w-[390px] w-full p-6 sm:p-7 relative overflow-hidden focus:outline-none"
+        className="bg-white rounded-2xl shadow-2xl border border-neutral-200/80 max-w-[410px] w-full p-6 sm:p-7 relative overflow-hidden focus:outline-none"
         tabIndex={-1}
       >
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700 p-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
+          className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700 p-1.5 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
           aria-label="Close authentication modal"
         >
           <X className="w-4 h-4" />
@@ -116,12 +124,12 @@ export const OAuthModal: React.FC = () => {
           </div>
 
           <h2 id="auth-modal-title" className="text-xl font-bold tracking-tight text-neutral-900">
-            {user ? 'Account Signed In' : 'Sign in to Studio'}
+            {user ? 'Account Signed In' : 'Sign In to Design Studio'}
           </h2>
-          <p className="text-xs text-neutral-500 mt-1 max-w-[280px] mx-auto leading-relaxed">
+          <p className="text-xs text-neutral-500 mt-1 max-w-[310px] mx-auto leading-relaxed">
             {user
-              ? 'Your design systems sync in real-time across tabs and devices.'
-              : 'Sign in or continue with Google to access and sync your design systems.'}
+              ? 'Your design systems sync dynamically to your account and persistent JSON store.'
+              : 'Sign in to create, edit, and automatically store all your design systems dynamically.'}
           </p>
         </div>
 
@@ -135,7 +143,7 @@ export const OAuthModal: React.FC = () => {
             </div>
             <button
               onClick={clearAuthError}
-              className="text-rose-400 hover:text-rose-700 text-xs shrink-0"
+              className="text-rose-400 hover:text-rose-700 text-xs shrink-0 cursor-pointer"
             >
               ✕
             </button>
@@ -143,7 +151,7 @@ export const OAuthModal: React.FC = () => {
         )}
 
         {/* Content Body */}
-        <div className="mt-5 space-y-3">
+        <div className="mt-5 space-y-4">
           {user ? (
             /* Signed-In State */
             <div className="space-y-3">
@@ -165,14 +173,14 @@ export const OAuthModal: React.FC = () => {
               <div className="flex items-center gap-2 pt-1">
                 <button
                   onClick={() => setIsOAuthModalOpen(false)}
-                  className="flex-1 py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl transition-colors"
+                  className="flex-1 py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
                 >
                   Continue to Studio
                 </button>
                 <button
                   onClick={logout}
                   disabled={isLoading}
-                  className="py-2.5 px-3 border border-neutral-200 hover:bg-neutral-100 text-neutral-700 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5"
+                  className="py-2.5 px-3 border border-neutral-200 hover:bg-neutral-100 text-neutral-700 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5 text-neutral-500" />
                   <span>Sign Out</span>
@@ -181,7 +189,7 @@ export const OAuthModal: React.FC = () => {
             </div>
           ) : (
             /* Sign-In Actions */
-            <>
+            <div className="space-y-3.5">
               {/* Primary Action: Continue with Google (Bookmark Split Design) */}
               <button
                 type="button"
@@ -192,12 +200,12 @@ export const OAuthModal: React.FC = () => {
                 {isLoading ? (
                   <div className="w-full flex items-center justify-center gap-2 py-3 px-4">
                     <RefreshCw className="w-4 h-4 animate-spin text-neutral-600" />
-                    <span className="text-xs font-medium text-neutral-600">Connecting to Google...</span>
+                    <span className="text-xs font-medium text-neutral-600">Connecting...</span>
                   </div>
                 ) : (
                   <>
                     {/* Left Chamber: Google SVG */}
-                    <div className="flex items-center justify-center px-3.5 py-3 bg-neutral-50 group-hover:bg-neutral-100 border-r border-neutral-200 transition-colors">
+                    <div className="flex items-center justify-center px-3.5 py-2.5 bg-neutral-50 group-hover:bg-neutral-100 border-r border-neutral-200 transition-colors">
                       <svg className="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24">
                         <path
                           fill="#4285F4"
@@ -218,79 +226,79 @@ export const OAuthModal: React.FC = () => {
                       </svg>
                     </div>
                     {/* Right Chamber: Label */}
-                    <div className="flex-1 flex items-center justify-center py-3 px-4">
+                    <div className="flex-1 flex items-center justify-center py-2.5 px-4">
                       <span>Continue with Google</span>
                     </div>
                   </>
                 )}
               </button>
 
-              {/* Minimalist Secondary Email Option */}
-              <div className="pt-2 text-center">
-                <AnimatePresence mode="wait">
-                  {!showEmailOption ? (
-                    <motion.button
-                      key="show-email-btn"
-                      type="button"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      onClick={() => setShowEmailOption(true)}
-                      className="text-[11px] text-neutral-400 hover:text-neutral-700 transition-colors cursor-pointer"
-                    >
-                      or sign in with email
-                    </motion.button>
-                  ) : (
-                    <motion.form
-                      key="email-form"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      onSubmit={handleEmailSubmit}
-                      className="space-y-2.5 pt-2 text-left"
-                    >
-                      <div>
-                        <input
-                          type="text"
-                          value={userName}
-                          onChange={e => setUserName(e.target.value)}
-                          placeholder="Your name (optional)"
-                          className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-neutral-900 bg-white"
-                        />
-                      </div>
-                      <div className="relative">
-                        <Mail className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-2.5" />
-                        <input
-                          type="email"
-                          required
-                          value={userEmail}
-                          onChange={e => setUserEmail(e.target.value)}
-                          placeholder="name@example.com"
-                          className="w-full pl-8 pr-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-neutral-900 bg-white"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 pt-0.5">
-                        <button
-                          type="submit"
-                          disabled={isLoading || !userEmail.trim()}
-                          className="flex-1 py-2 px-3 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
-                        >
-                          <span>Sign In</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowEmailOption(false)}
-                          className="py-2 px-3 text-neutral-500 hover:text-neutral-700 text-xs"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </motion.form>
-                  )}
-                </AnimatePresence>
+              {/* Divider */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-neutral-200" />
+                <span className="text-[11px] uppercase tracking-wider text-neutral-400 font-medium">
+                  or direct login
+                </span>
+                <div className="flex-1 h-px bg-neutral-200" />
               </div>
-            </>
+
+              {/* Direct Email Form */}
+              <form onSubmit={handleEmailSubmit} className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={userName}
+                    onChange={e => setUserName(e.target.value)}
+                    placeholder="Full name (optional)"
+                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-neutral-900 bg-white"
+                  />
+                  <div className="relative">
+                    <Mail className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-2.5" />
+                    <input
+                      type="email"
+                      required
+                      value={userEmail}
+                      onChange={e => setUserEmail(e.target.value)}
+                      placeholder="your.email@domain.com"
+                      className="w-full pl-7 pr-2.5 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-neutral-900 bg-white"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || !userEmail.trim()}
+                  className="w-full py-2.5 px-3 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  <span>Sign In with Email & Sync</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </form>
+
+              {/* Fast 1-Click Test Accounts */}
+              <div className="pt-1">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-neutral-400 mb-1.5">
+                  1-Click Quick Demo Sign In
+                </p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {DEMO_PERSONAS.map(p => (
+                    <button
+                      key={p.email}
+                      type="button"
+                      onClick={() => handlePersonaSelect(p)}
+                      disabled={isLoading}
+                      className="text-left px-2 py-1.5 rounded-lg border border-neutral-200 hover:border-neutral-400 bg-neutral-50/70 hover:bg-neutral-100 transition-colors cursor-pointer group"
+                      title={`Sign in as ${p.name} (${p.email})`}
+                    >
+                      <p className="text-[11px] font-semibold text-neutral-800 group-hover:text-black truncate">
+                        {p.name.split(' ')[0]}
+                      </p>
+                      <p className="text-[9px] text-neutral-400 truncate">{p.role}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
         </div>
 

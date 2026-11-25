@@ -109,7 +109,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
         isIframeReady.current = true;
         sendToPreview({
           type: 'INIT',
-          genreId: project.tokens?.meta?.genreId || project.websiteType?.id || 'ceramics-atelier',
+          genreId: project.websiteType?.id || project.tokens?.meta?.genreId || 'ceramics-atelier',
           tokens: project.tokens,
           mode,
           project: {
@@ -118,7 +118,8 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
             websiteType: project.websiteType,
             visualDirection: project.visualDirection,
             components: project.components,
-            imagery: project.imagery
+            imagery: project.imagery,
+            category: project.websiteType?.category || project.tokens?.meta?.category || 'commerce'
           }
         });
       }
@@ -147,7 +148,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
             sendToPreview({
               type: 'TOKENS',
               tokens: pendingTokensRef.current,
-              genreId: project.tokens?.meta?.genreId || project.websiteType?.id,
+              genreId: project.websiteType?.id || project.tokens?.meta?.genreId,
               mode,
               project: {
                 name: project.name || project.tokens?.meta?.projectName,
@@ -155,7 +156,8 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
                 websiteType: project.websiteType,
                 visualDirection: project.visualDirection,
                 components: project.components,
-                imagery: project.imagery
+                imagery: project.imagery,
+                category: project.websiteType?.category || project.tokens?.meta?.category || 'commerce'
               }
             });
             pendingTokensRef.current = null;
@@ -180,7 +182,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
   }, [project, mode, sendToPreview]);
 
   // Synchronize genre when project genre changes
-  const activeGenreId = project.tokens?.meta?.genreId || project.websiteType?.id;
+  const activeGenreId = project.websiteType?.id || project.tokens?.meta?.genreId;
   useEffect(() => {
     if (activeGenreId) {
       sendToPreview({
@@ -194,11 +196,12 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
           websiteType: project.websiteType,
           visualDirection: project.visualDirection,
           components: project.components,
-          imagery: project.imagery
+          imagery: project.imagery,
+          category: project.websiteType?.category || project.tokens?.meta?.category || 'commerce'
         }
       });
     }
-  }, [activeGenreId, sendToPreview]);
+  }, [activeGenreId, project, mode, sendToPreview]);
 
   // Auto-scroll iframe preview to relevant section for active wizard step (Doc 02 §3.4 & §5)
   useEffect(() => {

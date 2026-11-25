@@ -32,6 +32,7 @@ import {
 import { createNewProject } from '../../data/sampleProjects';
 import { useAuth } from '../../context/auth-context';
 import { ConfirmModal } from '../common/ConfirmModal';
+import { saveProjectToCloud, deleteProjectFromCloud } from '../../services/projectSync';
 
 interface ProjectDashboardProps {
   projects: DesignProject[];
@@ -93,10 +94,17 @@ export const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
   }, [projects]);
 
   const handleCreate = () => {
+    if (!user) {
+      setIsOAuthModalOpen(true);
+      return;
+    }
     const project = createNewProject(newProjectName || 'My New Website', newProjectType);
     project.currentStep = 1;
     project.completedSteps = [];
     saveProject(project);
+    if (user?.id) {
+      saveProjectToCloud(user.id, project);
+    }
     onRefreshProjects();
     setShowNewModal(false);
     onSelectProject(project.id, true);
@@ -113,6 +121,9 @@ export const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
       setRecentlyDeleted(targetProject);
     }
     deleteProject(projectToDelete.id);
+    if (user?.id) {
+      deleteProjectFromCloud(user.id, projectToDelete.id);
+    }
     onRefreshProjects();
     setProjectToDelete(null);
   };
@@ -120,6 +131,9 @@ export const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
   const handleUndoDelete = () => {
     if (recentlyDeleted) {
       saveProject(recentlyDeleted);
+      if (user?.id) {
+        saveProjectToCloud(user.id, recentlyDeleted);
+      }
       onRefreshProjects();
       setRecentlyDeleted(null);
     }
@@ -127,6 +141,9 @@ export const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
 
   const handleDuplicate = (id: string) => {
     const clone = duplicateProject(id);
+    if (clone && user?.id) {
+      saveProjectToCloud(user.id, clone);
+    }
     onRefreshProjects();
     onSelectProject(clone.id, false);
   };
@@ -217,7 +234,13 @@ export const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
           </label>
 
           <button
-            onClick={() => setShowNewModal(true)}
+            onClick={() => {
+              if (!user) {
+                setIsOAuthModalOpen(true);
+                return;
+              }
+              setShowNewModal(true);
+            }}
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white transition-all shadow-xs font-sans tracking-wide cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />

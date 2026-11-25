@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import {
-  ArrowUp,
   Sparkles,
   ShieldCheck,
   Zap,
@@ -23,10 +22,6 @@ interface StudioFooterProps {
 }
 
 export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExploreSample, onOpenLegal }) => {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <footer className="relative bg-[#090C15] text-white border-t border-white/10 overflow-hidden font-sans">
       {/* Dynamic Ambient Background Sheen */}
@@ -290,21 +285,6 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
             </button>
             <span className="hidden sm:inline">•</span>
             <span>Crafted for founders and engineers.</span>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-mono text-white/60">
-            <span className="hidden md:inline-flex items-center gap-1.5 text-white/40">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span>Offline-First PWA</span>
-            </span>
-            <button
-              onClick={scrollToTop}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/15 hover:border-white/30 hover:text-white transition-all cursor-pointer bg-white/5 hover:bg-white/10"
-              title="Scroll back to top of the page"
-            >
-              <span>Back to top</span>
-              <ArrowUp className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       </div>

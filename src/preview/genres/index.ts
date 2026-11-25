@@ -766,10 +766,79 @@ export const CATEGORIES_LIST: Array<{ id: CategoryId; label: string; description
   { id: 'finance', label: 'Finance & Capital', description: 'Fintech apps, venture syndicates, asset custody', icon: 'TrendingUp' }
 ];
 
+export const WEBSITE_TYPE_GENRE_ALIASES: Record<string, string> = {
+  // Commerce
+  'ecommerce': 'ceramics-atelier',
+  'fashion': 'fashion-store',
+  'electronics': 'electronics-hardware',
+  'beauty': 'beauty-skincare',
+  'luxury': 'fashion-store',
+  'membership': 'fashion-store',
+  'marketplace': 'ceramics-atelier',
+
+  // SaaS & Tech
+  'saas-product': 'dashboard-app',
+  'ai-tool': 'ai-product',
+  'admin-dashboard': 'dashboard-app',
+  'startup-landing': 'dev-tools',
+  'job-board': 'b2b-platform',
+  'community': 'b2b-platform',
+  'custom': 'dashboard-app',
+
+  // Publishing & Media
+  'documentation': 'tech-blog',
+  'blog-editorial': 'literary-magazine',
+  'news-media': 'news-journal',
+  'nonprofit': 'curated-newsletter',
+
+  // Education & Academies
+  'education-platform': 'online-masterclass',
+  'online-course': 'online-masterclass',
+  'university': 'university-school',
+  'academic-research': 'developer-bootcamp',
+
+  // Portfolio & Creative
+  'personal-portfolio': 'designer-portfolio',
+  'developer-portfolio': 'developer-portfolio',
+  'creative-portfolio': 'photographer-portfolio',
+  'digital-agency': 'creative-agency',
+  'corporate-business': 'creative-agency',
+
+  // Hospitality & Dining
+  'restaurant': 'fine-dining',
+  'travel-booking': 'boutique-hotel',
+  'healthcare': 'luxury-resort',
+  'event-website': 'fine-dining',
+
+  // Finance & Legal
+  'fintech': 'fintech-app',
+
+  // Architecture & Spaces
+  'real-estate': 'real-estate-estate',
+};
+
 export function getGenresForCategory(category: CategoryId): GenreConfig[] {
   return Object.values(GENRE_CONFIGS).filter(g => g.category === category);
 }
 
 export function getGenreById(id: string): GenreConfig {
-  return GENRE_CONFIGS[id] || GENRE_CONFIGS['ceramics-atelier'];
+  if (!id) return GENRE_CONFIGS['ceramics-atelier'];
+  if (GENRE_CONFIGS[id]) return GENRE_CONFIGS[id];
+  const normalized = id.toLowerCase().trim();
+  if (GENRE_CONFIGS[normalized]) return GENRE_CONFIGS[normalized];
+
+  const aliasId = WEBSITE_TYPE_GENRE_ALIASES[normalized] || WEBSITE_TYPE_GENRE_ALIASES[id];
+  if (aliasId && GENRE_CONFIGS[aliasId]) return GENRE_CONFIGS[aliasId];
+
+  // Match if normalized matches category directly
+  const byCat = Object.values(GENRE_CONFIGS).find(g => g.category.toLowerCase() === normalized);
+  if (byCat) return byCat;
+
+  // Match if any genre contains the normalized string
+  const partial = Object.values(GENRE_CONFIGS).find(
+    g => g.id.includes(normalized) || normalized.includes(g.id) || g.category.includes(normalized)
+  );
+  if (partial) return partial;
+
+  return GENRE_CONFIGS['ceramics-atelier'];
 }

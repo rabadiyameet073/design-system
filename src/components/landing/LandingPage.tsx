@@ -33,10 +33,17 @@ import {
   Network,
   Compass,
   Users,
-  Download
+  Download,
+  ShoppingBag,
+  GraduationCap,
+  Building2,
+  Landmark,
+  UtensilsCrossed,
+  BookOpen
 } from 'lucide-react';
 
 import { DesignProject } from '../../types/designSystem';
+import { CategoryId } from '../../tokens/types';
 import { LiveWebsitePreview } from '../preview/LiveWebsitePreview';
 import { ALL_SHOWCASE_PRESETS, ShowcasePreset } from '../../data/showcasePresets';
 import { WIZARD_STEPS } from '../common/WizardNav';
@@ -215,6 +222,91 @@ const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: 
 /*  Landing page                                                       */
 /* ------------------------------------------------------------------ */
 
+export interface CategoryTabItem {
+  id: CategoryId;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  flagshipId: string;
+  brand: string;
+  tagline: string;
+  description: string;
+}
+
+export const CATEGORY_TABS: CategoryTabItem[] = [
+  {
+    id: 'commerce',
+    label: 'Commerce',
+    icon: ShoppingBag,
+    flagshipId: 'ecommerce',
+    brand: 'AETHER Sound & Precision Gear',
+    tagline: 'High-conversion physical & artisan drops',
+    description: 'Dynamic shopping cart, lookbooks, tactile merchandise matrices, and responsive checkout.'
+  },
+  {
+    id: 'education',
+    label: 'Education',
+    icon: GraduationCap,
+    flagshipId: 'education-platform',
+    brand: 'AURELIA Research Scholar Institute',
+    tagline: 'Global research labs & academic fellows',
+    description: 'Active cohort announcements, research group recruiting, curriculum syllabus, and faculty directory.'
+  },
+  {
+    id: 'saas',
+    label: 'SaaS',
+    icon: Cpu,
+    flagshipId: 'saas-product',
+    brand: 'APEX Autonomous Mathematical Runtime',
+    tagline: 'Sub-millisecond AI & distributed compute',
+    description: 'Interactive code telemetry, real-time metrics row, API documentation tabs, and pricing tiers.'
+  },
+  {
+    id: 'architecture',
+    label: 'Architecture',
+    icon: Building2,
+    flagshipId: 'real-estate',
+    brand: 'ATELIER MONOLITH Spatial Architecture',
+    tagline: 'Raw stone materiality & spatial monographs',
+    description: 'Spatial proportions, architectural grid systems, project case studies, and material palettes.'
+  },
+  {
+    id: 'finance',
+    label: 'Finance',
+    icon: Landmark,
+    flagshipId: 'fintech',
+    brand: 'STRATA Wealth & Global Treasury',
+    tagline: 'Institutional liquidity & quantitative security',
+    description: 'Live treasury yield indicators, multi-asset security proofs, cryptographic audits, and compliance.'
+  },
+  {
+    id: 'hospitality',
+    label: 'Hospitality',
+    icon: UtensilsCrossed,
+    flagshipId: 'restaurant',
+    brand: 'SANCTUARY Reserve & Alpine Pavilions',
+    tagline: 'Michelin gastronomy & private retreats',
+    description: 'Seasonal tasting menus, concierge table booking, estate amenities, and sommelier cellars.'
+  },
+  {
+    id: 'portfolio',
+    label: 'Portfolio',
+    icon: LayoutGrid,
+    flagshipId: 'creative-portfolio',
+    brand: 'STUDIO VORTEX Design & Direction',
+    tagline: 'Selected Cannes Lion & D&AD monographs',
+    description: 'Full-bleed project galleries, creative direction archives, client rosters, and interactive reels.'
+  },
+  {
+    id: 'publishing',
+    label: 'Publishing',
+    icon: BookOpen,
+    flagshipId: 'blog-editorial',
+    brand: 'CHRONICLE Journal of Ideas & Culture',
+    tagline: 'Long-form essays & intellectual criticism',
+    description: 'Optimal 65ch reading rhythms, author monographs, curated issue releases, and newsletter archives.'
+  }
+];
+
 export const LandingPage: React.FC<LandingPageProps> = ({
   onStartNew,
   onExploreSample,
@@ -224,7 +316,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [selectedTypeId, setSelectedTypeId] = useState<string>('ecommerce');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [activeCategory, setActiveCategory] = useState<CategoryId | 'All'>('commerce');
   const [hoveredDeliverableId, setHoveredDeliverableId] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [architectureTab, setArchitectureTab] = useState<'tokens' | '3d'>('tokens');
@@ -281,14 +373,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const activeSample = activePreset.project;
   const activeSampleMeta = `${activePreset.category} · ${activePreset.typeName}`;
 
+  const activeCategoryTab =
+    CATEGORY_TABS.find((tab) => tab.id === activeCategory) ||
+    CATEGORY_TABS.find((tab) => tab.id === activePreset.canonicalCategory) ||
+    CATEGORY_TABS[0];
+
+  const handleSelectCategory = (catId: CategoryId) => {
+    setActiveCategory(catId);
+    const tab = CATEGORY_TABS.find((t) => t.id === catId);
+    if (tab) {
+      setSelectedTypeId(tab.flagshipId);
+    }
+  };
+
+  const handleSelectPreset = (preset: ShowcasePreset) => {
+    setSelectedTypeId(preset.id);
+    if (preset.canonicalCategory) {
+      setActiveCategory(preset.canonicalCategory);
+    }
+    setIsDropdownOpen(false);
+    setSearchQuery('');
+  };
+
   const filteredPresets = ALL_SHOWCASE_PRESETS.filter((preset) => {
     const matchesSearch =
+      searchQuery === '' ||
       preset.typeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       preset.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
       preset.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       preset.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
-      activeCategory === 'All' || preset.category === activeCategory;
+      activeCategory === 'All' ||
+      preset.canonicalCategory === activeCategory.toLowerCase() ||
+      preset.category.toLowerCase().includes(activeCategory.toLowerCase());
     return matchesSearch && matchesCategory;
   });
 
@@ -661,29 +778,33 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                       {/* Quick Category Chips */}
                       <div className="mt-2 flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none text-[11px]">
-                        {['All', 'Commerce', 'Software & Technology', 'Creative', 'Agency', 'Local'].map((catKey) => {
-                          const label = catKey === 'Software & Technology' ? 'SaaS' : catKey;
+                        {['All', ...CATEGORY_TABS.map((t) => t.label)].map((catLabel) => {
                           const isCatActive =
-                            (catKey === 'Creative' && activeCategory === 'Portfolio & Creative') ||
-                            (catKey === 'Agency' && activeCategory === 'Business & Agency') ||
-                            (catKey === 'Local' && activeCategory === 'Local & Services') ||
-                            activeCategory === catKey;
+                            (catLabel === 'All' && activeCategory === 'All') ||
+                            activeCategory.toLowerCase() === catLabel.toLowerCase();
                           return (
                             <button
-                              key={catKey}
+                              key={catLabel}
                               type="button"
                               onClick={() => {
-                                if (catKey === 'Creative') setActiveCategory('Portfolio & Creative');
-                                else if (catKey === 'Agency') setActiveCategory('Business & Agency');
-                                else if (catKey === 'Local') setActiveCategory('Local & Services');
-                                else setActiveCategory(catKey);
+                                if (catLabel === 'All') {
+                                  setActiveCategory('All');
+                                } else {
+                                  const foundTab = CATEGORY_TABS.find(
+                                    (t) => t.label.toLowerCase() === catLabel.toLowerCase()
+                                  );
+                                  if (foundTab) {
+                                    handleSelectCategory(foundTab.id);
+                                  }
+                                }
                               }}
-                              className={`px-2.5 py-1 rounded-full whitespace-nowrap font-medium transition-all cursor-pointer ${isCatActive
+                              className={`px-2.5 py-1 rounded-full whitespace-nowrap font-medium transition-all cursor-pointer ${
+                                isCatActive
                                   ? 'bg-ink text-white font-semibold'
                                   : 'bg-stone-100/70 text-ink/65 hover:bg-stone-200/70'
-                                }`}
+                              }`}
                             >
-                              {label}
+                              {catLabel}
                             </button>
                           );
                         })}
@@ -703,11 +824,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             <button
                               key={preset.id}
                               type="button"
-                              onClick={() => {
-                                setSelectedTypeId(preset.id);
-                                setIsDropdownOpen(false);
-                                setSearchQuery('');
-                              }}
+                              onClick={() => handleSelectPreset(preset)}
                               className={`w-full group flex items-start gap-3 p-2.5 rounded-xl transition-all cursor-pointer text-left ${isSelected
                                   ? 'bg-clay-wash/80 border border-clay/25'
                                   : 'hover:bg-stone-100/80 border border-transparent'
@@ -756,9 +873,85 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
+          {/* ========================================================= */}
+          {/* 8-CATEGORY STUDIO SWITCHER BAR                             */}
+          {/* ========================================================= */}
+          <div className="mt-8 border-b border-rule/80 pb-4">
+            <div className="flex items-center justify-between gap-4 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-clay animate-pulse" />
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/60 font-semibold">
+                  Select Industry Category
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-clay-wash text-clay font-bold border border-clay/15">
+                  8 Custom Homepages
+                </span>
+              </div>
+              <p className="text-xs text-ink/50 hidden md:block">
+                Each category renders a custom layout, unique sections, and authentic brand identity
+              </p>
+            </div>
+
+            {/* Horizontal scrollable category pill tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-2 px-2">
+              {CATEGORY_TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isSelected = activeCategoryTab.id === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleSelectCategory(tab.id)}
+                    className={`group relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer select-none shrink-0 border ${
+                      isSelected
+                        ? 'bg-ink text-white border-ink shadow-sm'
+                        : 'bg-white/80 hover:bg-stone-100 text-ink/75 border-rule/80 hover:border-ink/20 shadow-2xs'
+                    }`}
+                  >
+                    <Icon
+                      className={`w-3.5 h-3.5 transition-colors ${
+                        isSelected ? 'text-clay-wash' : 'text-ink/50 group-hover:text-ink'
+                      }`}
+                    />
+                    <span className="tracking-tight font-semibold">{tab.label}</span>
+                    {isSelected && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-clay ml-0.5 shadow-2xs" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Active Category Meta Callout */}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl bg-stone-50/90 border border-rule/70">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 truncate">
+                    <span className="text-xs font-bold text-ink truncate">
+                      {activeCategoryTab.brand}
+                    </span>
+                    <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/[0.05] text-ink/60">
+                      {activeCategoryTab.label} Homepage
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-ink/55 truncate">
+                    {activeCategoryTab.description}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-ink/60 font-mono shrink-0 ml-auto">
+                <span className="hidden lg:inline text-ink/40">Verified Architecture</span>
+                <span className="px-2 py-0.5 rounded bg-white border border-rule/80 text-ink/80 font-bold shadow-2xs">
+                  {activePreset.typeName}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <Reveal>
-            <div className="mt-10 border border-ink/15 p-2.5 sm:p-3">
-              <div className="h-[600px] w-full">
+            <div className="mt-6 border border-ink/15 p-2.5 sm:p-3 bg-white/50 backdrop-blur-xs rounded-xl shadow-xs">
+              <div className="h-[620px] w-full">
                 <LiveWebsitePreview project={activeSample} initialViewport="desktop" />
               </div>
             </div>

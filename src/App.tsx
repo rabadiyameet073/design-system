@@ -82,7 +82,8 @@ import { logger } from './utils/logger';
 const VIEW_STORAGE_KEY = 'dss_active_view_v1';
 
 function MainStudio() {
-  const { user } = useAuth();
+  const { user, setIsOAuthModalOpen } = useAuth();
+  const pendingActionRef = React.useRef<'create' | 'wizard' | null>(null);
 
   // State: View, Projects, and Active Selection
   const [view, setView] = useState<StudioView>(() => {
@@ -209,7 +210,16 @@ function MainStudio() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [activeProjectId]);
 
+  const activeProject =
+    projects.find(p => p.id === activeProjectId) || projects[0] || SAMPLE_PROJECT_CERAMICS;
+
   const handleSetView = useCallback((nextView: StudioView) => {
+    if (nextView === 'wizard' && !user) {
+      setToastMessage('Please sign in to access the design wizard and save your system.');
+      setIsOAuthModalOpen(true);
+      pendingActionRef.current = 'wizard';
+      return;
+    }
     setView(nextView);
     try {
       localStorage.setItem(VIEW_STORAGE_KEY, nextView);
@@ -221,7 +231,7 @@ function MainStudio() {
       projectId: activeProjectId || undefined,
       step: nextView === 'wizard' ? activeProject?.currentStep : undefined
     });
-  }, [activeProjectId]);
+  }, [activeProjectId, user, activeProject?.currentStep, setIsOAuthModalOpen]);
 
   // Real-time synchronization of projects when logged in with Google or account
   useEffect(() => {
@@ -250,6 +260,18 @@ function MainStudio() {
               (a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)
             );
           });
+
+          // Ensure active project reflects user's newest work if currently on sample
+          setActiveId(curr => {
+            if (!curr || curr === SAMPLE_PROJECT_CERAMICS.id) {
+              const newest = cloudProjects[0];
+              if (newest) {
+                setActiveProjectId(newest.id);
+                return newest.id;
+              }
+            }
+            return curr;
+          });
         }
       },
       (err) => {
@@ -259,9 +281,6 @@ function MainStudio() {
 
     return () => unsubscribe();
   }, [user?.id]);
-
-  const activeProject =
-    projects.find(p => p.id === activeProjectId) || projects[0] || SAMPLE_PROJECT_CERAMICS;
 
   const refreshProjectsList = useCallback(() => {
     const list = getStoredProjects();
@@ -596,7 +615,12 @@ function MainStudio() {
       case 9:
         handleUpdateActiveProject({
           imagery: fresh.imagery,
-          tokens: { ...activeProject.tokens, motion: fresh.tokens.motion }
+          tokens: {
+            ...activeProject.tokens,
+            motion: fresh.tokens.motion,
+            imagery: fresh.tokens.imagery,
+            icon: fresh.tokens.icon
+          }
         });
         break;
       case 10:
@@ -613,9 +637,13 @@ function MainStudio() {
     setToastMessage(`Step ${activeProject.currentStep} restored to recommended defaults`);
   };
 
-  const handleStartNewProject = () => {
-    setHistory([]);
-    setFuture([]);
+  const handleStartNewProject = useCallback(() => {
+    if (!user) {
+      setToastMessage('Please sign in to start creating and saving your design system.');
+      setIsOAuthModalOpen(true);
+      pendingActionRef.current = 'create';
+      return;
+    }
     setHistory([]);
     setFuture([]);
     const newProj = createNewProject('My New Website', 'ecommerce');
@@ -625,8 +653,24 @@ function MainStudio() {
     refreshProjectsList();
     setActiveId(newProj.id);
     setActiveProjectId(newProj.id);
+    if (user?.id) {
+      saveProjectToCloud(user.id, newProj).catch(e => logger.warn('Cloud save notice:', e));
+    }
     handleSetView('wizard');
-  };
+  }, [user, refreshProjectsList, handleSetView, setIsOAuthModalOpen]);
+
+  // Resume pending action after user completes sign in
+  useEffect(() => {
+    if (user && pendingActionRef.current) {
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+      if (action === 'create') {
+        handleStartNewProject();
+      } else if (action === 'wizard') {
+        handleSetView('wizard');
+      }
+    }
+  }, [user, handleStartNewProject, handleSetView]);
 
   const handleSelectProjectFromDashboard = (id: string, continueWizard: boolean = false) => {
     setHistory([]);
@@ -793,6 +837,8 @@ function MainStudio() {
         onTogglePreviewDrawer={() => setIsPreviewDrawerOpen(!isPreviewDrawerOpen)}
         isPreviewDrawerOpen={isPreviewDrawerOpen}
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
+        projectsCount={projects.length}
+        onStartNewDesign={handleStartNewProject}
       />
 
       {/* Main Content Area Landmark (WCAG 2.2 SC 1.3.1 & 2.4.1) */}

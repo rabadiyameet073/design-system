@@ -40,18 +40,29 @@ function saveProjectsToStorage(userId: string, projects: DesignProject[]): void 
 
 /**
  * Subscribes to real-time multi-tab updates for projects belonging to the user.
- * Operates offline-first and syncs seamlessly between browser tabs and windows.
+ * Loads from both local cache and backend JSON storage, keeping them seamlessly synchronized.
  */
 export function subscribeToUserProjects(
   userId: string,
   onProjectsUpdated: (projects: DesignProject[]) => void,
   _onError?: (err: any) => void
 ): () => void {
-  // Initial load
+  // 1. Immediate local cache load
   const initial = loadProjectsFromStorage(userId);
   if (initial.length > 0) {
     onProjectsUpdated(initial);
   }
+
+  // 2. Background fetch from backend JSON user storage
+  fetchUserProjectsFromServer(userId)
+    .then((serverProjects) => {
+      if (serverProjects && serverProjects.length > 0) {
+        onProjectsUpdated(serverProjects);
+      }
+    })
+    .catch((err) => {
+      console.warn('Backend user projects fetch notice:', err);
+    });
 
   let channel: BroadcastChannel | null = null;
   try {
@@ -83,7 +94,26 @@ export function subscribeToUserProjects(
 }
 
 /**
- * Saves or updates a project for the authenticated user in local storage and broadcasts to other tabs.
+ * Loads projects from backend JSON user storage.
+ */
+export async function fetchUserProjectsFromServer(userId: string): Promise<DesignProject[]> {
+  try {
+    const res = await fetch('/api/user/projects');
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (data.success && Array.isArray(data.projects)) {
+      saveProjectsToStorage(userId, data.projects);
+      return data.projects;
+    }
+    return [];
+  } catch (e) {
+    console.warn('Could not connect to backend user projects endpoint:', e);
+    return loadProjectsFromStorage(userId);
+  }
+}
+
+/**
+ * Saves or updates a project for the authenticated user in local storage AND sends to backend JSON store.
  */
 export async function saveProjectToStorage(
   userId: string,
@@ -106,6 +136,15 @@ export async function saveProjectToStorage(
 
   saveProjectsToStorage(userId, nextProjects);
 
+  // Send asynchronous background write to backend JSON user storage
+  fetch('/api/user/projects', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project: updatedProject })
+  }).catch((err) => {
+    console.warn('Backend project persistence notice:', err);
+  });
+
   // Broadcast real-time update to other tabs
   try {
     if (typeof BroadcastChannel !== 'undefined') {
@@ -122,7 +161,7 @@ export async function saveProjectToStorage(
 export const saveProjectToCloud = saveProjectToStorage;
 
 /**
- * Deletes a project from local user store.
+ * Deletes a project from local user store and backend JSON file.
  */
 export async function deleteProjectFromStorage(
   userId: string,
@@ -131,6 +170,13 @@ export async function deleteProjectFromStorage(
   const current = loadProjectsFromStorage(userId);
   const filtered = current.filter(p => p.id !== projectId);
   saveProjectsToStorage(userId, filtered);
+
+  // Send delete to backend JSON user storage
+  fetch(`/api/user/projects/${encodeURIComponent(projectId)}`, {
+    method: 'DELETE'
+  }).catch((err) => {
+    console.warn('Backend project deletion notice:', err);
+  });
 
   try {
     if (typeof BroadcastChannel !== 'undefined') {
@@ -147,7 +193,7 @@ export async function deleteProjectFromStorage(
 export const deleteProjectFromCloud = deleteProjectFromStorage;
 
 /**
- * Merges projects into the user's local multi-tab store.
+ * Merges projects into the user's local multi-tab store and syncs with backend JSON store.
  */
 export async function syncLocalProjectsToUserStore(
   userId: string,
@@ -165,6 +211,16 @@ export async function syncLocalProjectsToUserStore(
 
   const merged = Array.from(map.values()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
   saveProjectsToStorage(userId, merged);
+
+  // Send bulk sync to backend JSON store
+  fetch('/api/user/projects/sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ projects: merged })
+  }).catch((err) => {
+    console.warn('Backend project sync notice:', err);
+  });
+
   return merged.length;
 }
 

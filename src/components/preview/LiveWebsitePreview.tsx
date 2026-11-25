@@ -39,7 +39,7 @@ export const LiveWebsitePreview: React.FC<LiveWebsitePreviewProps> = ({
   const initPreview = useCallback(() => {
     sendToPreview({
       type: 'INIT',
-      genreId: project.tokens?.meta?.genreId || project.websiteType?.id || 'ceramics-atelier',
+      genreId: project.websiteType?.id || project.tokens?.meta?.genreId || 'ceramics-atelier',
       tokens: project.tokens,
       mode: themeMode,
       project: {
@@ -48,7 +48,8 @@ export const LiveWebsitePreview: React.FC<LiveWebsitePreviewProps> = ({
         websiteType: project.websiteType,
         visualDirection: project.visualDirection,
         components: project.components,
-        imagery: project.imagery
+        imagery: project.imagery,
+        category: project.websiteType?.category || project.tokens?.meta?.category || 'commerce'
       }
     });
   }, [project, themeMode, sendToPreview]);
@@ -71,7 +72,7 @@ export const LiveWebsitePreview: React.FC<LiveWebsitePreviewProps> = ({
       sendToPreview({
         type: 'TOKENS',
         tokens: project.tokens,
-        genreId: project.tokens?.meta?.genreId || project.websiteType?.id || 'ceramics-atelier',
+        genreId: project.websiteType?.id || project.tokens?.meta?.genreId || 'ceramics-atelier',
         mode: themeMode,
         project: {
           name: project.name || project.tokens?.meta?.projectName,
@@ -79,7 +80,8 @@ export const LiveWebsitePreview: React.FC<LiveWebsitePreviewProps> = ({
           websiteType: project.websiteType,
           visualDirection: project.visualDirection,
           components: project.components,
-          imagery: project.imagery
+          imagery: project.imagery,
+          category: project.websiteType?.category || project.tokens?.meta?.category || 'commerce'
         }
       });
     }

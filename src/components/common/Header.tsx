@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DesignProject } from '../../types/designSystem';
 import { useAuth } from '../../context/auth-context';
 import { StudioView } from '../../utils/router';
+import { UserProfileModal } from '../auth/UserProfileModal';
 
 interface HeaderProps {
   currentView: StudioView;
@@ -10,6 +11,8 @@ interface HeaderProps {
   onTogglePreviewDrawer?: () => void;
   isPreviewDrawerOpen?: boolean;
   onOpenShortcuts?: () => void;
+  projectsCount?: number;
+  onStartNewDesign?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,10 +21,13 @@ export const Header: React.FC<HeaderProps> = ({
   activeProject,
   onTogglePreviewDrawer,
   isPreviewDrawerOpen,
-  onOpenShortcuts
+  onOpenShortcuts,
+  projectsCount = 0,
+  onStartNewDesign
 }) => {
   const { user, setIsOAuthModalOpen, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const navLink = (active: boolean) =>
     `relative whitespace-nowrap shrink-0 transition-all font-sans text-xs sm:text-[13px] font-semibold tracking-wide ${
@@ -140,9 +146,24 @@ export const Header: React.FC<HeaderProps> = ({
                     <p className="text-ink/50 text-[11px] truncate">{user.email}</p>
                     <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-clay font-mono bg-clay-wash px-2 py-0.5 rounded">
                       <span className="w-1.5 h-1.5 rounded-full bg-clay" />
-                      <span>Google Auth Real-Time</span>
+                      <span>{user.provider === 'google' ? 'Google Verified' : 'Session Active'}</span>
                     </div>
                   </div>
+
+                  <button
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      setIsProfileModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-ink hover:bg-neutral-50 rounded-lg transition-colors text-left font-medium cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="8" r="5" />
+                      <path d="M20 21a8 8 0 0 0-16 0" />
+                    </svg>
+                    <span>View Profile & Account</span>
+                  </button>
+
                   <button
                     onClick={() => {
                       logout();
@@ -241,7 +262,7 @@ export const Header: React.FC<HeaderProps> = ({
           {currentView !== 'wizard' ? (
             /* Split-Chamber "Create Design System" with + SVG */
             <button
-              onClick={() => onNavigate('wizard')}
+              onClick={onStartNewDesign || (() => onNavigate('wizard'))}
               className="group flex items-stretch rounded-xl bg-clay hover:bg-clay-deep text-white shadow-sm hover:shadow-md transition-all active:scale-[0.98] overflow-hidden shrink-0 cursor-pointer text-xs font-bold font-sans"
               title="Create a new website design system"
             >
@@ -293,6 +314,14 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </div>
+
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        projectsCount={projectsCount}
+        onNavigateToProjects={() => onNavigate('dashboard')}
+        onStartNewDesign={onStartNewDesign}
+      />
     </header>
   );
 };

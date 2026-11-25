@@ -13,8 +13,7 @@ import {
   Sparkles,
   ArrowRight,
   Compass,
-  Code2,
-  ChevronDown
+  Code2
 } from 'lucide-react';
 
 interface DesignSystemAnatomyProps {
@@ -523,46 +522,6 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
               </div>
             );
           })}
-        </div>
-
-        {/* ======================= BOTTOM SCROLL PROGRESS DOCK ======================= */}
-        <div className="relative z-30 py-3 px-6 bg-white dark:bg-neutral-950 border-t border-rule dark:border-neutral-800 flex items-center justify-between">
-          {/* Clickable Step Pills */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <span className="font-mono text-xs font-bold text-ink/80 dark:text-neutral-200">
-              0{activePillar} / 04
-            </span>
-
-            {/* Clickable Step Breadcrumbs */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              {[1, 2, 3, 4].map((stepId) => (
-                <button
-                  key={stepId}
-                  onClick={() => scrollToPillar(stepId)}
-                  className={`h-2 sm:h-2.5 rounded-full transition-all cursor-pointer ${activePillar === stepId
-                    ? 'w-8 sm:w-10 bg-clay'
-                    : 'w-2 sm:w-2.5 bg-stone-200 dark:bg-neutral-800 hover:bg-stone-300 dark:hover:bg-neutral-700'
-                    }`}
-                  aria-label={`Jump to Step ${stepId}`}
-                  title={`Jump to Step ${stepId}`}
-                />
-              ))}
-            </div>
-
-            <span className="text-[11px] font-mono text-ink/50 dark:text-neutral-400 hidden md:inline ml-2">
-              Scroll down to scrub 1 → 2 → 3 → 4
-            </span>
-          </div>
-
-          {/* Scroll Cue & Next Section Hint */}
-          <div className="flex items-center gap-2 text-xs font-mono text-ink/60 dark:text-neutral-400">
-            <span>
-              {activePillar === 4
-                ? 'Scroll to next section (Deliverables Index)'
-                : `Scroll down to advance to Step 0${activePillar + 1}`}
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 animate-bounce text-clay" />
-          </div>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import {
   SessionUser,
   createSessionToken,
@@ -303,25 +304,71 @@ router.get('/auth/url', (req, res) => {
   });
 });
 
-// Per-User Current Session Endpoint (Stateless, signed cookie verified per S2)
-router.get('/auth/me', (req, res) => {
+// ============================================================================
+// DYNAMIC USER PROJECTS JSON STORAGE ENGINE
+// ============================================================================
+
+const DATA_DIR = path.resolve(process.cwd(), '.data', 'users');
+
+function ensureUserDir(userId: string): string {
+  const safeId = userId.replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const userDir = path.join(DATA_DIR, safeId);
+  if (!fs.existsSync(userDir)) {
+    fs.mkdirSync(userDir, { recursive: true });
+  }
+  return userDir;
+}
+
+function getUserProjectsFilePath(userId: string): string {
+  const userDir = ensureUserDir(userId);
+  return path.join(userDir, 'projects.json');
+}
+
+export function readUserProjectsFromFile(userId: string): any[] {
+  try {
+    const filePath = getUserProjectsFilePath(userId);
+    if (!fs.existsSync(filePath)) {
+      return [];
+    }
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error(`Error reading projects for user ${userId}:`, err);
+    return [];
+  }
+}
+
+export function writeUserProjectsToFile(userId: string, projects: any[]): void {
+  try {
+    const filePath = getUserProjectsFilePath(userId);
+    fs.writeFileSync(filePath, JSON.stringify(projects, null, 2), 'utf-8');
+  } catch (err) {
+    console.error(`Error writing projects for user ${userId}:`, err);
+  }
+}
+
+function getAuthenticatedUser(req: express.Request): SessionUser | null {
   const cookies = parseCookies(req.headers.cookie);
   const sessionToken =
     cookies[SESSION_COOKIE_NAME] ||
     (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null);
+  if (!sessionToken) return null;
+  return verifySessionToken(sessionToken);
+}
 
-  if (!sessionToken) {
-    return res.json({ authenticated: false, user: null });
-  }
-
-  const user = verifySessionToken(sessionToken);
+// Per-User Current Session Endpoint (Stateless, signed cookie verified per S2)
+router.get('/auth/me', (req, res) => {
+  const user = getAuthenticatedUser(req);
   if (!user) {
-    return res.json({ authenticated: false, user: null });
+    return res.json({ authenticated: false, user: null, projectsCount: 0 });
   }
 
+  const projects = readUserProjectsFromFile(user.id);
   res.json({
     authenticated: true,
-    user
+    user,
+    projectsCount: projects.length
   });
 });
 
@@ -365,47 +412,177 @@ router.post('/auth/google-session', async (req, res) => {
     const sessionToken = createSessionToken(safeUser);
     setSessionCookie(res, sessionToken);
 
-    res.json({ success: true, user: safeUser });
+    const userProjects = readUserProjectsFromFile(safeUser.id);
+    res.json({ success: true, user: safeUser, projects: userProjects, projectsCount: userProjects.length });
   } catch (err: any) {
     console.error('Error verifying Google ID token:', err);
     res.status(500).json({ error: 'Failed to verify Google ID token with upstream identity provider' });
   }
 });
 
-// Direct login gated for development / demo only per S3
+// Universal Direct login with Email/Account (Works for anyone & remembers projects)
 router.post('/auth/custom-login', (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(403).json({
-      error: 'Custom impersonation login is disabled in production. Please sign in with verified Google OAuth.'
-    });
-  }
-
   const { name, email, avatar } = req.body;
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ error: 'Email is required' });
   }
 
-  const cleanEmail = email.trim();
+  const cleanEmail = email.trim().toLowerCase();
   const cleanName = (name || cleanEmail.split('@')[0]).trim();
+  
+  // Create deterministic stable user ID from email so logging in with same email restores all previous work!
+  const emailHash = crypto.createHash('sha256').update(cleanEmail).digest('hex').slice(0, 16);
+  const userId = `usr_${emailHash}`;
+
   const safeUser: SessionUser = {
-    id: `demo_${Date.now()}`,
-    name: `${cleanName} (Demo)`,
+    id: userId,
+    name: cleanName,
     email: cleanEmail,
     avatar: avatar || generateInitialsAvatar(cleanName),
-    provider: 'demo',
+    provider: 'custom',
     authenticatedAt: Date.now()
   };
 
   const sessionToken = createSessionToken(safeUser);
   setSessionCookie(res, sessionToken);
 
-  res.json({ success: true, user: safeUser });
+  const existingProjects = readUserProjectsFromFile(userId);
+
+  res.json({
+    success: true,
+    user: safeUser,
+    projectsCount: existingProjects.length,
+    projects: existingProjects
+  });
 });
 
 // Logout Endpoint clearing session cookie per S2
 router.post('/auth/logout', (_req, res) => {
   clearSessionCookie(res);
   res.json({ success: true, message: 'Logged out successfully' });
+});
+
+// ============================================================================
+// USER PROJECTS BACKEND PERSISTENCE ROUTES (Dynamic JSON per User)
+// ============================================================================
+
+// 1. GET /user/projects — Read all stored projects for authenticated user
+router.get('/user/projects', (req, res) => {
+  const user = getAuthenticatedUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized: Please log in to view saved design systems.' });
+  }
+
+  const projects = readUserProjectsFromFile(user.id);
+  res.json({
+    success: true,
+    userId: user.id,
+    count: projects.length,
+    projects
+  });
+});
+
+// 2. POST /user/projects — Save or update a project in user's backend JSON file
+router.post('/user/projects', (req, res) => {
+  const user = getAuthenticatedUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized: Please log in to create or save design systems.' });
+  }
+
+  const project = req.body.project || req.body;
+  if (!project || !project.id || !project.name) {
+    return res.status(400).json({ error: 'Valid project object with id and name is required.' });
+  }
+
+  const projects = readUserProjectsFromFile(user.id);
+  const existingIdx = projects.findIndex((p: any) => p.id === project.id);
+  const updatedProject = {
+    ...project,
+    updatedAt: Date.now()
+  };
+
+  if (existingIdx >= 0) {
+    projects[existingIdx] = updatedProject;
+  } else {
+    projects.unshift(updatedProject);
+  }
+
+  writeUserProjectsToFile(user.id, projects);
+  res.json({ success: true, project: updatedProject, count: projects.length });
+});
+
+// 3. PUT /user/projects/:id — Update existing project in user's backend JSON file
+router.put('/user/projects/:id', (req, res) => {
+  const user = getAuthenticatedUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized: Please log in to update design systems.' });
+  }
+
+  const { id } = req.params;
+  const project = req.body.project || req.body;
+  const projects = readUserProjectsFromFile(user.id);
+  const existingIdx = projects.findIndex((p: any) => p.id === id);
+
+  const updatedProject = {
+    ...(existingIdx >= 0 ? projects[existingIdx] : {}),
+    ...project,
+    id,
+    updatedAt: Date.now()
+  };
+
+  if (existingIdx >= 0) {
+    projects[existingIdx] = updatedProject;
+  } else {
+    projects.unshift(updatedProject);
+  }
+
+  writeUserProjectsToFile(user.id, projects);
+  res.json({ success: true, project: updatedProject });
+});
+
+// 4. DELETE /user/projects/:id — Delete project from user's backend JSON file
+router.delete('/user/projects/:id', (req, res) => {
+  const user = getAuthenticatedUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized: Please log in to delete design systems.' });
+  }
+
+  const { id } = req.params;
+  const projects = readUserProjectsFromFile(user.id);
+  const filtered = projects.filter((p: any) => p.id !== id);
+  writeUserProjectsToFile(user.id, filtered);
+
+  res.json({ success: true, message: 'Project deleted from cloud storage', remainingCount: filtered.length });
+});
+
+// 5. POST /user/projects/sync — Bulk sync / merge client projects into user's backend JSON file
+router.post('/user/projects/sync', (req, res) => {
+  const user = getAuthenticatedUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized: Please log in to sync design systems.' });
+  }
+
+  const clientProjects = Array.isArray(req.body.projects) ? req.body.projects : [];
+  const serverProjects = readUserProjectsFromFile(user.id);
+
+  const map = new Map<string, any>();
+  serverProjects.forEach((p: any) => map.set(p.id, p));
+  clientProjects.forEach((p: any) => {
+    if (!p || !p.id) return;
+    const existing = map.get(p.id);
+    if (!existing || (p.updatedAt || 0) >= (existing.updatedAt || 0)) {
+      map.set(p.id, p);
+    }
+  });
+
+  const merged = Array.from(map.values()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  writeUserProjectsToFile(user.id, merged);
+
+  res.json({
+    success: true,
+    projects: merged,
+    count: merged.length
+  });
 });
 
 // AI prompt helper endpoint with real Gemini AI generation per S11
