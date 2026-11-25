@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
+    "test:visual:update": "playwright test tests/e2e/visual.e2e.ts --update-snapshots",
     "fonts:snapshot": "tsx scripts/generateFontSnapshot.ts"
   },
   "dependencies": {

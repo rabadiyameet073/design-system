@@ -1,7 +1,7 @@
 # 05 — QA, SECURITY, PERFORMANCE, DEPLOY & AGENT PROMPTS
 
 ## 1. Testing strategy
-> Status: only the Vitest unit/component layer is wired up today (151 passing tests). Playwright, axe, Lighthouse and the GitHub Actions workflow below are **targets being added in separate work**, not current CI.
+> Status: Vitest (164 passing tests), Playwright E2E + axe (8 specs), Playwright visual regression and Lighthouse CI budgets are all wired into `.github/workflows/ci.yml`. Component-level Testing Library tests and full 8-template × 3-viewport visual coverage remain future work.
 
 | Layer | Tool | What to test |
 |---|---|---|
@@ -84,7 +84,7 @@ Local verification available now: `npm run lint` (typecheck), `npm test`, `npm r
 ## 8. Final launch checklist
 - [ ] All doc checklists (02, 03, 04) are green.
 - [ ] Local checks pass: `npm run lint`, `npm test` (151 tests), `npm run build`.
-- [ ] Target CI once landed: lint, types, unit, build, e2e, axe, Lighthouse (the last three are being added in separate work).
+- [x] CI: lint, types, unit, build, e2e, axe, Lighthouse budgets (visual baselines for landing hero and preview light/dark).
 - [ ] Manual test on a real phone (iOS Safari + Android Chrome).
 - [ ] Keyboard-only run through all 11 steps.
 - [ ] Export starter ZIP → fresh Vite + Tailwind 4 project → `npm i && npm run dev` renders correctly with the exported theme.

@@ -248,8 +248,8 @@ What prevents "production-ready" status is not breadth of features but **trust**
 
 ## 11. Remediation Results (post-audit implementation)
 
-The audit findings were implemented in a follow-up pass. Verification after all changes:
-`npm run lint` ✅ · `npm test` ✅ (25 files / 164 tests) · `npm run build` ✅ · `npm run test:e2e` ✅ (7/7, including axe on landing + preview in light and dark).
+The audit findings were implemented in two follow-up passes. Final verification:
+`npm run lint` ✅ · `npm test` ✅ (25 files / 164 tests) · `npm run build` ✅ · `npm run test:e2e` ✅ (8/8, including axe on landing + preview in light/dark and visual-regression baselines).
 
 | Issue | Status | What changed |
 |---|---|---|
@@ -259,16 +259,16 @@ The audit findings were implemented in a follow-up pass. Verification after all 
 | F-01 duplicate/misrouted onboarding | **Fixed** | New project is persisted synchronously before selection; active ID and route are set explicitly; creation guard and cloud-sync protection added. E2E asserts exactly one new active project at Step 1. |
 | F-02 flagship brand/content mismatch | **Fixed** | Per-genre content resolver supplies brand, headline, products and offerings to all 8 templates; E2E asserts the preview H1 changes on genre selection. |
 | F-03 genre → live template | **Fixed** | `src/preview/genres/genreContent.ts` resolves all 32 genres; `PreviewFrame` merges project overrides; all templates consume resolved content. |
-| F-04 draft preview ribbon | **Not reproduced** | Option-card `onPreviewDraft` wiring is present; no ribbon appeared during manual hover/click testing. Left as an unverified risk, not claimed fixed. |
+| F-04 draft preview ribbon | **Verified working** | Reproduced with a real hover: the ribbon shows "Previewing (B): Luxury Fashion & Apparel" with Compare / Apply / Cancel. The original audit clicked the card (which commits immediately) instead of hovering. No code change required. |
 | A-01 false "verified" claims | **Fixed** | Status cards and badges now derive from `auditSemanticContrast`; audit mode and preview toolbar are synchronised via a shared event; the production ZIP stays disabled while any pair fails. |
 | U-01 mobile landing overflow | **Fixed** | `overflow-x-hidden` on the landing root and document; E2E asserts no overflow at 390px. |
 | U-02 misleading "Review" button | **Fixed** | Relabelled to "Export" (it opens the Export Center). |
 | U-03 silent validation | **Fixed** | Inline required-field message with `aria-invalid` / `aria-describedby` in Step 2. |
 | U-04 false numeric claims | **Fixed** | 14→11 steps, 5→13 formats, "Smooth 60 FPS"→"Target 60 FPS". |
 | U-05 clipped profile modal | **Fixed** | Modal is viewport-bounded with internal scroll. |
-| T-01 serverless persistence | **Implemented, requires configuration** | `api/projectStore.ts` adds a local-file adapter for development and an Upstash-compatible REST adapter for production; rate limiting uses shared storage when configured. Set `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (see `.env.example`) before deploying to Vercel. |
-| G-01 duplicate history systems | **Partially addressed** | `MAX_HISTORY` is now exported from `tokenReducer` and used by `App.tsx`; the reducer itself remains as the tested reference implementation. Full reducer adoption is still a refactor. |
-| G-02 missing CI gates | **Fixed** | Playwright + axe added (7 E2E specs), `test:e2e` scripts, and CI runs lint → unit → build → e2e. Lighthouse/visual regression remain future work. |
+| T-01 serverless persistence | **Fixed (configuration required at deploy)** | `api/projectStore.ts` provides a local-file adapter for development and an Upstash-compatible REST adapter for production. Production now **fails fast with an actionable error** if REST credentials are absent, so it can never silently use ephemeral storage (verified both ways). Set `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` before deploying; `/api/health` reports the active adapter. |
+| G-01 duplicate history systems | **Fixed** | Removed the unused `tokenReducer` implementation and its tests; `src/tokens/tokenMerge.ts` is now the single shared token-merge/history-depth utility used by `App.tsx`. One project-level undo/redo stack remains. |
+| G-02 missing CI gates | **Fixed** | Playwright + axe (8 specs including visual regression) and Lighthouse CI budgets (`lighthouserc.json`, `treosh/lighthouse-ci-action`) are wired into CI alongside lint/unit/build. |
 | D-01 documentation drift | **Fixed** | README, PROJECT_DOCUMENTATION, rules, security spec and roadmap docs reconciled with the code. |
 
 New regression coverage: `tests/preview/genreContent.test.ts`, `tests/utils/persistence.test.ts`, and `tests/e2e/*.e2e.ts` (7 specs, including axe).

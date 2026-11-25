@@ -68,7 +68,7 @@ import {
   setActiveProjectId
 } from './utils/storage';
 import { createNewProject, SAMPLE_PROJECT_CERAMICS } from './data/sampleProjects';
-import { mergeTokens, MAX_HISTORY } from './tokens/tokenReducer';
+import { mergeTokens, MAX_HISTORY } from './tokens/tokenMerge';
 import {
   subscribeToUserProjects,
   saveProjectToCloud,

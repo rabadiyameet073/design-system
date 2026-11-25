@@ -119,8 +119,23 @@ function projectKey(userId: string): string {
   return `dss:projects:${safeId(userId)}`;
 }
 
-/** The active store is selected once at startup from environment configuration. */
-export const projectStore: ProjectStore = getRedisConfig() ? restStore : localFileStore;
+/**
+ * The active store is selected once at startup from environment configuration.
+ * Production must never fall back to an ephemeral filesystem: doing so would
+ * silently lose user projects between serverless invocations. Fail loudly instead.
+ */
+function resolveStore(): ProjectStore {
+  if (getRedisConfig()) return restStore;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Production project storage is not configured. Set UPSTASH_REDIS_REST_URL and ' +
+        'UPSTASH_REDIS_REST_TOKEN (see .env.example) before starting the server.'
+    );
+  }
+  return localFileStore;
+}
+
+export const projectStore: ProjectStore = resolveStore();
 
 export async function checkSharedRateLimit(
   bucket: string,

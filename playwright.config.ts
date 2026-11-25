@@ -8,7 +8,14 @@ export default defineConfig({
   testMatch: '**/*.e2e.ts',
   // Each spec drives the 11-step wizard, so allow generous per-test headroom.
   timeout: 60_000,
-  expect: { timeout: 10_000 },
+  expect: {
+    timeout: 10_000,
+    toHaveScreenshot: {
+      animations: 'disabled',
+      maxDiffPixelRatio: 0.02,
+      caret: 'hide'
+    }
+  },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
