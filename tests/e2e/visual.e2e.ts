@@ -20,6 +20,11 @@ test.describe('Visual regression', () => {
 
     const preview = page.locator(PREVIEW_IFRAME_SELECTOR);
     await expect(preview).toBeVisible();
+    // Pin the frame height so the baseline is independent of layout reflow timing.
+    await preview.evaluate((el) => {
+      (el as HTMLElement).style.height = '600px';
+    });
+    await page.waitForTimeout(300);
     await expect(preview).toHaveScreenshot('preview-light.png');
 
     await page.evaluate(() =>

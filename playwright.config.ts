@@ -22,6 +22,8 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: [['list'], ['html', { open: 'never' }]],
   outputDir: 'test-results',
+  // Platform-independent baseline names so the same committed snapshots are used locally and in CI.
+  snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}{ext}',
 
   use: {
     baseURL: BASE_URL,
