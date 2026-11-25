@@ -212,10 +212,16 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
     return () => clearTimeout(timer);
   }, [currentStep, sendToPreview]);
 
-  const toggleMode = () => {
-    const nextMode = mode === 'light' ? 'dark' : 'light';
+  const applyMode = (nextMode: 'light' | 'dark') => {
+    if (nextMode === mode) return;
     setMode(nextMode);
     sendToPreview({ type: 'MODE', mode: nextMode });
+  };
+
+  const toggleMode = () => {
+    const nextMode = mode === 'light' ? 'dark' : 'light';
+    applyMode(nextMode);
+    window.dispatchEvent(new CustomEvent('dss:set-theme-mode', { detail: nextMode }));
   };
 
   useEffect(() => {
@@ -223,6 +229,17 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
     window.addEventListener('dss:toggle-mode', handleCustomToggle);
     return () => window.removeEventListener('dss:toggle-mode', handleCustomToggle);
   }, [mode, project.tokens]);
+
+  // Shared mode: Step 10's audit toggle and the keyboard D shortcut both update
+  // the preview toolbar, so the live A11y badge always audits the displayed mode.
+  useEffect(() => {
+    const handleSharedMode = (e: Event) => {
+      const next = (e as CustomEvent<'light' | 'dark'>).detail;
+      if (next === 'light' || next === 'dark') applyMode(next);
+    };
+    window.addEventListener('dss:set-theme-mode', handleSharedMode);
+    return () => window.removeEventListener('dss:set-theme-mode', handleSharedMode);
+  }, [mode, sendToPreview]);
 
   // Viewport container width style
   const getViewportWidth = () => {
@@ -258,7 +275,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
 
           {/* Selected Genre Pill */}
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs truncate max-w-[200px]">
-            <span className="text-amber-700/60 font-mono font-normal">Type:</span>
+            <span className="text-amber-800 font-mono font-normal">Type:</span>
             <span className="truncate">{project.websiteType?.name || 'Ceramics Atelier'}</span>
           </span>
 
@@ -341,7 +358,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
             <button
               onClick={() => setLayoutMode('split')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                layoutMode === 'split' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-500 hover:text-neutral-900'
+                layoutMode === 'split' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-700 hover:text-neutral-950'
               }`}
               title="Split Studio (50/50)"
             >
@@ -352,7 +369,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
             <button
               onClick={() => setLayoutMode('focus-form')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                layoutMode === 'focus-form' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-500 hover:text-neutral-900'
+                layoutMode === 'focus-form' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-700 hover:text-neutral-950'
               }`}
               title="Questions Only"
             >
@@ -363,7 +380,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
             <button
               onClick={() => setLayoutMode('focus-preview')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                layoutMode === 'focus-preview' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-500 hover:text-neutral-900'
+                layoutMode === 'focus-preview' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-700 hover:text-neutral-950'
               }`}
               title="Full Preview"
             >
@@ -413,12 +430,14 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
         {/* RIGHT PANE: LIVE INTERACTIVE IFRAME PREVIEW STAGE */}
         <aside
           className={`flex-col bg-[#080B11] transition-all duration-300 relative overflow-hidden ${
-            layoutMode === 'split'
-              ? 'hidden lg:flex flex-1 min-w-0 p-4'
+            mobileTab === 'preview'
+              ? 'flex w-full h-full p-2'
               : layoutMode === 'focus-preview'
-              ? 'flex w-full h-full p-4 sm:p-6'
-              : 'hidden'
-          } ${mobileTab === 'preview' ? 'flex w-full h-full p-2' : 'hidden lg:flex'}`}
+                ? 'flex w-full h-full p-4 sm:p-6'
+                : layoutMode === 'split'
+                  ? 'hidden lg:flex flex-1 min-w-0 p-4'
+                  : 'hidden'
+          }`}
         >
           {/* Always-On Preview Toolbar: Viewports, Light/Dark, A11y Badge */}
           <div className="pb-3 mb-2 flex items-center justify-between border-b border-neutral-800 text-white shrink-0">
@@ -461,6 +480,7 @@ export const WizardWorkspaceStage: React.FC<WizardWorkspaceStageProps> = ({
               {/* Colorblind Vision Deficiency Simulator */}
               <div className="relative">
                 <select
+                  aria-label="Simulate color vision deficiency"
                   value={colorblindMode}
                   onChange={(e) => setColorblindMode(e.target.value as any)}
                   className="appearance-none pl-7 pr-3 py-1 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-bold text-neutral-200 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-white/30"

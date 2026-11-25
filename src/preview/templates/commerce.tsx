@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TemplateProps } from './index';
+import { ContentItem, ResolvedGenreContent } from '../genres/genreContent';
 import {
   ComponentsShowcase,
   TypeSpecimen
@@ -42,13 +43,13 @@ interface ProductItem {
   rating: number;
   reviewsCount: number;
   badge?: string;
-  category: 'headphones' | 'earphones' | 'hardware' | 'accessories';
+  category: string;
   specs: string[];
   image: string;
   colorways: { name: string; hex: string }[];
 }
 
-const PRODUCTS: ProductItem[] = [
+const FLAGSHIP_PRODUCTS: ProductItem[] = [
   {
     id: 'aether-pro-headphones',
     name: 'Aether Pro Planar Wireless',
@@ -117,7 +118,7 @@ const PRODUCTS: ProductItem[] = [
   }
 ];
 
-const PRESS_ACCOLADES = [
+const FLAGSHIP_PRESS = [
   { outlet: 'WIRED', quote: 'The new absolute benchmark in wireless planar acoustic engineering.' },
   { outlet: 'THE VERGE', quote: '9.6/10 — Impeccable industrial design with surgical acoustic depth.' },
   { outlet: 'WALLPAPER*', quote: 'Winner: Best Hardware Product Design Award 2026.' },
@@ -125,7 +126,7 @@ const PRESS_ACCOLADES = [
   { outlet: 'FAST COMPANY', quote: 'A masterclass in stripping away the unnecessary and elevating sound.' }
 ];
 
-const ENGINEERING_PILLARS = [
+const FLAGSHIP_PILLARS = [
   {
     id: 'drivers',
     icon: Volume2,
@@ -176,7 +177,7 @@ const ENGINEERING_PILLARS = [
   }
 ];
 
-const FAQS = [
+const FLAGSHIP_FAQS = [
   {
     q: 'How does the 30-Day In-Home Acoustic Audition work?',
     a: 'Experience Aether gear in your personal listening environment. If you are not thoroughly captivated by the soundstage and comfort within 30 days, return it in original packaging for a 100% full refund with complimentary insured return shipping.'
@@ -196,14 +197,24 @@ const FAQS = [
 ];
 
 export const CommerceTemplate: React.FC<TemplateProps> = ({
-  brandName = 'AETHER Sound & Precision Gear',
-  headline,
-  subtitle,
-  badge = 'Gen-3 Acoustic Reference',
+  content,
+  brandName: brandNameProp,
+  headline: headlineProp,
+  subtitle: subtitleProp,
+  badge: badgeProp,
+  heroImage,
+  genreId,
   components,
   buttonStyle
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'headphones' | 'earphones' | 'hardware' | 'accessories'>('all');
+  // Genre-resolved copy replaces the flagship Aether arrays when supplied.
+  // With no content prop the original flagship experience is preserved.
+  const brandName = content?.brandName || brandNameProp || 'AETHER Sound & Precision Gear';
+  const headline = headlineProp || content?.headline;
+  const subtitle = subtitleProp || content?.subtitle;
+  const badge = content?.badge || badgeProp || 'Gen-3 Acoustic Reference';
+  const effectiveHeroImage = heroImage || content?.heroImage;
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedColorway, setSelectedColorway] = useState<number>(0);
   const [activePillarIndex, setActivePillarIndex] = useState<number>(0);
   const [cartCount, setCartCount] = useState<number>(2);
@@ -308,6 +319,86 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
     transition: 'filter 0.2s ease'
   });
 
+  const itemToProduct = (raw: ContentItem, index: number): ProductItem => ({
+    id: raw.id,
+    name: raw.title,
+    tagline: raw.description,
+    price: raw.price || 0,
+    originalPrice: raw.originalPrice,
+    rating: raw.rating || 4.8,
+    reviewsCount: raw.reviewsCount || 100 + index * 37,
+    badge: raw.badge,
+    category: content ? `item-${index}` : 'accessories',
+    specs: raw.specs && raw.specs.length ? raw.specs : [raw.description],
+    image: raw.image,
+    colorways: raw.colorways && raw.colorways.length
+      ? raw.colorways
+      : [{ name: 'Signature', hex: 'var(--color-brand-500)' }]
+  });
+
+  const PRODUCTS: ProductItem[] = content?.items && content.items.length
+    ? content.items.map(itemToProduct)
+    : FLAGSHIP_PRODUCTS;
+
+  const PRESS_ACCOLADES = content?.quotes && content.quotes.length
+    ? content.quotes
+        .filter(quote => Boolean(quote.outlet))
+        .map(quote => ({ outlet: quote.outlet || 'PRESS', quote: quote.quote }))
+    : FLAGSHIP_PRESS;
+
+  const pillarIcons = [Volume2, Cpu, Layers, BatteryCharging];
+  const ENGINEERING_PILLARS = content?.highlights && content.highlights.length
+    ? content.highlights.map((highlight, index) => ({
+        id: highlight.id,
+        icon: pillarIcons[index % pillarIcons.length],
+        tabLabel: highlight.label,
+        headline: highlight.title,
+        desc: highlight.description,
+        stats: highlight.stats
+      }))
+    : FLAGSHIP_PILLARS;
+
+  const FAQS = content?.faqs && content.faqs.length ? content.faqs : FLAGSHIP_FAQS;
+
+  const categoryTabs = content
+    ? [
+        { id: 'all', label: 'All' },
+        ...content.items.map((item, index) => ({ id: `item-${index}`, label: item.title.split(' ').slice(0, 2).join(' ') }))
+      ]
+    : [
+        { id: 'all', label: 'All Products' },
+        { id: 'headphones', label: 'Headphones' },
+        { id: 'earphones', label: 'Earphones' },
+        { id: 'hardware', label: 'Studio DAC' },
+        { id: 'accessories', label: 'Accessories' }
+      ];
+
+  const navLinks = content
+    ? [
+        { label: content.items[0]?.title || 'Collection', href: '#products' },
+        { label: content.items[1]?.title || 'Details', href: '#products' },
+        { label: content.featuresTitle, href: '#technology' },
+        { label: content.sectionTitle, href: '#specs' },
+        { label: 'Reviews', href: '#reviews' },
+        { label: 'FAQ', href: '#faq' }
+      ]
+    : [
+        { label: 'Headphones', href: '#products' },
+        { label: 'Studio Gear', href: '#products' },
+        { label: 'Acoustic Tech', href: '#technology' },
+        { label: 'Specifications', href: '#specs' },
+        { label: 'Reviews', href: '#reviews' },
+        { label: 'FAQ', href: '#faq' }
+      ];
+
+  const specRows = content && content.items.length
+    ? (content.items[0].specs || []).map((spec, index) => ({
+        label: spec,
+        a: spec,
+        b: (content.items[1] && content.items[1].specs && content.items[1].specs[index]) || '—'
+      }))
+    : [];
+
   const filteredProducts = selectedCategory === 'all'
     ? PRODUCTS
     : PRODUCTS.filter(p => p.category === selectedCategory);
@@ -328,11 +419,17 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
     }, 4000);
   };
 
-  const heroColors = [
-    { name: 'Titanium Silver', hex: 'var(--color-neutral-200)', desc: 'Satin bead-blasted aerospace titanium' },
-    { name: 'Space Obsidian', hex: 'var(--color-neutral-900)', desc: 'Deep PVD scratch-resistant black' },
-    { name: 'Desert Sand', hex: 'var(--color-brand-400)', desc: 'Warm champagne anodized finish' }
-  ];
+  const heroColors = content && content.items[0] && content.items[0].colorways && content.items[0].colorways.length
+    ? content.items[0].colorways.map(colorway => ({
+        name: colorway.name,
+        hex: colorway.hex,
+        desc: content.label
+      }))
+    : [
+        { name: 'Titanium Silver', hex: 'var(--color-neutral-200)', desc: 'Satin bead-blasted aerospace titanium' },
+        { name: 'Space Obsidian', hex: 'var(--color-neutral-900)', desc: 'Deep PVD scratch-resistant black' },
+        { name: 'Desert Sand', hex: 'var(--color-brand-400)', desc: 'Warm champagne anodized finish' }
+      ];
 
   return (
     <div className="w-full min-h-screen flex flex-col bg-[var(--color-bg-default)] text-[var(--color-fg-default)] selection:bg-[var(--color-action-primary)] selection:text-[var(--color-action-primary-fg)] font-sans antialiased">
@@ -376,12 +473,9 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
 
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center gap-8 text-xs font-semibold tracking-wide text-[var(--color-fg-muted)] uppercase">
-            <a href="#products" className="hover:text-[var(--color-fg-default)] transition-colors">Headphones</a>
-            <a href="#products" className="hover:text-[var(--color-fg-default)] transition-colors">Studio Gear</a>
-            <a href="#technology" className="hover:text-[var(--color-fg-default)] transition-colors">Acoustic Tech</a>
-            <a href="#specs" className="hover:text-[var(--color-fg-default)] transition-colors">Specifications</a>
-            <a href="#reviews" className="hover:text-[var(--color-fg-default)] transition-colors">Reviews</a>
-            <a href="#faq" className="hover:text-[var(--color-fg-default)] transition-colors">FAQ</a>
+            {navLinks.map((link, index) => (
+              <a key={`${link.href}-${index}`} href={link.href} className="hover:text-[var(--color-fg-default)] transition-colors">{link.label}</a>
+            ))}
           </nav>
 
           {/* Actions & Cart Badge */}
@@ -389,7 +483,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
             <span className="text-xs font-mono font-medium text-[var(--color-fg-muted)] hidden sm:inline">USD ($)</span>
             <button
               type="button"
-              onClick={() => handleAddToCart('Aether Pro')}
+              onClick={() => handleAddToCart(PRODUCTS[0]?.name || brandName)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] hover:bg-[var(--color-bg-default)] transition-all text-xs font-semibold cursor-pointer"
             >
               <ShoppingBag className="w-3.5 h-3.5 text-[var(--color-action-primary)]" />
@@ -403,7 +497,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-bold tracking-wide transition-all shadow-[var(--shadow-sm)] hover:opacity-90 cursor-pointer"
               style={getPrimaryBtnStyle()}
             >
-              <span>Pre-Order Now</span>
+              <span>{content?.primaryAction || 'Pre-Order Now'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -460,11 +554,11 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
               <div className="pt-4 flex flex-wrap items-center gap-4">
                 <button
                   type="button"
-                  onClick={() => handleAddToCart('Aether Pro Planar')}
+                  onClick={() => handleAddToCart(PRODUCTS[0]?.name || brandName)}
                   className="px-8 py-3.5 text-xs sm:text-sm font-bold tracking-wider uppercase transition-all shadow-[var(--shadow-md)] hover:opacity-95 cursor-pointer flex items-center gap-2"
                   style={getPrimaryBtnStyle()}
                 >
-                  <span>Pre-Order — $349</span>
+                  <span>{content ? content.primaryAction : 'Pre-Order — $349'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
@@ -474,7 +568,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                   style={{ borderRadius: 'var(--radius-button, var(--radius-md, 8px))' }}
                 >
                   <Play className="w-3.5 h-3.5 text-[var(--color-action-primary)]" />
-                  <span>Acoustic Teardown</span>
+                  <span>{content?.secondaryAction || 'Acoustic Teardown'}</span>
                 </a>
               </div>
 
@@ -502,8 +596,8 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                 style={{ borderRadius: 'var(--radius-card, var(--radius-lg, 24px))' }}
               >
                 <img
-                  src="/src/assets/images/preview_saas_metrics_1792316645998.jpg"
-                  alt="Aether Pro Headphones"
+                  src={effectiveHeroImage || '/src/assets/images/preview_saas_metrics_1792316645998.jpg'}
+                  alt={`${brandName} hero`}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   style={{ borderRadius: 'calc(var(--radius-card, 24px) - 8px)', filter: 'var(--image-filter, none)' }}
                 />
@@ -512,20 +606,20 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                 <div className="absolute top-6 left-6 p-3 rounded-2xl backdrop-blur-md bg-[var(--color-bg-default)]/90 border border-[var(--color-border-default)] shadow-xl text-left space-y-0.5">
                   <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[var(--color-action-primary)] uppercase">
                     <Volume2 className="w-3 h-3" />
-                    <span>Planar Transducers</span>
+                    <span>{content?.highlights[0]?.label || 'Planar Transducers'}</span>
                   </div>
-                  <p className="text-xs font-bold text-[var(--color-fg-default)]">50mm Beryllium Diaphragm</p>
-                  <span className="text-[10px] text-[var(--color-fg-muted)] font-mono">5Hz – 48kHz Ultrawide</span>
+                  <p className="text-xs font-bold text-[var(--color-fg-default)]">{content?.highlights[0]?.title || '50mm Beryllium Diaphragm'}</p>
+                  <span className="text-[10px] text-[var(--color-fg-muted)] font-mono">{content?.highlights[0]?.stats[0]?.value || '5Hz – 48kHz Ultrawide'}</span>
                 </div>
 
                 {/* Floating Hotspot Callout 2 */}
                 <div className="absolute bottom-6 right-6 p-3 rounded-2xl backdrop-blur-md bg-[var(--color-bg-default)]/90 border border-[var(--color-border-default)] shadow-xl text-left space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-emerald-500 uppercase">
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[var(--color-status-success)] uppercase">
                     <BatteryCharging className="w-3 h-3" />
-                    <span>Battery Stamina</span>
+                    <span>{content?.highlights[1]?.label || 'Battery Stamina'}</span>
                   </div>
-                  <p className="text-xs font-bold text-[var(--color-fg-default)]">65 Hours Continuous</p>
-                  <span className="text-[10px] text-[var(--color-fg-muted)] font-mono">Qi2 Wireless Fast Charge</span>
+                  <p className="text-xs font-bold text-[var(--color-fg-default)]">{content?.highlights[1]?.title || '65 Hours Continuous'}</p>
+                  <span className="text-[10px] text-[var(--color-fg-muted)] font-mono">{content?.highlights[1]?.stats[1]?.value || 'Qi2 Wireless Fast Charge'}</span>
                 </div>
               </div>
             </div>
@@ -537,7 +631,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
           <section className="w-full py-8 px-6 sm:px-12 bg-[var(--color-bg-surface)] border-b border-[var(--color-border-default)]">
             <div className="max-w-6xl mx-auto">
               <p className="text-[11px] font-mono uppercase tracking-widest text-center text-[var(--color-fg-muted)] mb-6">
-                Recognized Worldwide by Leading Audio & Design Authorities
+                {content?.ctaSubtitle || 'Recognized Worldwide by Leading Audio & Design Authorities'}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 text-center">
                 {PRESS_ACCOLADES.map((item, idx) => (
@@ -563,28 +657,22 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 text-left">
               <div className="space-y-2">
                 <span className="text-xs font-mono font-bold tracking-widest text-[var(--color-action-primary)] uppercase">
-                  Hardware Ecosystem
+                  {content?.sectionTitle || 'Hardware Ecosystem'}
                 </span>
                 <h2
                   className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--color-fg-default)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
-                  Engineered for Acoustic Truth
+                  {content?.featuresTitle || 'Engineered for Acoustic Truth'}
                 </h2>
                 <p className="text-xs sm:text-sm text-[var(--color-fg-muted)] max-w-xl">
-                  Explore our complete collection of reference planar headphones, hybrid in-ear monitors, and machined studio hardware.
+                  {content?.sectionSubtitle || 'Explore our complete collection of reference planar headphones, hybrid in-ear monitors, and machined studio hardware.'}
                 </p>
               </div>
 
               {/* Filter Pills */}
               <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">
-                {[
-                  { id: 'all', label: 'All Products' },
-                  { id: 'headphones', label: 'Headphones' },
-                  { id: 'earphones', label: 'Earphones' },
-                  { id: 'hardware', label: 'Studio DAC' },
-                  { id: 'accessories', label: 'Accessories' }
-                ].map(tab => (
+                {categoryTabs.map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setSelectedCategory(tab.id as any)}
@@ -701,16 +789,16 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center space-y-3 max-w-2xl mx-auto">
               <span className="text-xs font-mono font-bold tracking-widest text-[var(--color-action-primary)] uppercase">
-                Acoustic Architecture
+                {content?.sectionTitle || 'Acoustic Architecture'}
               </span>
               <h2
                 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--color-fg-default)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Zero Compromise. Total Transparency.
+                {content?.featuresTitle || 'Zero Compromise. Total Transparency.'}
               </h2>
               <p className="text-xs sm:text-sm text-[var(--color-fg-muted)] leading-relaxed">
-                Click any engineering subsystem below to inspect driver physics, neural noise cancellation, and titanium metallurgy.
+                {content?.featuresSubtitle || 'Click any engineering subsystem below to inspect driver physics, neural noise cancellation, and titanium metallurgy.'}
               </p>
             </div>
 
@@ -771,8 +859,8 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                   {/* Visual Blueprint Diagram Box */}
                   <div className="lg:col-span-5 aspect-square rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-6 flex flex-col justify-between">
                     <div className="flex items-center justify-between text-xs font-mono text-[var(--color-fg-muted)]">
-                      <span>ACOUSTIC_LAB_TEST_V3</span>
-                      <span className="text-emerald-500 font-bold">100% PASSED</span>
+                      <span>{content ? `${content.genreId.toUpperCase()}_REVIEW` : 'ACOUSTIC_LAB_TEST_V3'}</span>
+                      <span className="text-[var(--color-status-success)] font-bold">100% PASSED</span>
                     </div>
 
                     {/* Mock Frequency Response Curve Bars */}
@@ -819,52 +907,73 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
             </div>
 
             <div className="rounded-2xl border border-[var(--color-border-default)] overflow-hidden bg-[var(--color-bg-surface)]">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-[var(--color-bg-default)] border-b border-[var(--color-border-default)] font-mono text-[var(--color-fg-muted)] uppercase text-[10px]">
-                  <tr>
-                    <th className="py-3 px-5">Specification</th>
-                    <th className="py-3 px-5 font-bold text-[var(--color-action-primary)]">Aether Pro Planar</th>
-                    <th className="py-3 px-5">Studio Earphones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--color-border-default)] text-[var(--color-fg-default)]">
-                  <tr>
-                    <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Acoustic Driver</td>
-                    <td className="py-3.5 px-5 font-bold">50mm Planar Beryllium</td>
-                    <td className="py-3.5 px-5">Dual Balanced Armature + 10mm Dynamic</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Frequency Range</td>
-                    <td className="py-3.5 px-5 font-mono font-bold">5Hz – 48kHz</td>
-                    <td className="py-3.5 px-5 font-mono">15Hz – 32kHz</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Active Noise Cancelling</td>
-                    <td className="py-3.5 px-5 font-bold">Neural Hybrid ANC (-42dB)</td>
-                    <td className="py-3.5 px-5">Feedforward ANC (-34dB)</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Total Playtime</td>
-                    <td className="py-3.5 px-5 font-bold">65 Hours (ANC On)</td>
-                    <td className="py-3.5 px-5">40 Hours (with Case)</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Wireless Codecs</td>
-                    <td className="py-3.5 px-5 font-bold">LDAC, aptX Lossless, AAC, SBC</td>
-                    <td className="py-3.5 px-5">aptX Adaptive, AAC, SBC</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Chassis Materials</td>
-                    <td className="py-3.5 px-5 font-bold">Grade 5 Titanium & Italian Leather</td>
-                    <td className="py-3.5 px-5">Anodized Aluminum & Bio-Polymer</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Weight</td>
-                    <td className="py-3.5 px-5 font-mono font-bold">235 grams</td>
-                    <td className="py-3.5 px-5 font-mono">5.2g per earbud</td>
-                  </tr>
-                </tbody>
-              </table>
+              {content && specRows.length ? (
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-[var(--color-bg-default)] border-b border-[var(--color-border-default)] font-mono text-[var(--color-fg-muted)] uppercase text-[10px]">
+                    <tr>
+                      <th className="py-3 px-5">Detail</th>
+                      <th className="py-3 px-5 font-bold text-[var(--color-action-primary)]">{content.items[0]?.title}</th>
+                      <th className="py-3 px-5">{content.items[1]?.title || 'Alternative'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--color-border-default)] text-[var(--color-fg-default)]">
+                    {specRows.map((row, index) => (
+                      <tr key={index}>
+                        <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">{row.label}</td>
+                        <td className="py-3.5 px-5 font-bold">{row.a}</td>
+                        <td className="py-3.5 px-5">{row.b}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-[var(--color-bg-default)] border-b border-[var(--color-border-default)] font-mono text-[var(--color-fg-muted)] uppercase text-[10px]">
+                    <tr>
+                      <th className="py-3 px-5">Specification</th>
+                      <th className="py-3 px-5 font-bold text-[var(--color-action-primary)]">Aether Pro Planar</th>
+                      <th className="py-3 px-5">Studio Earphones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--color-border-default)] text-[var(--color-fg-default)]">
+                    <tr>
+                      <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Acoustic Driver</td>
+                      <td className="py-3.5 px-5 font-bold">50mm Planar Beryllium</td>
+                      <td className="py-3.5 px-5">Dual Balanced Armature + 10mm Dynamic</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Frequency Range</td>
+                      <td className="py-3.5 px-5 font-mono font-bold">5Hz – 48kHz</td>
+                      <td className="py-3.5 px-5 font-mono">15Hz – 32kHz</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Active Noise Cancelling</td>
+                      <td className="py-3.5 px-5 font-bold">Neural Hybrid ANC (-42dB)</td>
+                      <td className="py-3.5 px-5">Feedforward ANC (-34dB)</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Total Playtime</td>
+                      <td className="py-3.5 px-5 font-bold">65 Hours (ANC On)</td>
+                      <td className="py-3.5 px-5">40 Hours (with Case)</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Wireless Codecs</td>
+                      <td className="py-3.5 px-5 font-bold">LDAC, aptX Lossless, AAC, SBC</td>
+                      <td className="py-3.5 px-5">aptX Adaptive, AAC, SBC</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Chassis Materials</td>
+                      <td className="py-3.5 px-5 font-bold">Grade 5 Titanium & Italian Leather</td>
+                      <td className="py-3.5 px-5">Anodized Aluminum & Bio-Polymer</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3.5 px-5 font-medium text-[var(--color-fg-muted)]">Weight</td>
+                      <td className="py-3.5 px-5 font-mono font-bold">235 grams</td>
+                      <td className="py-3.5 px-5 font-mono">5.2g per earbud</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </section>
@@ -876,18 +985,20 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center space-y-2 max-w-xl mx-auto">
               <span className="text-xs font-mono font-bold tracking-widest text-[var(--color-action-primary)] uppercase">
-                Audio Engineer Acclaim
+                {content?.sectionTitle || 'Audio Engineer Acclaim'}
               </span>
               <h2
                 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--color-fg-default)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Trusted by Mastering Engineers & Artists
+                {content?.ctaTitle || 'Trusted by Mastering Engineers & Artists'}
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-              {[
+              {(content?.quotes && content.quotes.length
+                ? content.quotes.map(quote => ({ ...quote, verified: true }))
+                : [
                 {
                   quote:
                     'The planar driver resolution on the Aether Pro is astonishing. I can hear reverb tails down to -70dB that were previously smeared on dynamic cans. They have become my reference for final album masters.',
@@ -909,7 +1020,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                   role: 'Electronic Music Producer, Tokyo',
                   verified: true
                 }
-              ].map((rev, i) => (
+                ]).map((rev, i) => (
                 <div
                   key={i}
                   className="p-6 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-default)] shadow-sm space-y-4 flex flex-col justify-between"
@@ -931,7 +1042,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                       <p className="text-[11px] text-[var(--color-fg-muted)]">{rev.role}</p>
                     </div>
                     {rev.verified && (
-                      <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-500 font-semibold">
+                      <span className="flex items-center gap-1 text-[10px] font-mono font-semibold" style={{ color: 'var(--color-status-success-fg)', backgroundColor: 'var(--color-status-success-bg)', padding: '2px 6px', borderRadius: 6 }}>
                         <CheckCircle2 className="w-3 h-3" />
                         Verified
                       </span>
@@ -1008,11 +1119,11 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
               className="text-2xl sm:text-4xl font-black tracking-tight text-[var(--color-fg-default)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              Join the Inner Acoustic Circle
+              {content?.ctaTitle || 'Join the Inner Acoustic Circle'}
             </h2>
 
             <p className="text-xs sm:text-sm text-[var(--color-fg-muted)] leading-relaxed">
-              Receive private access to limited studio batch runs, early beta firmware drops, and invitations to acoustic listening salons.
+              {content?.ctaSubtitle || 'Receive private access to limited studio batch runs, early beta firmware drops, and invitations to acoustic listening salons.'}
             </p>
 
             {isSubscribed ? (
@@ -1056,34 +1167,38 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
               <span>{brandName}</span>
             </div>
             <p className="text-[11px] leading-relaxed">
-              Precision acoustic hardware, planar transducers, and studio monitors crafted for uncompromised fidelity.
+              {content?.description || 'Precision acoustic hardware, planar transducers, and studio monitors crafted for uncompromised fidelity.'}
             </p>
           </div>
 
           <div className="space-y-2">
             <h4 className="font-bold text-[var(--color-fg-default)] font-mono uppercase text-[10px]">Products</h4>
             <ul className="space-y-1 text-[11px]">
-              <li><a href="#products" className="hover:text-[var(--color-fg-default)]">Aether Pro Planar</a></li>
-              <li><a href="#products" className="hover:text-[var(--color-fg-default)]">Studio In-Ear Reference</a></li>
-              <li><a href="#products" className="hover:text-[var(--color-fg-default)]">Precision DAC & Amp</a></li>
-              <li><a href="#products" className="hover:text-[var(--color-fg-default)]">MagSafe Brass Stand</a></li>
+              {(content?.items?.length
+                ? content.items.map(item => item.title)
+                : ['Aether Pro Planar', 'Studio In-Ear Reference', 'Precision DAC & Amp', 'MagSafe Brass Stand']
+              ).map(label => (
+                <li key={label}><a href="#products" className="hover:text-[var(--color-fg-default)]">{label}</a></li>
+              ))}
             </ul>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-bold text-[var(--color-fg-default)] font-mono uppercase text-[10px]">Acoustic Lab</h4>
+            <h4 className="font-bold text-[var(--color-fg-default)] font-mono uppercase text-[10px]">{content?.sectionTitle || 'Acoustic Lab'}</h4>
             <ul className="space-y-1 text-[11px]">
-              <li><a href="#technology" className="hover:text-[var(--color-fg-default)]">Planar Transducers</a></li>
-              <li><a href="#technology" className="hover:text-[var(--color-fg-default)]">Neural ANC Tech</a></li>
-              <li><a href="#specs" className="hover:text-[var(--color-fg-default)]">Specifications</a></li>
-              <li><a href="#faq" className="hover:text-[var(--color-fg-default)]">30-Day Trial Guarantee</a></li>
+              {(content?.highlights?.length
+                ? content.highlights.map(highlight => highlight.label)
+                : ['Planar Transducers', 'Neural ANC Tech', 'Specifications', '30-Day Trial Guarantee']
+              ).map(label => (
+                <li key={label}><a href="#technology" className="hover:text-[var(--color-fg-default)]">{label}</a></li>
+              ))}
             </ul>
           </div>
 
           <div className="space-y-2">
             <h4 className="font-bold text-[var(--color-fg-default)] font-mono uppercase text-[10px]">Assurance</h4>
             <p className="text-[11px] leading-relaxed">
-              Certified Hi-Res Audio · Bluetooth SIG 5.4 · 100% Carbon-Neutral Shipping · 2-Year Factory Warranty.
+              {content?.featuresSubtitle || 'Certified Hi-Res Audio · Bluetooth SIG 5.4 · 100% Carbon-Neutral Shipping · 2-Year Factory Warranty.'}
             </p>
           </div>
         </div>

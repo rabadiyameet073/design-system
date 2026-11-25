@@ -18,7 +18,7 @@ trigger: always_on
   - Always clean up Three.js scenes, geometries, materials, renderers, and requestAnimationFrame loops in `useEffect` cleanup return functions.
   - Always support responsive resizing using `ResizeObserver` or window listeners with proper aspect ratio updates (`camera.aspect = width / height; camera.updateProjectionMatrix(); renderer.setSize(width, height)`).
   - Use `alpha: true` and `antialias: true` for seamless blending with ambient UI backgrounds.
-  - Keep polycount optimized for 60fps across mobile and desktop.
+  - Keep polycount optimized to target 60fps across mobile and desktop; measure before claiming a frame rate.
 - **Lighting & Aesthetics**:
   - Combine ambient light with directional accent lights (e.g. primary brand color keylight + subtle contrasting rim light).
   - Use materials with rich specular response (`MeshPhysicalMaterial` or `MeshStandardMaterial` with roughness 0.2–0.4 and metalness 0.1–0.3).
@@ -44,6 +44,6 @@ trigger: always_on
 
 ## 5. Accessibility & Performance Guardrails
 - Respect `prefers-reduced-motion` media queries.
-- Maintain WCAG 2.1 AA contrast ratio (minimum 4.5:1 for normal text, 3:1 for large text).
+- Maintain WCAG 2.2 AA contrast ratio (minimum 4.5:1 for normal text, 3:1 for large text) and 24×24px minimum touch targets.
 - Full keyboard focus rings (`focus-visible:ring-2 focus-visible:ring-offset-2`).
 - Never block interactive UI with heavy 3D calculations.

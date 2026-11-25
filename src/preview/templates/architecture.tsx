@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { TemplateProps } from './index';
 import {
   ComponentsShowcase,
-  TypeSpecimen
+  TypeSpecimen,
+  GenreOfferings
 } from '../sections';
 import {
   Compass,
@@ -132,15 +133,21 @@ const MATERIAL_STUDIES = [
 ];
 
 export const ArchitectureTemplate: React.FC<TemplateProps> = ({
-  brandName = 'ATELIER MONOLITH Spatial Architecture',
-  headline,
-  subtitle,
-  badge = 'Monolithic Spatial Architecture Atelier',
-  heroImage = '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
+  content,
+  brandName: brandNameProp,
+  headline: headlineProp,
+  subtitle: subtitleProp,
+  badge: badgeProp,
+  heroImage: heroImageProp,
   genreId = '',
   components,
   buttonStyle
 }) => {
+  const brandName = content?.brandName || brandNameProp || 'ATELIER MONOLITH Spatial Architecture';
+  const headline = headlineProp || content?.headline;
+  const subtitle = subtitleProp || content?.subtitle;
+  const badge = content?.badge || badgeProp || 'Monolithic Spatial Architecture Atelier';
+  const heroImage = content?.heroImage || heroImageProp;
   const [activeFloor, setActiveFloor] = useState<'ground' | 'mezzanine' | 'rooftop'>('ground');
   const [showingBooked, setShowingBooked] = useState(false);
   const [activeWork, setActiveWork] = useState<BuiltWork>(BUILT_WORKS[0]);
@@ -351,7 +358,7 @@ export const ArchitectureTemplate: React.FC<TemplateProps> = ({
 
                 <div className="p-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] space-y-1">
                   <span className="text-[11px] font-mono text-[var(--color-fg-muted)] uppercase">Sustainability</span>
-                  <span className="text-2xl sm:text-3xl font-mono font-bold text-emerald-500 block">Net Zero</span>
+                  <span className="text-2xl sm:text-3xl font-mono font-bold text-[var(--color-status-success)] block">Net Zero</span>
                   <span className="text-[10px] text-[var(--color-fg-muted)]">Passivhaus Verified</span>
                 </div>
 
@@ -661,6 +668,7 @@ export const ArchitectureTemplate: React.FC<TemplateProps> = ({
         )}
 
         {/* 9. Design System Showcase & Type Specimen (Doc 02 §4.3) */}
+        <GenreOfferings content={content} />
         {(isEnabled('components') || isEnabled('componentsShowcase')) && <ComponentsShowcase />}
         <TypeSpecimen />
       </main>

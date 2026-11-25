@@ -19,6 +19,7 @@ import {
   OAUTH_STATE_COOKIE_NAME
 } from './session';
 import { generateInitialsAvatar } from '../src/utils/avatar';
+import { projectStore, checkSharedRateLimit } from './projectStore';
 
 export type UserSession = SessionUser;
 
@@ -106,7 +107,7 @@ if (cleanupInterval.unref) {
   cleanupInterval.unref();
 }
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   // Never rate-limit static assets, Vite internal modules, or root frontend navigation
   const isViteOrAsset =
     req.path.startsWith('/@') ||
@@ -130,29 +131,41 @@ app.use((req, res, next) => {
   }
 
   const ip = getClientIp(req);
-  const now = Date.now();
-  const store = isAuthRoute ? rateLimitStores.auth : rateLimitStores.general;
+  const bucket = isAuthRoute ? 'auth' : 'general';
   const limit = isAuthRoute ? 20 : 60; // 20 req/min for auth routes, 60 req/min for general API
 
-  if (store.size > MAX_RATE_LIMIT_ENTRIES) {
-    cleanupRateLimitStore(store);
+  try {
+    // In production with a REST store configured the counter is shared across all
+    // serverless instances. Locally we retain the in-memory per-process limiter.
+    const shared = await checkSharedRateLimit(bucket, ip, limit);
+    if (!shared.allowed) {
+      res.setHeader('Retry-After', String(shared.retryAfter));
+      return res.status(429).json({
+        error: `Rate limit exceeded: maximum ${limit} requests per minute on this endpoint.`
+      });
+    }
+    if (projectStore.kind === 'local-file') {
+      const store = isAuthRoute ? rateLimitStores.auth : rateLimitStores.general;
+      const now = Date.now();
+      if (store.size > MAX_RATE_LIMIT_ENTRIES) cleanupRateLimitStore(store);
+      const entry = store.get(ip);
+      if (!entry || now > entry.resetTime) {
+        store.set(ip, { count: 1, resetTime: now + 60000 });
+        return next();
+      }
+      if (entry.count >= limit) {
+        res.setHeader('Retry-After', '60');
+        return res.status(429).json({
+          error: `Rate limit exceeded: maximum ${limit} requests per minute on this endpoint.`
+        });
+      }
+      entry.count++;
+    }
+    next();
+  } catch (err) {
+    console.error('Rate limiter error (failing open):', err);
+    next();
   }
-
-  const entry = store.get(ip);
-  if (!entry || now > entry.resetTime) {
-    store.set(ip, { count: 1, resetTime: now + 60000 });
-    return next();
-  }
-
-  if (entry.count >= limit) {
-    res.setHeader('Retry-After', '60');
-    return res.status(429).json({
-      error: `Rate limit exceeded: maximum ${limit} requests per minute on this endpoint.`
-    });
-  }
-
-  entry.count++;
-  next();
 });
 
 // Helper to register API endpoints
@@ -162,7 +175,8 @@ const router = express.Router();
 router.get(['/health', '/healthz'], (_req, res) => {
   res.json({
     status: 'healthy',
-    version: '1.6.0'
+    version: '1.6.0',
+    storage: projectStore.kind
   });
 });
 
@@ -305,48 +319,8 @@ router.get('/auth/url', (req, res) => {
 });
 
 // ============================================================================
-// DYNAMIC USER PROJECTS JSON STORAGE ENGINE
+// DYNAMIC PER-USER PROJECT STORAGE (serverless-safe via api/projectStore.ts)
 // ============================================================================
-
-const DATA_DIR = path.resolve(process.cwd(), '.data', 'users');
-
-function ensureUserDir(userId: string): string {
-  const safeId = userId.replace(/[^a-zA-Z0-9_\-]/g, '_');
-  const userDir = path.join(DATA_DIR, safeId);
-  if (!fs.existsSync(userDir)) {
-    fs.mkdirSync(userDir, { recursive: true });
-  }
-  return userDir;
-}
-
-function getUserProjectsFilePath(userId: string): string {
-  const userDir = ensureUserDir(userId);
-  return path.join(userDir, 'projects.json');
-}
-
-export function readUserProjectsFromFile(userId: string): any[] {
-  try {
-    const filePath = getUserProjectsFilePath(userId);
-    if (!fs.existsSync(filePath)) {
-      return [];
-    }
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    console.error(`Error reading projects for user ${userId}:`, err);
-    return [];
-  }
-}
-
-export function writeUserProjectsToFile(userId: string, projects: any[]): void {
-  try {
-    const filePath = getUserProjectsFilePath(userId);
-    fs.writeFileSync(filePath, JSON.stringify(projects, null, 2), 'utf-8');
-  } catch (err) {
-    console.error(`Error writing projects for user ${userId}:`, err);
-  }
-}
 
 function getAuthenticatedUser(req: express.Request): SessionUser | null {
   const cookies = parseCookies(req.headers.cookie);
@@ -358,13 +332,13 @@ function getAuthenticatedUser(req: express.Request): SessionUser | null {
 }
 
 // Per-User Current Session Endpoint (Stateless, signed cookie verified per S2)
-router.get('/auth/me', (req, res) => {
+router.get('/auth/me', async (req, res) => {
   const user = getAuthenticatedUser(req);
   if (!user) {
     return res.json({ authenticated: false, user: null, projectsCount: 0 });
   }
 
-  const projects = readUserProjectsFromFile(user.id);
+  const projects = await projectStore.read(user.id);
   res.json({
     authenticated: true,
     user,
@@ -412,7 +386,7 @@ router.post('/auth/google-session', async (req, res) => {
     const sessionToken = createSessionToken(safeUser);
     setSessionCookie(res, sessionToken);
 
-    const userProjects = readUserProjectsFromFile(safeUser.id);
+    const userProjects = await projectStore.read(safeUser.id);
     res.json({ success: true, user: safeUser, projects: userProjects, projectsCount: userProjects.length });
   } catch (err: any) {
     console.error('Error verifying Google ID token:', err);
@@ -420,8 +394,16 @@ router.post('/auth/google-session', async (req, res) => {
   }
 });
 
-// Universal Direct login with Email/Account (Works for anyone & remembers projects)
-router.post('/auth/custom-login', (req, res) => {
+// Direct email login is a local/demo convenience only. Production requires verified
+// OAuth identity — without email ownership verification this endpoint would allow
+// anyone to assume another user's identity by simply supplying their email address.
+router.post('/auth/custom-login', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({
+      error: 'Direct email sign-in is disabled in production. Please sign in with Google.'
+    });
+  }
+
   const { name, email, avatar } = req.body;
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ error: 'Email is required' });
@@ -446,7 +428,7 @@ router.post('/auth/custom-login', (req, res) => {
   const sessionToken = createSessionToken(safeUser);
   setSessionCookie(res, sessionToken);
 
-  const existingProjects = readUserProjectsFromFile(userId);
+  const existingProjects = await projectStore.read(userId);
 
   res.json({
     success: true,
@@ -467,13 +449,13 @@ router.post('/auth/logout', (_req, res) => {
 // ============================================================================
 
 // 1. GET /user/projects — Read all stored projects for authenticated user
-router.get('/user/projects', (req, res) => {
+router.get('/user/projects', async (req, res) => {
   const user = getAuthenticatedUser(req);
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized: Please log in to view saved design systems.' });
   }
 
-  const projects = readUserProjectsFromFile(user.id);
+  const projects = await projectStore.read(user.id);
   res.json({
     success: true,
     userId: user.id,
@@ -482,8 +464,8 @@ router.get('/user/projects', (req, res) => {
   });
 });
 
-// 2. POST /user/projects — Save or update a project in user's backend JSON file
-router.post('/user/projects', (req, res) => {
+// 2. POST /user/projects — Save or update a project in the user's store
+router.post('/user/projects', async (req, res) => {
   const user = getAuthenticatedUser(req);
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized: Please log in to create or save design systems.' });
@@ -494,7 +476,7 @@ router.post('/user/projects', (req, res) => {
     return res.status(400).json({ error: 'Valid project object with id and name is required.' });
   }
 
-  const projects = readUserProjectsFromFile(user.id);
+  const projects = await projectStore.read(user.id);
   const existingIdx = projects.findIndex((p: any) => p.id === project.id);
   const updatedProject = {
     ...project,
@@ -507,12 +489,12 @@ router.post('/user/projects', (req, res) => {
     projects.unshift(updatedProject);
   }
 
-  writeUserProjectsToFile(user.id, projects);
+  await projectStore.write(user.id, projects);
   res.json({ success: true, project: updatedProject, count: projects.length });
 });
 
-// 3. PUT /user/projects/:id — Update existing project in user's backend JSON file
-router.put('/user/projects/:id', (req, res) => {
+// 3. PUT /user/projects/:id — Update existing project in the user's store
+router.put('/user/projects/:id', async (req, res) => {
   const user = getAuthenticatedUser(req);
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized: Please log in to update design systems.' });
@@ -520,7 +502,7 @@ router.put('/user/projects/:id', (req, res) => {
 
   const { id } = req.params;
   const project = req.body.project || req.body;
-  const projects = readUserProjectsFromFile(user.id);
+  const projects = await projectStore.read(user.id);
   const existingIdx = projects.findIndex((p: any) => p.id === id);
 
   const updatedProject = {
@@ -536,34 +518,34 @@ router.put('/user/projects/:id', (req, res) => {
     projects.unshift(updatedProject);
   }
 
-  writeUserProjectsToFile(user.id, projects);
+  await projectStore.write(user.id, projects);
   res.json({ success: true, project: updatedProject });
 });
 
-// 4. DELETE /user/projects/:id — Delete project from user's backend JSON file
-router.delete('/user/projects/:id', (req, res) => {
+// 4. DELETE /user/projects/:id — Delete project from the user's store
+router.delete('/user/projects/:id', async (req, res) => {
   const user = getAuthenticatedUser(req);
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized: Please log in to delete design systems.' });
   }
 
   const { id } = req.params;
-  const projects = readUserProjectsFromFile(user.id);
+  const projects = await projectStore.read(user.id);
   const filtered = projects.filter((p: any) => p.id !== id);
-  writeUserProjectsToFile(user.id, filtered);
+  await projectStore.write(user.id, filtered);
 
   res.json({ success: true, message: 'Project deleted from cloud storage', remainingCount: filtered.length });
 });
 
-// 5. POST /user/projects/sync — Bulk sync / merge client projects into user's backend JSON file
-router.post('/user/projects/sync', (req, res) => {
+// 5. POST /user/projects/sync — Bulk sync / merge client projects into the user's store
+router.post('/user/projects/sync', async (req, res) => {
   const user = getAuthenticatedUser(req);
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized: Please log in to sync design systems.' });
   }
 
   const clientProjects = Array.isArray(req.body.projects) ? req.body.projects : [];
-  const serverProjects = readUserProjectsFromFile(user.id);
+  const serverProjects = await projectStore.read(user.id);
 
   const map = new Map<string, any>();
   serverProjects.forEach((p: any) => map.set(p.id, p));
@@ -576,7 +558,7 @@ router.post('/user/projects/sync', (req, res) => {
   });
 
   const merged = Array.from(map.values()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-  writeUserProjectsToFile(user.id, merged);
+  await projectStore.write(user.id, merged);
 
   res.json({
     success: true,
@@ -588,9 +570,14 @@ router.post('/user/projects/sync', (req, res) => {
 // AI prompt helper endpoint with real Gemini AI generation per S11
 router.post('/generate-ai-prompt', async (req, res) => {
   const { project } = req.body;
-  if (!project || !project.name) {
+  if (!project || !project.name || typeof project.name !== 'string') {
     return res.status(400).json({ error: 'Project data required' });
   }
+
+  // All untrusted fields are escaped before being interpolated into any returned text.
+  const safeName = escapeHtml(project.name.slice(0, 120));
+  const safeCategory = escapeHtml(String(project.tokens?.meta?.category || 'general').slice(0, 60));
+  const safeAudience = escapeHtml(String(project.business?.audience || 'modern users').slice(0, 120));
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (apiKey && apiKey !== 'MY_GEMINI_API_KEY') {
@@ -599,11 +586,11 @@ router.post('/generate-ai-prompt', async (req, res) => {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: `Create an inspiring 2-sentence design direction brief for a website called "${project.name}" in category "${project.tokens?.meta?.category || 'general'}" targeting "${project.business?.audience || 'modern users'}".`
+        contents: `Create an inspiring 2-sentence design direction brief for a website called "${safeName}" in category "${safeCategory}" targeting "${safeAudience}".`
       });
       const generated = response.text?.trim();
       if (generated) {
-        return res.json({ success: true, timestamp: Date.now(), prompt: generated });
+        return res.json({ success: true, timestamp: Date.now(), prompt: escapeHtml(generated) });
       }
     } catch (aiErr) {
       console.warn('Gemini prompt generation notice:', aiErr);
@@ -613,7 +600,7 @@ router.post('/generate-ai-prompt', async (req, res) => {
   res.json({
     success: true,
     timestamp: Date.now(),
-    prompt: `A bespoke, modern digital experience for ${project.name}, designed with accessible OKLCH color palettes, fluid typography, and ergonomic spatial rhythm tailored for ${project.business?.audience || 'modern audiences'}.`
+    prompt: `A bespoke, modern digital experience for ${safeName}, designed with accessible OKLCH color palettes, fluid typography, and ergonomic spatial rhythm tailored for ${safeAudience}.`
   });
 });
 

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { TemplateProps } from './index';
+import { contentPascal, contentSlug } from '../genres/genreContent';
 import {
   ComponentsShowcase,
-  TypeSpecimen
+  TypeSpecimen,
+  GenreOfferings
 } from '../sections';
 import {
   Terminal,
@@ -37,15 +39,39 @@ import {
 } from 'lucide-react';
 
 export const SaasTemplate: React.FC<TemplateProps> = ({
-  brandName = 'APEX Systems Engine',
-  headline,
-  subtitle,
-  badge = 'High-Velocity Distributed Token Runtime',
-  heroImage = '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
+  content,
+  brandName: brandNameProp,
+  headline: headlineProp,
+  subtitle: subtitleProp,
+  badge: badgeProp,
+  heroImage: heroImageProp,
   genreId = '',
   components,
   buttonStyle
 }) => {
+  // Genre content drives the visible brand/copy; flagship defaults stay intact
+  // when the template is rendered standalone (no content prop).
+  const brandName = content?.brandName || brandNameProp || 'APEX Systems Engine';
+  const headline = headlineProp || content?.headline;
+  const subtitle = subtitleProp || content?.subtitle;
+  const badge = content?.badge || badgeProp || 'High-Velocity Distributed Token Runtime';
+  const heroImage = content?.heroImage || heroImageProp;
+  const enginePkg = content ? `@${contentSlug(content.brandName)}/engine` : '@apex/engine';
+  const engineClass = content ? `${contentPascal(content.brandName)}Compiler` : 'ApexCompiler';
+  const runtimeKey = content ? `${contentSlug(content.brandName).toUpperCase()}_RUNTIME_KEY` : 'APEX_RUNTIME_KEY';
+  const projectId = content ? contentSlug(content.brandName).replace(/-/g, '_') : 'apex_design_system';
+  const systemName = content ? `${content.brandName} System` : 'Apex Precision System';
+  const clientName = content ? contentSlug(content.brandName).replace(/-/g, '') : 'apex';
+  const cliHint = content ? `npx ${enginePkg} init` : 'npx @apex/engine init';
+  const initPkg = content ? `@${contentSlug(content.brandName)}/init` : '@apex/init';
+  const cliPkg = content ? `@${contentSlug(content.brandName)}/cli` : '@apex/cli';
+  const apiHost = content ? `api.${contentSlug(content.brandName)}.io` : 'api.apexengine.io';
+  const pyModule = content ? contentSlug(content.brandName).replace(/-/g, '_') : 'apex_engine';
+  const goModule = content ? contentSlug(content.brandName) : 'apex-engine';
+  const apiKey = content ? `${contentSlug(content.brandName).replace(/-/g, '_')}_live_key` : 'apex_live_8471b02';
+  const importLine = content
+    ? `import { ${engineClass}, defineTokens } from '${enginePkg}';`
+    : `import { ApexCompiler, defineTokens } from '@apex/engine';`;
   const [copiedCmd, setCopiedCmd] = useState(false);
   const [isAiRunning, setIsAiRunning] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('Compile OKLCH harmonic ramp with WCAG 2.2 AAA contrast and fluid typography clamps');
@@ -143,7 +169,7 @@ export const SaasTemplate: React.FC<TemplateProps> = ({
     transition: 'filter 0.2s ease'
   });
 
-  const handleCopyCli = (text = 'npx @apex/engine init --template enterprise-tokens') => {
+  const handleCopyCli = (text = content ? `npx ${enginePkg} init --template enterprise-tokens` : 'npx @apex/engine init --template enterprise-tokens') => {
     navigator.clipboard.writeText(text);
     setCopiedCmd(true);
     setTimeout(() => setCopiedCmd(false), 2000);
@@ -156,10 +182,10 @@ export const SaasTemplate: React.FC<TemplateProps> = ({
       setIsAiRunning(false);
       setAiOutput(
 `// Verified Design Token Engine Output (Latency: 84ms)
-import { defineDesignSystem } from '@apex/engine';
+${content ? `import { defineDesignSystem } from '${enginePkg}';` : "import { defineDesignSystem } from '@apex/engine';"}
 
 export const studioSystem = defineDesignSystem({
-  name: 'Apex Precision System',
+  name: systemName,
   colorRamp: {
     space: 'OKLCH',
     brand: 'oklch(0.58 0.22 260)',
@@ -252,7 +278,9 @@ export const studioSystem = defineDesignSystem({
     },
     {
       q: 'Can we integrate token compilation into our automated GitHub Actions CI/CD?',
-      a: 'Absolutely. The @apex/cli can be executed as a pre-commit hook or CI check to fail builds if pull requests introduce unapproved colors, break contrast thresholds, or alter type scale geometry without architectural review.'
+      a: content
+        ? `Absolutely. The ${cliPkg} can be executed as a pre-commit hook or CI check to fail builds if pull requests introduce unapproved colors, break contrast thresholds, or alter type scale geometry without architectural review.`
+        : 'Absolutely. The @apex/cli can be executed as a pre-commit hook or CI check to fail builds if pull requests introduce unapproved colors, break contrast thresholds, or alter type scale geometry without architectural review.'
     },
     {
       q: 'What is the latency penalty of the streaming edge distribution network?',
@@ -309,8 +337,8 @@ export const studioSystem = defineDesignSystem({
               onClick={() => handleCopyCli()}
               className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-xs font-mono text-[var(--color-fg-muted)] hover:text-[var(--color-fg-default)] transition-colors cursor-pointer"
             >
-              <span>$ npx @apex/init</span>
-              {copiedCmd ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>$ {content ? `npx ${initPkg}` : 'npx @apex/init'}</span>
+              {copiedCmd ? <Check className="w-3.5 h-3.5 text-[var(--color-status-success)]" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
 
             <a
@@ -371,8 +399,8 @@ export const studioSystem = defineDesignSystem({
                   style={{ borderRadius: 'var(--radius-button, var(--radius-md, 8px))' }}
                 >
                   <Terminal className="w-4 h-4 text-[var(--color-action-primary)]" />
-                  <span>npx @apex/engine init</span>
-                  {copiedCmd ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-[var(--color-fg-muted)]" />}
+                  <span>{cliHint}</span>
+                  {copiedCmd ? <Check className="w-4 h-4 text-[var(--color-status-success)]" /> : <Copy className="w-4 h-4 text-[var(--color-fg-muted)]" />}
                 </button>
               </div>
 
@@ -384,7 +412,7 @@ export const studioSystem = defineDesignSystem({
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
                   </div>
                   <span className="text-2xl sm:text-3xl font-mono font-bold text-[var(--color-fg-default)] block">1.18ms</span>
-                  <span className="text-[10px] text-emerald-500 font-semibold">-0.24ms vs last period</span>
+                  <span className="text-[10px] text-[var(--color-status-success)] font-semibold">-0.24ms vs last period</span>
                 </div>
 
                 <div className="p-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] space-y-1">
@@ -408,9 +436,9 @@ export const studioSystem = defineDesignSystem({
                 <div className="p-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono text-[var(--color-fg-muted)] uppercase">Compliance</span>
-                    <Shield className="w-3.5 h-3.5 text-emerald-500" />
+                    <Shield className="w-3.5 h-3.5 text-[var(--color-status-success)]" />
                   </div>
-                  <span className="text-2xl sm:text-3xl font-mono font-bold text-emerald-500 block">SOC 2</span>
+                  <span className="text-2xl sm:text-3xl font-mono font-bold text-[var(--color-status-success)] block">SOC 2</span>
                   <span className="text-[10px] text-[var(--color-fg-muted)]">Type II Certified</span>
                 </div>
               </div>
@@ -492,8 +520,12 @@ export const studioSystem = defineDesignSystem({
                     type="button"
                     onClick={() => handleCopyCli(
                       activeCodeTab === 'typescript'
-                        ? "import { ApexCompiler } from '@apex/engine';\nconst engine = new ApexCompiler({ project: 'apex_runtime' });\nexport const tokens = await engine.compile({ target: 'tailwind-v4' });"
-                        : "curl -X POST https://api.apexengine.io/v1/tokens/compile -H 'Authorization: Bearer apex_live_key'"
+                        ? content
+                          ? `import { ${engineClass} } from '${enginePkg}';\nconst engine = new ${engineClass}({ project: '${projectId}' });\nexport const tokens = await engine.compile({ target: 'tailwind-v4' });`
+                          : "import { ApexCompiler } from '@apex/engine';\nconst engine = new ApexCompiler({ project: 'apex_runtime' });\nexport const tokens = await engine.compile({ target: 'tailwind-v4' });"
+                        : content
+                          ? `curl -X POST https://${apiHost}/v1/tokens/compile -H 'Authorization: Bearer ${apiKey}'`
+                          : "curl -X POST https://api.apexengine.io/v1/tokens/compile -H 'Authorization: Bearer apex_live_key'"
                     )}
                     className="hover:text-[var(--color-fg-default)] flex items-center gap-1.5 cursor-pointer"
                   >
@@ -504,33 +536,33 @@ export const studioSystem = defineDesignSystem({
 
                 <pre className="overflow-x-auto text-[var(--color-fg-default)] leading-relaxed font-mono p-2">
                   {activeCodeTab === 'typescript' &&
-`import { ApexCompiler, defineTokens } from '@apex/engine';
+`${importLine}
 
 // 1. Initialize mathematical design system schema
-const compiler = new ApexCompiler({
-  apiKey: process.env.APEX_RUNTIME_KEY,
+const compiler = new ${engineClass}({
+  apiKey: process.env.${runtimeKey},
   strictContrast: 'WCAG-2.2-AAA'
 });
 
 // 2. Compile synchronized tokens directly to Tailwind CSS 4 & CSS Vars
 export const theme = await compiler.compile({
-  projectId: 'apex_design_system',
+  projectId: '${projectId}',
   format: 'tailwind-v4',
   optimizeOklch: true,
   edgeCacheTtl: 86400
 });`}
                   {activeCodeTab === 'python' &&
-`from apex_engine import ApexCompiler, ContrastStrategy
+`from ${pyModule} import ${engineClass}, ContrastStrategy
 
 # Initialize Python SDK client
-compiler = ApexCompiler(
-    api_key="apex_live_8471b02",
+compiler = ${engineClass}(
+    api_key="${apiKey}",
     contrast_strategy=ContrastStrategy.WCAG_AAA
 )
 
 # Export typed DTCG and Figma Variables
 token_bundle = compiler.export_bundle(
-    project_id="apex_design_system",
+    project_id="${projectId}",
     targets=["figma_variables", "dtcg_json"]
 )`}
                   {activeCodeTab === 'go' &&
@@ -539,13 +571,13 @@ token_bundle = compiler.export_bundle(
 import (
     "context"
     "fmt"
-    "github.com/apex-engine/sdk-go"
+    "github.com/${goModule}/sdk-go"
 )
 
 func main() {
-    client := apex.NewClient("apex_live_8471b02")
-    tokens, err := client.Compile(context.Background(), &apex.CompileOpts{
-        ProjectID: "apex_design_system",
+    client := ${clientName}.NewClient("${apiKey}")
+    tokens, err := client.Compile(context.Background(), &${clientName}.CompileOpts{
+        ProjectID: "${projectId}",
         Format:    "css-vars",
     })
     if err != nil { panic(err) }
@@ -553,11 +585,11 @@ func main() {
 }`}
                   {activeCodeTab === 'curl' &&
 `# Fetch compiled production CSS variables from nearest edge point
-curl -X POST https://api.apexengine.io/v1/tokens/compile \\
-  -H "Authorization: Bearer apex_live_8471b02" \\
+curl -X POST https://${apiHost}/v1/tokens/compile \\
+  -H "Authorization: Bearer ${apiKey}" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "projectId": "apex_design_system",
+    "projectId": "${projectId}",
     "format": "tailwind-v4",
     "colorSpace": "OKLCH"
   }'`}
@@ -609,7 +641,7 @@ curl -X POST https://api.apexengine.io/v1/tokens/compile \\
               >
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="text-[var(--color-fg-muted)]">Daily Ingestion Volume (Requests / Sec)</span>
-                  <span className="text-emerald-500 font-bold flex items-center gap-1.5">
+                  <span className="text-[var(--color-status-success)] font-bold flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span>Live Streaming Data (42 Regions)</span>
                   </span>
@@ -690,7 +722,7 @@ curl -X POST https://api.apexengine.io/v1/tokens/compile \\
                       Integrated contrast engine computes APCA lightness difference and 4.5:1 / 7:1 ratios with 1-click automated color nudging.
                     </p>
                   </div>
-                  <span className="text-[11px] font-mono text-emerald-500 font-bold">Guaranteed Compliance</span>
+                  <span className="text-[11px] font-mono text-[var(--color-status-success)] font-bold">Guaranteed Compliance</span>
                 </div>
 
                 <div
@@ -771,7 +803,7 @@ curl -X POST https://api.apexengine.io/v1/tokens/compile \\
                   <pre className="overflow-x-auto text-[var(--color-fg-default)] leading-relaxed font-mono">
                     {aiOutput ||
 `// Ready. Click 'Synthesize Tokens' to execute real-time model synthesis.
-const tokens = await apex.synthesize({
+const tokens = await ${clientName}.synthesize({
   prompt: 'Minimalist editorial architecture with warm earth tones',
   exportTarget: 'tailwind-v4'
 });`}
@@ -849,7 +881,7 @@ const tokens = await apex.synthesize({
                       <ul className="space-y-2.5 pt-4 border-t border-[var(--color-border-default)]">
                         {tier.features.map((feat, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs text-[var(--color-fg-default)]">
-                            <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                            <Check className="w-4 h-4 text-[var(--color-status-success)] shrink-0 mt-0.5" />
                             <span>{feat}</span>
                           </li>
                         ))}
@@ -970,7 +1002,7 @@ const tokens = await apex.synthesize({
                   style={{ borderRadius: 'var(--radius-button, var(--radius-md, 8px))' }}
                 >
                   <Terminal className="w-4 h-4 text-[var(--color-action-primary)]" />
-                  <span>npx @apex/engine init</span>
+                  <span>{cliHint}</span>
                 </button>
               </div>
             </div>
@@ -978,6 +1010,7 @@ const tokens = await apex.synthesize({
         )}
 
         {/* 12. Design System Showcase & Type Specimen (Doc 02 §4.3) */}
+        <GenreOfferings content={content} />
         {(isEnabled('components') || isEnabled('componentsShowcase')) && <ComponentsShowcase />}
         <TypeSpecimen />
       </main>

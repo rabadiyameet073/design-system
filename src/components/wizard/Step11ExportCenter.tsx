@@ -466,8 +466,9 @@ export const Step11ExportCenter: React.FC<Step11ExportCenterProps> = ({ project,
 
         <button
           onClick={handleDownloadStarterZip}
-          disabled={isPackaging}
-          className="px-5 py-3 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 transition-all font-bold text-xs flex items-center gap-2 shadow-lg cursor-pointer shrink-0 disabled:opacity-50"
+          disabled={isPackaging || hasFailingContrast}
+          title={hasFailingContrast ? 'Fix the failing contrast pairs above before packaging a production starter.' : undefined}
+          className="px-5 py-3 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 transition-all font-bold text-xs flex items-center gap-2 shadow-lg cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download className="w-4 h-4" />
           <span>{isPackaging ? 'Packaging Project...' : 'Download Starter ZIP'}</span>

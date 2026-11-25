@@ -147,7 +147,7 @@ export const Step1CategoryGenre: React.FC<Step1CategoryGenreProps> = ({
       {/* Recently Used Genres Row */}
       {recentGenreIds.length > 0 && (
         <div className="space-y-2">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 font-semibold block">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-600 font-semibold block">
             Recently Selected Genres
           </span>
           <div className="flex items-center gap-2 flex-wrap">

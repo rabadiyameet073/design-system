@@ -341,7 +341,7 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                         <span>Start Studio Flow</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </motion.button>
-                      <span className="font-mono text-[10px] text-ink/45 dark:text-neutral-400 hidden sm:inline">
+                      <span className="font-mono text-[10px] text-ink/75 dark:text-neutral-400 hidden sm:inline">
                         {pillar.metricLabel}
                       </span>
                     </div>
@@ -369,7 +369,7 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                         <div className="space-y-3">
                           <div>
                             <div className="flex justify-between text-xs font-mono mb-1">
-                              <span className="text-ink/60 dark:text-neutral-400">Brand Energy</span>
+                              <span className="text-ink/75 dark:text-neutral-400">Brand Energy</span>
                               <span className="font-bold text-ink dark:text-neutral-200">Calm & Contemplative (35%)</span>
                             </div>
                             <div className="w-full h-1.5 rounded-full bg-stone-200/60 dark:bg-neutral-800 overflow-hidden">
@@ -379,7 +379,7 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
 
                           <div>
                             <div className="flex justify-between text-xs font-mono mb-1">
-                              <span className="text-ink/60 dark:text-neutral-400">Craft & Materiality</span>
+                              <span className="text-ink/75 dark:text-neutral-400">Craft & Materiality</span>
                               <span className="font-bold text-ink dark:text-neutral-200">Organic Artisanal (90%)</span>
                             </div>
                             <div className="w-full h-1.5 rounded-full bg-stone-200/60 dark:bg-neutral-800 overflow-hidden">
@@ -389,7 +389,7 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
 
                           <div>
                             <div className="flex justify-between text-xs font-mono mb-1">
-                              <span className="text-ink/60 dark:text-neutral-400">Voice & Copywriting</span>
+                              <span className="text-ink/75 dark:text-neutral-400">Voice & Copywriting</span>
                               <span className="font-bold text-ink dark:text-neutral-200">Poetic Editorial (80%)</span>
                             </div>
                             <div className="w-full h-1.5 rounded-full bg-stone-200/60 dark:bg-neutral-800 overflow-hidden">
@@ -398,7 +398,7 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                           </div>
                         </div>
 
-                        <div className="text-[11px] font-mono text-ink/65 dark:text-neutral-300 bg-white/70 dark:bg-neutral-800/70 p-2.5 rounded-xl border border-rule dark:border-neutral-700">
+                        <div className="text-[11px] font-mono text-ink/75 dark:text-neutral-300 bg-white/70 dark:bg-neutral-800/70 p-2.5 rounded-xl border border-rule dark:border-neutral-700">
                           💡 In Studio, these dials directly govern default button radius, typography scale ratios, and primary saturation.
                         </div>
                       </div>
@@ -469,19 +469,19 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                             <span className="text-2xl font-bold tracking-tight text-ink dark:text-neutral-100 font-cormorant">
                               Cormorant Garamond Display
                             </span>
-                            <span className="font-mono text-[10px] text-ink/40 dark:text-neutral-400">39px</span>
+                            <span className="font-mono text-[10px] text-ink/75 dark:text-neutral-400">39px</span>
                           </div>
                           <div className="flex items-baseline justify-between border-b border-stone-200/40 dark:border-neutral-700/40 pb-1.5">
                             <span className="text-lg font-bold tracking-tight text-ink dark:text-neutral-100">
                               Section Heading Level 1
                             </span>
-                            <span className="font-mono text-[10px] text-ink/40 dark:text-neutral-400">31px</span>
+                            <span className="font-mono text-[10px] text-ink/75 dark:text-neutral-400">31px</span>
                           </div>
                           <div className="flex items-baseline justify-between border-b border-stone-200/40 dark:border-neutral-700/40 pb-1.5">
                             <span className="text-sm font-semibold tracking-tight text-ink dark:text-neutral-100">
                               Subheading Level 2 (Lato Body)
                             </span>
-                            <span className="font-mono text-[10px] text-ink/40 dark:text-neutral-400">25px</span>
+                            <span className="font-mono text-[10px] text-ink/75 dark:text-neutral-400">25px</span>
                           </div>
                           <p className="text-xs text-ink/70 dark:text-neutral-300 italic pt-0.5">
                             "Premium typography adds lasting value to your brand."
@@ -498,7 +498,7 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                             <span className="w-2 h-2 rounded-full bg-rose-500/80" />
                             <span className="w-2 h-2 rounded-full bg-amber-500/80" />
                             <span className="w-2 h-2 rounded-full bg-emerald-500/80" />
-                            <span className="ml-1 text-[11px] text-white/50">tailwind.theme.css</span>
+                            <span className="ml-1 text-[11px] text-white/75">tailwind.theme.css</span>
                           </div>
                           <span className="text-[10px] text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">
                             Single Source of Truth

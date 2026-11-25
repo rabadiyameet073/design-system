@@ -29,20 +29,27 @@ import {
 } from 'lucide-react';
 import {
   ComponentsShowcase,
-  TypeSpecimen
+  TypeSpecimen,
+  GenreOfferings
 } from '../sections';
 import { TemplateProps } from './index';
 
 export const FinanceTemplate: React.FC<TemplateProps> = ({
-  brandName = 'STRATA Wealth & Global Treasury',
-  headline,
-  subtitle,
-  badge = 'Institutional Grade Treasury & Custody',
-  heroImage = '/src/assets/images/preview_saas_metrics_1792316645998.jpg',
+  content,
+  brandName: brandNameProp,
+  headline: headlineProp,
+  subtitle: subtitleProp,
+  badge: badgeProp,
+  heroImage: heroImageProp,
   genreId = '',
   components,
   buttonStyle
 }) => {
+  const brandName = content?.brandName || brandNameProp || 'STRATA Wealth & Global Treasury';
+  const headline = headlineProp || content?.headline;
+  const subtitle = subtitleProp || content?.subtitle;
+  const badge = content?.badge || badgeProp || 'Institutional Grade Treasury & Custody';
+  const heroImage = content?.heroImage || heroImageProp;
   const [balanceAmount, setBalanceAmount] = useState(1250000);
   const [activeYieldTab, setActiveYieldTab] = useState<'liquid' | 'term'>('liquid');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -1067,6 +1074,7 @@ export const FinanceTemplate: React.FC<TemplateProps> = ({
         )}
 
         {/* 13. Component Showcase & Type Specimen (Doc 02 §4.3 mandatory) */}
+        <GenreOfferings content={content} />
         {(isEnabled('components') || isEnabled('componentsShowcase')) && <ComponentsShowcase />}
         <TypeSpecimen />
       </main>

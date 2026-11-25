@@ -47,7 +47,7 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
                 <span className="font-display text-sm font-bold tracking-tight text-white leading-tight">
                   Design System Studio
                 </span>
-                <span className="font-mono text-[10px] text-clay uppercase tracking-widest font-bold">
+                <span className="font-mono text-[10px] text-orange-300 uppercase tracking-widest font-bold">
                   System Architecture Engine
                 </span>
               </div>
@@ -63,7 +63,7 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>Tokens Engine: v1.6.0 · All 11 Steps Active</span>
               </div>
-              <div className="flex items-center gap-2 text-[11px] font-mono text-white/45 pl-1">
+              <div className="flex items-center gap-2 text-[11px] font-mono text-white/75 pl-1">
                 <span>⚡ Built on Vite 8 & React 19</span>
                 <span>•</span>
                 <span>Tailwind 4 Engine</span>
@@ -85,7 +85,7 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
 
           {/* Col 2: The 11 Decisions (2 Cols) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-clay">
+            <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-orange-300">
               The 11 Decisions
             </h4>
             <ul className="space-y-2 text-xs text-white/70 font-light">
@@ -94,89 +94,89 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>01. Category & Genre</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q01</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q01</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>02. Project Scope</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q02</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q02</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>03. Brand Personality</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q03</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q03</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>04. Visual Direction</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q04</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q04</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>05. Color Studio</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q05</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q05</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>06. Typography</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q06</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q06</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>07. Shape & Spacing</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q07</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q07</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>08. Components</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q08</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q08</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>09. Imagery & Motion</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q09</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q09</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>10. Review & Audit</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q10</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q10</span>
               </li>
               <li
                 onClick={onStartNew}
                 className="hover:text-white transition-colors cursor-pointer flex items-center justify-between group"
               >
                 <span>11. Export Center</span>
-                <span className="font-mono text-[10px] text-white/30 group-hover:text-clay">Q11</span>
+                <span className="font-mono text-[10px] text-white/75 group-hover:text-orange-300">Q11</span>
               </li>
             </ul>
           </div>
 
           {/* Col 3: Export Formats (2 Cols) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-clay">
+            <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-orange-300">
               Deliverables
             </h4>
             <ul className="space-y-2 text-xs text-white/70 font-light">
               <li className="flex items-center gap-2 hover:text-white transition-colors">
-                <FileCode2 className="w-3.5 h-3.5 text-clay" />
+                <FileCode2 className="w-3.5 h-3.5 text-orange-300" />
                 <span>Tailwind 4 (@theme)</span>
               </li>
               <li className="flex items-center gap-2 hover:text-white transition-colors">
@@ -204,7 +204,7 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
 
           {/* Col 4: Curated Presets (2 Cols) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-clay">
+            <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-orange-300">
               Presets & Genres
             </h4>
             <ul className="space-y-2 text-xs text-white/70 font-light">
@@ -248,7 +248,7 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
 
           {/* Col 5: Core Standards (2 Cols) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-clay">
+            <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-orange-300">
               Core Standards
             </h4>
             <ul className="space-y-2 text-xs text-white/70 font-light">
@@ -267,7 +267,7 @@ export const StudioFooter: React.FC<StudioFooterProps> = ({ onStartNew, onExplor
       {/* ==================== ZONE 3: BOTTOM TELEMETRY & BACK TO TOP BAR ==================== */}
       <div className="relative z-10 border-t border-white/10 bg-black/40 py-6">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/50 font-light">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/75 font-light">
             <span>© {new Date().getFullYear()} Design System Studio.</span>
             <span className="hidden sm:inline">•</span>
             <button

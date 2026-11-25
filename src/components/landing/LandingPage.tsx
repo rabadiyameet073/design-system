@@ -410,7 +410,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   });
 
   return (
-    <div className="min-h-screen bg-paper font-sans text-ink antialiased">
+    <div className="min-h-screen w-full overflow-x-hidden bg-paper font-sans text-ink antialiased">
       {/* =============================== HERO =============================== */}
       <section className="border-b border-rule">
         <div className="mx-auto max-w-7xl px-6 pt-14 pb-12 lg:pt-24 lg:pb-20">
@@ -448,7 +448,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               {/* Subtitle in refined prose */}
               <p className="mt-4 max-w-xl text-base sm:text-lg leading-relaxed text-ink/75 font-normal text-pretty">
-                Transform your brand vision into mathematical design tokens, accessible components, and production-ready code in 14 guided decisions.
+                Transform your brand vision into mathematical design tokens, accessible components, and production-ready code in 11 guided decisions.
               </p>
 
               {/* Value Highlight Pills */}
@@ -459,7 +459,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/80 border border-rule/80 text-xs text-ink/75 font-semibold shadow-2xs">
                   <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                  <span>14 Guided Steps</span>
+                  <span>11 Guided Steps</span>
                 </div>
                 <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/80 border border-rule/80 text-xs text-ink/75 font-semibold shadow-2xs">
                   <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
@@ -532,7 +532,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <h3 className="font-display text-lg sm:text-xl font-bold text-ink tracking-tight">
                       What You Decide
                     </h3>
-                    <p className="mt-1 text-xs text-ink/55 leading-relaxed">
+                    <p className="mt-1 text-xs text-ink/75 leading-relaxed">
                       Six core dimensions in tokens & real-time 3D spatial models.
                     </p>
                   </div>
@@ -542,7 +542,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       onClick={() => setArchitectureTab('tokens')}
                       className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${architectureTab === 'tokens'
                           ? 'bg-white text-ink shadow-2xs font-bold'
-                          : 'text-ink/60 hover:text-ink'
+                          : 'text-ink/75 hover:text-ink'
                         }`}
                     >
                       Tokens
@@ -552,7 +552,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       onClick={() => setArchitectureTab('3d')}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${architectureTab === '3d'
                           ? 'bg-white text-ink shadow-2xs font-bold'
-                          : 'text-ink/60 hover:text-ink'
+                          : 'text-ink/75 hover:text-ink'
                         }`}
                       title="Explore in real-time interactive 3D WebGL space"
                     >
@@ -573,14 +573,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         <span className="text-xs font-semibold text-white/90">
                           3D Spatial Preview (Reduced Motion Mode)
                         </span>
-                        <span className="text-[11px] text-white/50 max-w-xs mt-1">
+                        <span className="text-[11px] text-white/75 max-w-xs mt-1">
                           Interactive WebGL animation paused to honor accessibility preferences.
                         </span>
                       </div>
                     ) : (
                       <React.Suspense
                         fallback={
-                          <div className="absolute inset-0 flex items-center justify-center text-xs font-mono text-white/60">
+                          <div className="absolute inset-0 flex items-center justify-center text-xs font-mono text-white/75">
                             Loading 3D WebGL Canvas...
                           </div>
                         }
@@ -610,8 +610,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                           {activePreset.label} · 3D Knot Mesh
                         </span>
                       </div>
-                      <span className="text-[10px] font-mono text-white/60">
-                        Smooth 60 FPS
+                      <span className="text-[10px] font-mono text-white/75">
+                        Target 60 FPS
                       </span>
                     </div>
                   </div>
@@ -636,7 +636,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                               <span className="text-xs sm:text-sm font-semibold text-ink tracking-tight block">
                                 {item.label}
                               </span>
-                              <p className="text-[11px] text-ink/50 truncate">
+                              <p className="text-[11px] text-ink/75 truncate">
                                 {item.title}
                               </p>
                             </div>
@@ -673,7 +673,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                 AA Pass
                               </span>
                             )}
-                            <span className="font-mono text-[10px] sm:text-[11px] text-ink/50 bg-stone-100/80 px-2 py-0.5 rounded-md border border-rule/60">
+                            <span className="font-mono text-[10px] sm:text-[11px] text-ink/75 bg-stone-100/80 px-2 py-0.5 rounded-md border border-rule/60">
                               {item.badge}
                             </span>
                           </div>
@@ -694,7 +694,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="mx-auto max-w-7xl px-6 py-12 lg:py-20">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <Reveal>
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-ink/45">
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-ink/75">
                 Live render
               </p>
               <h2 className="mt-4 max-w-lg font-display text-[clamp(1.7rem,3.3vw,2.4rem)] font-semibold leading-[1.1] tracking-[-0.015em] text-ink text-balance">
@@ -734,13 +734,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </div>
 
                   {/* Category Pill */}
-                  <span className="hidden sm:inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-mono font-medium bg-black/[0.06] text-ink/65 shrink-0">
+                  <span className="hidden sm:inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-mono font-medium bg-black/[0.06] text-ink/75 shrink-0">
                     {activePreset.category}
                   </span>
 
                   {/* Chevron */}
                   <ChevronDown
-                    className={`w-3.5 h-3.5 text-ink/50 group-hover:text-ink transition-transform duration-200 shrink-0 ${isDropdownOpen ? 'rotate-180' : ''
+                    className={`w-3.5 h-3.5 text-ink/75 group-hover:text-ink transition-transform duration-200 shrink-0 ${isDropdownOpen ? 'rotate-180' : ''
                       }`}
                   />
                 </button>
@@ -756,7 +756,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     {/* Search & Header */}
                     <div className="p-1 mb-2">
                       <div className="flex items-center justify-between px-2 pb-2 border-b border-rule/70">
-                        <span className="text-[11px] font-mono uppercase tracking-[0.16em] text-ink/45 font-semibold">
+                        <span className="text-[11px] font-mono uppercase tracking-[0.16em] text-ink/75 font-semibold">
                           Website Types ({ALL_SHOWCASE_PRESETS.length})
                         </span>
                         <span className="text-[10px] font-mono text-clay font-bold">
@@ -765,13 +765,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       </div>
 
                       <div className="relative mt-2">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink/40 pointer-events-none" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink/75 pointer-events-none" />
                         <input
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Search types (e.g. fashion, saas, restaurant)..."
-                          className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-stone-100/80 hover:bg-stone-100 focus:bg-white text-xs text-ink placeholder:text-ink/40 border border-transparent focus:border-clay/40 focus:outline-none transition-all"
+                          className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-stone-100/80 hover:bg-stone-100 focus:bg-white text-xs text-ink placeholder:text-ink/75 border border-transparent focus:border-clay/40 focus:outline-none transition-all"
                           autoFocus
                         />
                       </div>
@@ -801,7 +801,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                               className={`px-2.5 py-1 rounded-full whitespace-nowrap font-medium transition-all cursor-pointer ${
                                 isCatActive
                                   ? 'bg-ink text-white font-semibold'
-                                  : 'bg-stone-100/70 text-ink/65 hover:bg-stone-200/70'
+                                  : 'bg-stone-100/70 text-ink/75 hover:bg-stone-200/70'
                               }`}
                             >
                               {catLabel}
@@ -814,7 +814,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     {/* Presets List */}
                     <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 overscroll-contain">
                       {filteredPresets.length === 0 ? (
-                        <div className="p-6 text-center text-xs text-ink/50">
+                        <div className="p-6 text-center text-xs text-ink/75">
                           No website types found matching "{searchQuery}"
                         </div>
                       ) : (
@@ -839,11 +839,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                   <span className="text-xs font-bold text-ink truncate group-hover:text-clay transition-colors">
                                     {preset.typeName}
                                   </span>
-                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] text-ink/50 shrink-0">
+                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] text-ink/75 shrink-0">
                                     {preset.category}
                                   </span>
                                 </div>
-                                <p className="text-[11px] text-ink/55 truncate mt-0.5">
+                                <p className="text-[11px] text-ink/75 truncate mt-0.5">
                                   <strong className="text-ink/80 font-medium">{preset.label}</strong> — {preset.description}
                                 </p>
                               </div>
@@ -880,14 +880,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="flex items-center justify-between gap-4 mb-3">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-clay animate-pulse" />
-                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/60 font-semibold">
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/75 font-semibold">
                   Select Industry Category
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-clay-wash text-clay font-bold border border-clay/15">
                   8 Custom Homepages
                 </span>
               </div>
-              <p className="text-xs text-ink/50 hidden md:block">
+              <p className="text-xs text-ink/75 hidden md:block">
                 Each category renders a custom layout, unique sections, and authentic brand identity
               </p>
             </div>
@@ -910,7 +910,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   >
                     <Icon
                       className={`w-3.5 h-3.5 transition-colors ${
-                        isSelected ? 'text-clay-wash' : 'text-ink/50 group-hover:text-ink'
+                        isSelected ? 'text-clay-wash' : 'text-ink/75 group-hover:text-ink'
                       }`}
                     />
                     <span className="tracking-tight font-semibold">{tab.label}</span>
@@ -931,17 +931,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <span className="text-xs font-bold text-ink truncate">
                       {activeCategoryTab.brand}
                     </span>
-                    <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/[0.05] text-ink/60">
+                    <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/[0.05] text-ink/75">
                       {activeCategoryTab.label} Homepage
                     </span>
                   </div>
-                  <p className="text-[11px] text-ink/55 truncate">
+                  <p className="text-[11px] text-ink/75 truncate">
                     {activeCategoryTab.description}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-ink/60 font-mono shrink-0 ml-auto">
-                <span className="hidden lg:inline text-ink/40">Verified Architecture</span>
+              <div className="flex items-center gap-2 text-[11px] text-ink/75 font-mono shrink-0 ml-auto">
+                <span className="hidden lg:inline text-ink/75">Verified Architecture</span>
                 <span className="px-2 py-0.5 rounded bg-white border border-rule/80 text-ink/80 font-bold shadow-2xs">
                   {activePreset.typeName}
                 </span>
@@ -957,7 +957,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </Reveal>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-8 gap-y-2 font-mono text-[11px] uppercase tracking-[0.12em] text-ink/45">
+          <div className="mt-4 flex flex-wrap items-center gap-x-8 gap-y-2 font-mono text-[11px] uppercase tracking-[0.12em] text-ink/75">
             <span>{activeSampleMeta}</span>
             {(['primary', 'secondary', 'accent'] as const).map((key) => (
               <span key={key} className="flex items-center gap-2">
@@ -995,9 +995,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </p>
               </div>
               <h2 className="font-display text-[clamp(2.2rem,4.2vw,3.4rem)] font-bold leading-[1.06] tracking-[-0.03em] text-ink text-balance">
-                Five formats, one token set.
+                Thirteen formats, one token set.
               </h2>
-              <p className="mt-4 text-base sm:text-lg leading-relaxed text-ink/65 max-w-2xl font-light">
+              <p className="mt-4 text-base sm:text-lg leading-relaxed text-ink/75 max-w-2xl font-light">
                 Everything is generated from the same decisions, so the specification, the code
                 and the rendered site can never disagree.
               </p>
@@ -1011,11 +1011,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-ink">
                   Deliverables index
                 </h3>
-                <span className="font-display text-xl sm:text-2xl font-normal text-ink/40">
+                <span className="font-display text-xl sm:text-2xl font-normal text-ink/75">
                   (5)
                 </span>
               </div>
-              <p className="text-xs sm:text-[13px] text-ink/50 font-normal">
+              <p className="text-xs sm:text-[13px] text-ink/75 font-normal">
                 Hover to preview · click to open
               </p>
             </div>
@@ -1041,7 +1041,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       <h4 className="font-display text-xl sm:text-2xl lg:text-[32px] font-bold text-ink leading-tight tracking-[-0.03em] transition-transform duration-600 ease-[0.22,1,0.36,1] group-hover:translate-x-3 truncate">
                         {item.title}
                       </h4>
-                      <p className="mt-1 text-xs sm:text-sm text-ink/50 truncate max-w-xl hidden sm:block">
+                      <p className="mt-1 text-xs sm:text-sm text-ink/75 truncate max-w-xl hidden sm:block">
                         {item.body}
                       </p>
                     </div>
@@ -1049,10 +1049,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                   {/* Middle Metadata: Category & Detail / Year */}
                   <div className="hidden md:flex items-center gap-8 lg:gap-16 shrink-0 text-left">
-                    <span className="text-sm font-medium text-ink/65 min-w-[130px]">
+                    <span className="text-sm font-medium text-ink/75 min-w-[130px]">
                       {item.category}
                     </span>
-                    <span className="text-sm font-mono text-ink/50 min-w-[80px]">
+                    <span className="text-sm font-mono text-ink/75 min-w-[80px]">
                       {item.year || '2025'}
                     </span>
                   </div>
@@ -1101,13 +1101,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       <div className="font-display text-base font-bold text-ink">
                         {item.title}
                       </div>
-                      <p className="mt-1.5 text-xs text-ink/65 leading-relaxed">
+                      <p className="mt-1.5 text-xs text-ink/75 leading-relaxed">
                         {item.body}
                       </p>
 
                       {/* Specimen pill checklist */}
                       <div className="mt-3.5 space-y-1.5">
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-ink/40 font-semibold">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-ink/75 font-semibold">
                           Includes in package
                         </div>
                         <div className="flex flex-wrap gap-1.5">
@@ -1123,7 +1123,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       </div>
 
                       <div className="mt-4 pt-2.5 border-t border-rule/60 flex items-center justify-between text-[11px] font-mono">
-                        <span className="text-ink/50">{item.detail}</span>
+                        <span className="text-ink/75">{item.detail}</span>
                         <span className="text-clay font-bold flex items-center gap-1">
                           Click to open →
                         </span>
@@ -1168,12 +1168,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
                   <span>100% Client-Side Private</span>
                 </span>
-                <span className="text-white/30">•</span>
+                <span className="text-white/75">•</span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
                   <span>Tailwind 4 & CSS Ready</span>
                 </span>
-                <span className="text-white/30">•</span>
+                <span className="text-white/75">•</span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
                   <span>WCAG 2.2 AA Verified</span>

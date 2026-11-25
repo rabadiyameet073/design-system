@@ -24,20 +24,27 @@ import {
 } from 'lucide-react';
 import {
   ComponentsShowcase,
-  TypeSpecimen
+  TypeSpecimen,
+  GenreOfferings
 } from '../sections';
 import { TemplateProps } from './index';
 
 export const HospitalityTemplate: React.FC<TemplateProps> = ({
-  brandName = 'SANCTUARY Reserve & Retreats',
-  headline,
-  subtitle,
-  badge = 'Three Michelin Stars · World’s 50 Best Hotels 2026',
-  heroImage = '/src/assets/images/hero_founder_studio_1792316645323.jpg',
+  content,
+  brandName: brandNameProp,
+  headline: headlineProp,
+  subtitle: subtitleProp,
+  badge: badgeProp,
+  heroImage: heroImageProp,
   genreId = '',
   components,
   buttonStyle
 }) => {
+  const brandName = content?.brandName || brandNameProp || 'SANCTUARY Reserve & Retreats';
+  const headline = headlineProp || content?.headline;
+  const subtitle = subtitleProp || content?.subtitle;
+  const badge = content?.badge || badgeProp || 'Three Michelin Stars · World’s 50 Best Hotels 2026';
+  const heroImage = content?.heroImage || heroImageProp;
   const [selectedPavilion, setSelectedPavilion] = useState(0);
   const [partySize, setPartySize] = useState(2);
   const [residencyNights, setResidencyNights] = useState(3);
@@ -788,6 +795,7 @@ export const HospitalityTemplate: React.FC<TemplateProps> = ({
         )}
 
         {/* 10. Components Showcase & Type Specimen (Doc 02 §4.3 mandatory) */}
+        <GenreOfferings content={content} />
         {(isEnabled('components') || isEnabled('componentsShowcase')) && <ComponentsShowcase />}
         <TypeSpecimen />
       </main>

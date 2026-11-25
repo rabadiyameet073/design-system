@@ -55,10 +55,13 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
 
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [urlValidationError, setUrlValidationError] = useState<string | null>(null);
+  const [nameTouched, setNameTouched] = useState(false);
 
   const isNameEmpty = !projectName.trim();
+  const showNameError = isNameEmpty && nameTouched;
 
   const handleNameChange = (newName: string) => {
+    setNameTouched(true);
     const trimmed = newName.slice(0, 60);
     // If slug was empty or matched previous slugified name, keep it in sync
     const previousSlugCandidate = slugify(projectName);
@@ -267,7 +270,7 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
         {/* Project Name */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-neutral-700">
+            <label htmlFor="project-name" className="text-xs font-bold text-neutral-700">
               Project / Brand Name <span className="text-rose-500">*</span>
             </label>
             <span className="text-[10px] font-mono text-neutral-400">
@@ -275,22 +278,30 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
             </span>
           </div>
           <input
+            id="project-name"
             type="text"
             required
             maxLength={60}
             value={projectName}
             onChange={e => handleNameChange(e.target.value)}
+            onBlur={() => setNameTouched(true)}
+            aria-invalid={showNameError}
+            aria-describedby={showNameError ? 'project-name-error' : undefined}
             placeholder="e.g. Maison Atelier"
             className={`w-full px-3.5 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 ${
-              isNameEmpty
+              showNameError
                 ? 'border-rose-400 focus:ring-rose-500 bg-rose-50/20'
                 : 'border-neutral-300 focus:ring-neutral-900 bg-white'
             }`}
           />
-          {isNameEmpty && (
-            <p className="flex items-center gap-1 text-[11px] text-rose-500 font-medium">
+          {showNameError && (
+            <p
+              id="project-name-error"
+              role="alert"
+              className="flex items-center gap-1 text-[11px] text-rose-500 font-medium"
+            >
               <AlertCircle className="w-3 h-3" />
-              <span>Project name is required to proceed.</span>
+              <span>Required — enter a project name to continue.</span>
             </p>
           )}
         </div>

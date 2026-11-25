@@ -2,7 +2,8 @@
 import { TemplateProps } from './index';
 import {
   ComponentsShowcase,
-  TypeSpecimen
+  TypeSpecimen,
+  GenreOfferings
 } from '../sections';
 import {
   GraduationCap,
@@ -250,13 +251,20 @@ const ADMISSIONS_FAQS = [
 ];
 
 export const EducationTemplate: React.FC<TemplateProps> = ({
-  brandName = 'AURELIA Research Scholar Institute',
-  headline,
-  subtitle,
-  badge = 'Founded by Researchers from Harvard & Oxford',
+  content,
+  brandName: brandNameProp,
+  headline: headlineProp,
+  subtitle: subtitleProp,
+  badge: badgeProp,
+  heroImage,
+  genreId,
   components,
   buttonStyle
 }) => {
+  const brandName = content?.brandName || brandNameProp || 'AURELIA Research Scholar Institute';
+  const headline = headlineProp || content?.headline;
+  const subtitle = subtitleProp || content?.subtitle;
+  const badge = content?.badge || badgeProp || 'Founded by Researchers from Harvard & Oxford';
   const [activeDisciplineIndex, setActiveDisciplineIndex] = useState<number>(0);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [copiedDoi, setCopiedDoi] = useState<string | null>(null);
@@ -466,7 +474,7 @@ export const EducationTemplate: React.FC<TemplateProps> = ({
               </div>
 
               <div className="p-4 rounded-2xl bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] space-y-1">
-                <span className="text-2xl sm:text-4xl font-black text-emerald-500 font-mono block">
+                <span className="text-2xl sm:text-4xl font-black text-[var(--color-status-success)] font-mono block">
                   94.6%
                 </span>
                 <p className="text-xs text-[var(--color-fg-muted)] font-medium">Top-30 University Acceptance</p>
@@ -630,7 +638,7 @@ export const EducationTemplate: React.FC<TemplateProps> = ({
                       <ul className="space-y-2">
                         {current.sampleTopics.map((top, i) => (
                           <li key={i} className="flex items-start gap-2.5 text-xs text-[var(--color-fg-default)]">
-                            <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                            <CheckCircle className="w-4 h-4 text-[var(--color-status-success)] shrink-0 mt-0.5" />
                             <span className="font-medium italic">"{top}"</span>
                           </li>
                         ))}
@@ -659,7 +667,7 @@ export const EducationTemplate: React.FC<TemplateProps> = ({
                       </div>
                       <div className="p-3 rounded-xl bg-[var(--color-bg-default)] border border-[var(--color-border-default)] flex items-center justify-between">
                         <span>Recommendation Letter</span>
-                        <strong className="font-mono text-emerald-500">Provided by PhD Scholar</strong>
+                        <strong className="font-mono text-[var(--color-status-success)]">Provided by PhD Scholar</strong>
                       </div>
                     </div>
                   </div>
@@ -731,7 +739,7 @@ export const EducationTemplate: React.FC<TemplateProps> = ({
                     <ul className="space-y-2.5 pt-4 border-t border-[var(--color-border-default)]">
                       {tier.features.map((feat, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs text-[var(--color-fg-default)]">
-                          <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                          <Check className="w-4 h-4 text-[var(--color-status-success)] shrink-0 mt-0.5" />
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -898,7 +906,7 @@ export const EducationTemplate: React.FC<TemplateProps> = ({
                     >
                       <span>DOI: {pub.doi}</span>
                       {copiedDoi === pub.doi ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <Check className="w-3.5 h-3.5 text-[var(--color-status-success)]" />
                       ) : (
                         <Bookmark className="w-3.5 h-3.5" />
                       )}
@@ -1082,6 +1090,7 @@ export const EducationTemplate: React.FC<TemplateProps> = ({
         </section>
         )}
         {/* 13. Design System Showcase & Type Specimen (Doc 02 §4.3) */}
+        <GenreOfferings content={content} />
         {(isEnabled('components') || isEnabled('componentsShowcase')) && <ComponentsShowcase />}
         <TypeSpecimen />
       </main>

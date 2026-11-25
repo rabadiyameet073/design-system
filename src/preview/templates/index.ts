@@ -7,8 +7,11 @@ import { EducationTemplate } from './education';
 import { ArchitectureTemplate } from './architecture';
 import { FinanceTemplate } from './finance';
 import { CategoryId } from '../../tokens/types';
+import { ResolvedGenreContent } from '../genres/genreContent';
 
 export interface TemplateProps {
+  /** Genre-resolved content. When absent, templates keep their flagship defaults. */
+  content?: ResolvedGenreContent;
   brandName?: string;
   headline?: string;
   subtitle?: string;

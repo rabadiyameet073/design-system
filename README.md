@@ -75,7 +75,7 @@ This repository is pre-configured for seamless zero-config deployment on [Vercel
 - `npm run dev`: Starts Express full-stack engine with Vite development middleware.
 - `npm run build`: Compiles production frontend bundle with Vite.
 - `npm run lint`: Performs strict TypeScript type check (`tsc --noEmit`).
-- `npm run test`: Runs the Vitest test suite (23 test files, 144 passing tests).
+- `npm run test`: Runs the Vitest test suite (23 test files, 151 passing tests).
 - `npm run fonts:snapshot`: Updates the local Google Fonts metadata snapshot.
 - `npm run preview`: Previews built production assets locally.
 
@@ -121,7 +121,7 @@ Additional assets:
 - **Brand-to-Tokens Generator**: Generates primary colors, font pairings, and design briefs from brand descriptions.
 - **Marketing Copy Synthesizer**: Generates headlines, subheadlines, and CTAs tailored to industry and tone.
 - **Natural Language Palette Extractor**: Converts descriptive phrases into balanced OKLCH palettes.
-- **Resilient Fallback Engine**: Deterministic offline heuristics guarantee zero downtime when API keys are omitted or offline.
+- **Resilient Fallback Engine**: Deterministic offline heuristics keep the studio usable when API keys are omitted or the API is unavailable.
 - **Local Telemetry**: Privacy-friendly event tracking stored locally in IndexedDB/LocalStorage with zero third-party trackers.
 
 ---

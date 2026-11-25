@@ -9,7 +9,7 @@
 
 Building a bespoke, luxury-grade web application typically takes 4–8 weeks of fragmented meetings between founders, designers, and developers arguing over hex codes, font scales, button radiuses, and CSS variables. Hand-offs frequently drift: Figma variables disagree with Tailwind classes, dark mode contrast fails WCAG accessibility, and typography breaks across mobile screens.
 
-**Design System Studio** solves this by turning design system creation into an opinionated, guided mathematical methodology. As choices are made, a **Live Simulated Website** updates in real time with instant synchronous previewing, enabling founders and engineers to judge how their site looks across desktop, tablet, and mobile viewports before exporting production code in standard formats.
+**Design System Studio** solves this by turning design system creation into an opinionated, guided mathematical methodology. As choices are made, a **Live Simulated Website** updates live from a single source of truth, enabling founders and engineers to judge how their site looks across desktop, tablet, and mobile viewports before exporting production code in standard formats.
 
 ---
 
@@ -23,8 +23,8 @@ Building a bespoke, luxury-grade web application typically takes 4–8 weeks of 
 | **Motion & Animation** | Motion 12 (`motion/react`) | Physics-based spring animations (`stiffness: 280, damping: 22`), AnimatePresence |
 | **3D & Spatial WebGL** | Three.js (v0.186+) | Interactive 3D WebGL scenes, specular `MeshPhysicalMaterial`, mouse parallax |
 | **Backend & Serverless** | Express 4, Vercel Serverless Functions | Unified API in `api/index.ts`, Google OAuth 2.0 endpoint, token verification |
-| **Storage & Sync** | Browser `localStorage` + Multi-Tab Sync | 100% offline-ready, local-first browser storage with BroadcastChannel multi-tab sync |
-| **Export Formats** | jsPDF, html2canvas, JSZip | 10 export formats: CSS vars, Tailwind 4, DTCG JSON, Style Dictionary, Figma Tokens, SCSS, Android, iOS, Vector PDF, and Starter ZIP |
+| **Storage & Sync** | `localStorage`, BroadcastChannel, per-user JSON file store | Local-first browser storage with multi-tab sync; signed-in projects also persist to a server-side per-user JSON file (being replaced with a REST-backed store in separate work) |
+| **Export Formats** | jsPDF, html2canvas, JSZip | 13 token/code formats (Tailwind 4/3, CSS vars, SCSS, DTCG JSON, TypeScript, shadcn/ui, Figma Tokens Studio & Variables, Style Dictionary, fonts CSS, a11y report, project JSON) plus PDF spec, PNG board and starter ZIP |
 
 ---
 
@@ -63,7 +63,7 @@ The studio's engine is structured around four ascending architectural flights ac
 - **Step 8: Website Components** (`Step10ComponentsStudio.tsx`): Button variants (solid, outline, subtle, minimal), form controls, badges, and toggle active site modules.
 - **Step 9: Imagery & Motion** (`Step8ImageryStudio.tsx`): Photo filters (duotone, monochrome, clean), corner rounding, and physics-based spring curves.
 - **Step 10: Review & Audit** (`Step10ReviewAudit.tsx`): Comprehensive design system audit across contrast, focus-visible outlines, touch targets (24×24px), fluid clamps, and token completeness with auto-fix.
-- **Step 11: Export Center** (`Step11ExportCenter.tsx`): Multi-format export center with interactive Starter ZIP bundle, 10 code formats, and vector PDF design tokens sheet.
+- **Step 11: Export Center** (`Step11ExportCenter.tsx`): Multi-format export center with interactive Starter ZIP bundle, 13 token/code formats, vector PDF spec, PNG specimen board, and shareable preview link.
 
 ---
 
@@ -96,17 +96,22 @@ An editorial section on the home page explaining design theory and system consis
 - Complete lifecycle cleanup on unmount disposing geometries, materials, and renderer.
 
 ### D. Multi-Format Deliverables Engine
-The application compiles decisions into 10 synchronized export packages:
-1. **Tailwind CSS 4 Theme Block** (`@theme` variables for direct use in Vite / Next.js).
-2. **CSS Custom Properties** (Standard `:root` CSS variables).
-3. **W3C Design Tokens JSON** (Standard format compatible with Style Dictionary).
-4. **Figma Tokens JSON** (Tokens Studio format).
-5. **Style Dictionary Tokens** (Multi-platform format).
-6. **SCSS Variables** (Traditional CSS preprocessor tokens).
-7. **TypeScript Theme Definitions** (Type-safe constants and interfaces).
-8. **iOS Swift & Android Kotlin Token Structs** (Native mobile constants).
-9. **4-Page Vector PDF Specification** (Generated in-browser via jsPDF with color ramps, contrast audits, and type ladders).
-10. **Complete Starter ZIP Bundle** (Includes tokens, fonts, configuration, and ready-to-run React component code).
+The application compiles decisions into 13 synchronized token/code formats, plus PDF, PNG and ZIP assets:
+1. **Tailwind CSS 4 Theme Block** (`theme.css`, `@theme inline` with dark variants).
+2. **Tailwind CSS v3 Config** (`tailwind.v3.config.js`, legacy `module.exports`).
+3. **CSS Custom Properties** (`tokens.css`, `:root` / `.dark`).
+4. **SCSS Variables** (`tokens.scss`, light/dark mixins).
+5. **W3C DTCG Tokens JSON** (`tokens.json`).
+6. **TypeScript Definitions** (`tokens.ts`, `as const` constants).
+7. **shadcn/ui Theme** (`shadcn-theme.css`).
+8. **Figma Tokens Studio JSON** (`tokens.studio.json`).
+9. **Native Figma Variables JSON** (`figma.variables.json`, Light/Dark modes).
+10. **Style Dictionary Config** (`style-dictionary.config.json`).
+11. **Self-Hosted Fonts CSS** (`fonts.css`, `@font-face` / Fontsource instructions).
+12. **Accessibility Audit Report** (`a11y-audit-report.md`, WCAG 2.2 AA contrast matrix).
+13. **Portable Project File** (`project.dss.json`, `schemaVersion: 1`).
+
+Additional assets: a multi-page vector **PDF specification** (jsPDF), a 1600×1000 **PNG specimen board**, a **starter ZIP** bundling all 13 files with fonts and accessible React components, and a read-only **shareable preview link**.
 
 ---
 
@@ -193,5 +198,5 @@ SESSION_SECRET=your_strong_random_secret_at_least_32_chars
 
 ---
 
-*Authored for Design System Studio • All 11 steps, reactive split-screen workbench, and 10-format export engine active.*
+*Authored for Design System Studio • All 11 steps, reactive split-screen workbench, and 13-format export engine active.*
 

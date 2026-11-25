@@ -33,13 +33,15 @@ Nobody does "pick business type → see a real site for that type → customize 
 - Strict TypeScript, Tailwind 4 `@theme`, accessibility-first philosophy.
 
 ### Fix / risky claims
+> Status: rows marked **resolved** are already addressed in the codebase; the rest remain open.
+
 | Issue | Why it matters | Action |
 |---|---|---|
-| "0ms latency", "zero drift" | Not provable; erodes trust | Rewrite as "instant updates", "single source of truth" |
-| "client-side encryption" of `localStorage` | Key lives in the same browser → no real protection; gives false security | Remove the claim; store plain JSON, offer export/import. Encrypt only if there is a real server-side key/account |
+| ~~"0ms latency", "zero drift"~~ — **resolved** | Not provable; erodes trust | Rewritten as "live updates" / "single source of truth"; do not reintroduce absolute claims |
+| ~~"client-side encryption" of `localStorage`~~ — **resolved** | Key lives in the same browser → no real protection; gives false security | Claim removed; projects are plain JSON with explicit export/import. Encrypt only if a real server-side key/account exists |
 | "Verified 8.4:1 AAA" hardcoded in Anatomy section | Must be computed | Compute from real colors with the WCAG formula |
-| WCAG **2.1** | Current is **2.2** (adds focus-appearance and target-size rules, 24×24 CSS px min) | Target WCAG 2.2 AA |
-| "5 export formats" but 6 listed | Inconsistent docs | Fix counts; see doc 04 for final list |
+| ~~WCAG **2.1**~~ — **resolved** | Current is **2.2** (adds focus-appearance and target-size rules, 24×24 CSS px min) | Docs and the contrast engine now target WCAG 2.2 AA |
+| ~~"5 export formats" but 6 listed~~ — **resolved** | Inconsistent docs | Counts reconciled: 13 token/code formats plus PDF, PNG and ZIP assets |
 | Q10/Q12 names differ between diagram and list | Confusing | Use the names in §4 below |
 | "12 typography pairs" but 4 named | Hand-picked pairs don't scale | Replace with font API + recommendation engine (doc 03) |
 | Typo `d:/desing system/` | Cosmetic | Rename folder `design-system-studio` |

@@ -1,6 +1,8 @@
 # 05 — QA, SECURITY, PERFORMANCE, DEPLOY & AGENT PROMPTS
 
 ## 1. Testing strategy
+> Status: only the Vitest unit/component layer is wired up today (151 passing tests). Playwright, axe, Lighthouse and the GitHub Actions workflow below are **targets being added in separate work**, not current CI.
+
 | Layer | Tool | What to test |
 |---|---|---|
 | Unit | Vitest | color scale, contrast, `nudgeToContrast`, `fluid`, `scaleSize`, `scorePair`, guardrails, token reducer (undo/redo), exporters (snapshots), migrations |
@@ -11,10 +13,10 @@
 | Performance | Lighthouse CI | Landing + wizard budgets (see §3) |
 | Export validation | scripts in CI | Compile Tailwind output, `tsc` the TS export, schema-validate DTCG |
 
-CI (GitHub Actions): `lint → typecheck → unit → build → e2e → axe → lighthouse`. Block merge on failure.
+Local verification available now: `npm run lint` (typecheck), `npm test`, `npm run build`. Target CI pipeline: `lint → typecheck → unit → build → e2e → axe → lighthouse`, blocking merge on failure — no workflow is committed yet.
 
 ## 2. Security & privacy
-- **Remove the "client-side encryption" claim.** Local storage in the same browser can't be protected by a key stored there.
+- **Do not claim client-side encryption** (already removed). A key stored in the same browser offers no real protection; projects stay plain JSON with explicit export/import.
 - Secrets (`GOOGLE_CLIENT_SECRET`, `GOOGLE_FONTS_API_KEY`) only on the server; never `VITE_`-prefixed.
 - Google OAuth: use the authorization-code flow (with PKCE) or verified ID tokens; verify `aud`, `iss`, `exp` server-side; use `httpOnly`, `Secure`, `SameSite=Lax` session cookies.
 - Validate every API input (Zod); rate-limit `/api/*` (e.g. 60 req/min/IP); set sensible CORS (same-origin only).
@@ -81,7 +83,8 @@ CI (GitHub Actions): `lint → typecheck → unit → build → e2e → axe → 
 
 ## 8. Final launch checklist
 - [ ] All doc checklists (02, 03, 04) are green.
-- [ ] CI passes: lint, types, unit, e2e, axe, Lighthouse.
+- [ ] Local checks pass: `npm run lint`, `npm test` (151 tests), `npm run build`.
+- [ ] Target CI once landed: lint, types, unit, build, e2e, axe, Lighthouse (the last three are being added in separate work).
 - [ ] Manual test on a real phone (iOS Safari + Android Chrome).
 - [ ] Keyboard-only run through all 11 steps.
 - [ ] Export starter ZIP → fresh Vite + Tailwind 4 project → `npm i && npm run dev` renders correctly with the exported theme.

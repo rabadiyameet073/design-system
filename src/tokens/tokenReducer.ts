@@ -20,7 +20,7 @@ export type TokenAction =
   | { type: 'SET_VIEWPORT'; viewport: 'mobile' | 'tablet' | 'desktop' }
   | { type: 'RESET_TO_PRESET'; preset: DesignTokens };
 
-const MAX_HISTORY = 30;
+export const MAX_HISTORY = 30;
 
 /**
  * Deeply merges a partial DesignTokens object on top of a base DesignTokens object

@@ -59,7 +59,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans"
+      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-xs font-sans"
       role="dialog"
       aria-modal="true"
       aria-labelledby="user-profile-title"
@@ -70,7 +70,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-white rounded-3xl shadow-2xl border border-neutral-200/90 max-w-[440px] w-full p-6 sm:p-7 relative overflow-hidden focus:outline-none"
+        className="bg-white rounded-3xl shadow-2xl border border-neutral-200/90 max-w-[440px] w-full max-h-[92vh] overflow-y-auto p-6 sm:p-7 relative focus:outline-none"
         tabIndex={-1}
       >
         {/* Subtle Ambient Top Accent Glow */}

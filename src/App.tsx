@@ -68,7 +68,7 @@ import {
   setActiveProjectId
 } from './utils/storage';
 import { createNewProject, SAMPLE_PROJECT_CERAMICS } from './data/sampleProjects';
-import { mergeTokens } from './tokens/tokenReducer';
+import { mergeTokens, MAX_HISTORY } from './tokens/tokenReducer';
 import {
   subscribeToUserProjects,
   saveProjectToCloud,
@@ -82,8 +82,10 @@ import { logger } from './utils/logger';
 const VIEW_STORAGE_KEY = 'dss_active_view_v1';
 
 function MainStudio() {
-  const { user, setIsOAuthModalOpen } = useAuth();
-  const pendingActionRef = React.useRef<'create' | 'wizard' | null>(null);
+  const { user } = useAuth();
+  // Guard against duplicate project creation and cloud-sync clobbering during onboarding.
+  const creatingProjectRef = React.useRef(false);
+  const justCreatedProjectIdRef = React.useRef<string | null>(null);
 
   // State: View, Projects, and Active Selection
   const [view, setView] = useState<StudioView>(() => {
@@ -213,13 +215,9 @@ function MainStudio() {
   const activeProject =
     projects.find(p => p.id === activeProjectId) || projects[0] || SAMPLE_PROJECT_CERAMICS;
 
+  // The studio is local-first: the wizard works without an account, matching the
+  // documented "zero signup walls" promise. Accounts only add cloud sync.
   const handleSetView = useCallback((nextView: StudioView) => {
-    if (nextView === 'wizard' && !user) {
-      setToastMessage('Please sign in to access the design wizard and save your system.');
-      setIsOAuthModalOpen(true);
-      pendingActionRef.current = 'wizard';
-      return;
-    }
     setView(nextView);
     try {
       localStorage.setItem(VIEW_STORAGE_KEY, nextView);
@@ -231,7 +229,7 @@ function MainStudio() {
       projectId: activeProjectId || undefined,
       step: nextView === 'wizard' ? activeProject?.currentStep : undefined
     });
-  }, [activeProjectId, user, activeProject?.currentStep, setIsOAuthModalOpen]);
+  }, [activeProjectId, activeProject?.currentStep]);
 
   // Real-time synchronization of projects when logged in with Google or account
   useEffect(() => {
@@ -261,8 +259,10 @@ function MainStudio() {
             );
           });
 
-          // Ensure active project reflects user's newest work if currently on sample
+          // Reflect the user's newest work, but never steal selection from a project
+          // that was just created locally.
           setActiveId(curr => {
+            if (justCreatedProjectIdRef.current) return curr;
             if (!curr || curr === SAMPLE_PROJECT_CERAMICS.id) {
               const newest = cloudProjects[0];
               if (newest) {
@@ -307,7 +307,7 @@ function MainStudio() {
       updatedAt: Date.now()
     };
 
-    setHistory(h => [...h.slice(-14), current]);
+    setHistory(h => [...h.slice(-(MAX_HISTORY - 1)), current]);
     setFuture([]);
     setProjects(prev => prev.map(p => (p.id === next.id ? next : p)));
 
@@ -638,39 +638,42 @@ function MainStudio() {
   };
 
   const handleStartNewProject = useCallback(() => {
-    if (!user) {
-      setToastMessage('Please sign in to start creating and saving your design system.');
-      setIsOAuthModalOpen(true);
-      pendingActionRef.current = 'create';
-      return;
-    }
+    if (creatingProjectRef.current) return;
+    creatingProjectRef.current = true;
+
     setHistory([]);
     setFuture([]);
     const newProj = createNewProject('My New Website', 'ecommerce');
     newProj.currentStep = 1;
     newProj.completedSteps = [];
-    saveProject(newProj);
-    refreshProjectsList();
+    justCreatedProjectIdRef.current = newProj.id;
+
+    // Persist synchronously before refreshing the list and selecting the project —
+    // the previous debounced write meant the new project wasn't in state yet and the
+    // wizard silently fell back to the sample project.
+    saveProject(newProj, 0, { makeActive: true });
+    const refreshed = getStoredProjects();
+    setProjects(refreshed);
     setActiveId(newProj.id);
     setActiveProjectId(newProj.id);
+    setView('wizard');
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, 'wizard');
+    } catch {
+      // storage restricted
+    }
+    navigateToRoute({ view: 'wizard', projectId: newProj.id, step: 1 });
+
     if (user?.id) {
       saveProjectToCloud(user.id, newProj).catch(e => logger.warn('Cloud save notice:', e));
     }
-    handleSetView('wizard');
-  }, [user, refreshProjectsList, handleSetView, setIsOAuthModalOpen]);
 
-  // Resume pending action after user completes sign in
-  useEffect(() => {
-    if (user && pendingActionRef.current) {
-      const action = pendingActionRef.current;
-      pendingActionRef.current = null;
-      if (action === 'create') {
-        handleStartNewProject();
-      } else if (action === 'wizard') {
-        handleSetView('wizard');
-      }
-    }
-  }, [user, handleStartNewProject, handleSetView]);
+    // Release the guard after the cloud-sync subscription has had a chance to run.
+    setTimeout(() => {
+      justCreatedProjectIdRef.current = null;
+      creatingProjectRef.current = false;
+    }, 1000);
+  }, [user]);
 
   const handleSelectProjectFromDashboard = (id: string, continueWizard: boolean = false) => {
     setHistory([]);

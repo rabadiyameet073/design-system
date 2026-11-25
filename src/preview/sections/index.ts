@@ -15,6 +15,7 @@ import { StatsRow } from './StatsRow';
 import { ComponentsShowcase } from './ComponentsShowcase';
 import { TypeSpecimen } from './TypeSpecimen';
 import { Footer } from './Footer';
+import { GenreOfferings } from './GenreOfferings';
 
 export const SECTION_REGISTRY = {
   header: Header,
@@ -33,7 +34,8 @@ export const SECTION_REGISTRY = {
   stats: StatsRow,
   componentsShowcase: ComponentsShowcase,
   typeSpecimen: TypeSpecimen,
-  footer: Footer
+  footer: Footer,
+  genreOfferings: GenreOfferings
 } as const;
 
 export type SectionType = keyof typeof SECTION_REGISTRY;
@@ -55,6 +57,7 @@ export {
   StatsRow,
   ComponentsShowcase,
   TypeSpecimen,
-  Footer
+  Footer,
+  GenreOfferings
 };
 

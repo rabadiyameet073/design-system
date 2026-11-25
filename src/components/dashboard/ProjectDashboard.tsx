@@ -523,7 +523,7 @@ export const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
                       onClick={() => onSelectProject(p.id, true)}
                       className="px-3 py-1 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-md transition-colors cursor-pointer"
                     >
-                      {isCompleted ? 'Review' : 'Continue'}
+                      {isCompleted ? 'Export' : 'Continue'}
                     </button>
                   </div>
                 </div>
@@ -568,7 +568,7 @@ export const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
                     onClick={() => onSelectProject(p.id, true)}
                     className="px-3 py-1 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg cursor-pointer"
                   >
-                    {isCompleted ? 'Review' : 'Continue'}
+                    {isCompleted ? 'Export' : 'Continue'}
                   </button>
                   {projects.length > 1 && (
                     <button

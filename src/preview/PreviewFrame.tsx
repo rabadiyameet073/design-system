@@ -4,6 +4,7 @@ import { DEFAULT_DESIGN_TOKENS } from '../tokens/defaultTokens';
 import { applyTokens } from './tokens/applyTokens';
 import { TEMPLATE_REGISTRY } from './templates';
 import { getGenreById, GENRE_CONFIGS } from './genres';
+import { resolveGenreContent } from './genres/genreContent';
 import { auditSemanticContrast } from '../tokens/contrastEngine';
 
 export const PreviewFrame: React.FC = () => {
@@ -212,47 +213,44 @@ export const PreviewFrame: React.FC = () => {
   const category: CategoryId = matchedCategory || genre.category || 'commerce';
   const TemplateComponent = TEMPLATE_REGISTRY[category] || TEMPLATE_REGISTRY.commerce;
 
-  // 3. Resolve Brand Name with dynamic category fallbacks
-  const defaultBrandForCategory =
-    category === 'commerce' ? 'AETHER Sound & Precision Gear' :
-    category === 'education' ? 'AURELIA Research Scholar Institute' :
-    category === 'saas' ? 'APEX Systems Engine' :
-    category === 'architecture' ? 'ATELIER MONOLITH Spatial Architecture' :
-    category === 'finance' ? 'STRATA Wealth & Global Treasury' :
-    category === 'hospitality' ? 'SANCTUARY Reserve & Retreats' :
-    category === 'portfolio' ? 'STUDIO VORTEX Design & Direction' :
-    category === 'publishing' ? 'CHRONICLE Journal of Ideas & Culture' :
-    genre.label;
+  // 3. Resolve genre content. Explicit project metadata wins over genre defaults.
+  //    Every genre (not just its category) now contributes brand, copy and items.
+  const isSampleCeramicsName = (n?: string) =>
+    n === 'Ceramics Atelier' || n === 'Komorebi Ceramics' || n === 'Komorebi Studio & Ceramics';
 
   const isGenericDefault = (n?: string) =>
     !n ||
     n === 'My New Website' ||
     n === 'Untitled Project' ||
     n === 'New Design System' ||
-    (n === 'Ceramics Atelier' && category !== 'commerce') ||
-    (n === 'Komorebi Ceramics' && category !== 'commerce') ||
-    (n === 'Komorebi Studio & Ceramics' && category !== 'commerce');
+    // Preset/wizard sample residue must not override a different genre's brand.
+    (isSampleCeramicsName(n) && resolvedGenreId !== 'ceramics-atelier');
 
   const customName =
     (!isGenericDefault(projectMeta.business?.name) ? projectMeta.business?.name : null) ||
     (!isGenericDefault(projectMeta.name) ? projectMeta.name : null) ||
     (!isGenericDefault(tokens.meta?.projectName) ? tokens.meta?.projectName : null);
 
-  const brandName = customName || defaultBrandForCategory;
-
   const isSamplePotteryOffering =
     projectMeta.business?.offering?.includes('Hand-thrown stoneware') ||
     projectMeta.business?.offering?.includes('tactile tea sets');
 
-  const headline = (projectMeta.business?.offering && (!isSamplePotteryOffering || category === 'commerce'))
+  const customHeadline = (projectMeta.business?.offering && (!isSamplePotteryOffering || resolvedGenreId === 'ceramics-atelier'))
     ? projectMeta.business.offering
     : undefined;
 
-  const subtitle = (projectMeta.business?.audience && (!isSamplePotteryOffering || category === 'commerce'))
+  const customSubtitle = (projectMeta.business?.audience && (!isSamplePotteryOffering || resolvedGenreId === 'ceramics-atelier'))
     ? `Crafted for ${projectMeta.business.audience}.`
     : undefined;
 
-  const badge = projectMeta.visualDirection?.archetype || projectMeta.visualDirection?.name || genre.label;
+  const content = resolveGenreContent(resolvedGenreId, {
+    brandName: customName || undefined,
+    headline: customHeadline || undefined,
+    subtitle: customSubtitle || undefined,
+    badge: projectMeta.visualDirection?.archetype || projectMeta.visualDirection?.name || undefined
+  });
+
+  const { brandName, headline, subtitle, badge } = content;
 
   // RTL Internationalization Detection (Doc 04 §Internationalization)
   const isRtl = Boolean(
@@ -276,11 +274,12 @@ export const PreviewFrame: React.FC = () => {
   return (
     <div className="w-full min-h-screen overflow-x-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
       <TemplateComponent
+        content={content}
         brandName={brandName}
         headline={headline}
         subtitle={subtitle}
         badge={badge}
-        heroImage={genre.heroImage}
+        heroImage={content.heroImage}
         genreId={resolvedGenreId}
         components={effectiveComponents}
         buttonStyle={effectiveComponents.buttonStyle}

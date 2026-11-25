@@ -23,20 +23,27 @@ import {
 } from 'lucide-react';
 import {
   ComponentsShowcase,
-  TypeSpecimen
+  TypeSpecimen,
+  GenreOfferings
 } from '../sections';
 import { TemplateProps } from './index';
 
 export const PublishingTemplate: React.FC<TemplateProps> = ({
-  brandName = 'CHRONICLE Journal of Ideas & Culture',
-  headline,
-  subtitle,
-  badge = 'Volume XVI · Issue 04 · Autumn Critical Essays',
-  heroImage = '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
+  content,
+  brandName: brandNameProp,
+  headline: headlineProp,
+  subtitle: subtitleProp,
+  badge: badgeProp,
+  heroImage: heroImageProp,
   genreId = '',
   components,
   buttonStyle
 }) => {
+  const brandName = content?.brandName || brandNameProp || 'CHRONICLE Journal of Ideas & Culture';
+  const headline = headlineProp || content?.headline;
+  const subtitle = subtitleProp || content?.subtitle;
+  const badge = content?.badge || badgeProp || 'Volume XVI · Issue 04 · Autumn Critical Essays';
+  const heroImage = content?.heroImage || heroImageProp;
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioSpeed, setAudioSpeed] = useState<'1x' | '1.25x' | '1.5x'>('1x');
   const [selectedTier, setSelectedTier] = useState<'digital' | 'patron' | 'fellow'>('patron');
@@ -824,6 +831,7 @@ export const PublishingTemplate: React.FC<TemplateProps> = ({
         )}
 
         {/* 11. Components & Type Specimen (Doc 02 §4.3 mandatory) */}
+        <GenreOfferings content={content} />
         {(isEnabled('components') || isEnabled('componentsShowcase')) && <ComponentsShowcase />}
         <TypeSpecimen />
       </main>

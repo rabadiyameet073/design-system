@@ -118,13 +118,15 @@ export const WizardNav: React.FC<WizardNavProps> = ({
                 <button
                   key={step.number}
                   onClick={() => onSelectStep(step.number)}
+                  role="tab"
+                  aria-selected={isCurrent}
                   aria-current={isCurrent ? 'step' : undefined}
                   aria-label={`Step ${step.number}: ${step.title}${isCompleted ? ' (Completed)' : ''}`}
                   className={`w-7 h-7 min-w-[28px] min-h-[28px] rounded text-xs font-medium transition-colors flex items-center justify-center shrink-0 cursor-pointer ${isCurrent
                     ? 'bg-neutral-900 text-white shadow-xs'
                     : isCompleted
                       ? 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'
-                      : 'text-neutral-400 hover:text-neutral-700'
+                      : 'text-neutral-600 hover:text-neutral-900'
                     }`}
                   title={`${step.number}. ${step.title}`}
                 >
@@ -186,7 +188,7 @@ export const WizardNav: React.FC<WizardNavProps> = ({
               aria-label={currentStep === WIZARD_STEPS.length ? 'Finish & Export design system' : continueLabel}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer min-h-[32px] ${canContinue
                 ? 'bg-neutral-900 text-white hover:bg-neutral-800'
-                : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                : 'bg-neutral-200 text-neutral-600 cursor-not-allowed'
                 }`}
             >
               <span>{currentStep === WIZARD_STEPS.length ? 'Finish & Export' : continueLabel}</span>

@@ -32,3 +32,9 @@ jobs:
       - name: Build Production Client & Assets
         run: npm run build
 
+      - name: Install Playwright Chromium
+        run: npm run test:e2e:install
+
+      - name: Run Playwright E2E Tests
+        run: npm run test:e2e
+

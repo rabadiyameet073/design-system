@@ -243,3 +243,33 @@ What prevents "production-ready" status is not breadth of features but **trust**
 - I **did not modify any application code** during the audit. Screenshots were saved only to the approved temp folder: `C:\Users\rmdu0\AppData\Local\Temp\opencode\dss-*.png`.
 - **Not tested:** actual downloaded ZIP/PDF/PNG file contents (browser download UI not readable here), Google OAuth live flow (requires real credentials — used the built-in demo login instead), Gemini AI live generation (no key configured — verified fallback only), Vercel deployment behavior, keyboard-only full run, and visual regression. These are marked as risks/unverified, not bugs.
 - The local dev server was left running in the background; close browser tab `dss-audit2` when finished.
+
+---
+
+## 11. Remediation Results (post-audit implementation)
+
+The audit findings were implemented in a follow-up pass. Verification after all changes:
+`npm run lint` ✅ · `npm test` ✅ (25 files / 164 tests) · `npm run build` ✅ · `npm run test:e2e` ✅ (7/7, including axe on landing + preview in light and dark).
+
+| Issue | Status | What changed |
+|---|---|---|
+| S-01 unauthenticated login | **Fixed** | `POST /auth/custom-login` returns 403 in production (verified against a `NODE_ENV=production` server); demo personas remain available locally. |
+| S-02 sign-in wall | **Fixed** | Wizard and project creation are local-first with no account required, matching "zero signup walls"; accounts add cloud sync only. |
+| S-03 AI prompt injection | **Fixed** | All untrusted fields in `/generate-ai-prompt` are escaped and length-limited. |
+| F-01 duplicate/misrouted onboarding | **Fixed** | New project is persisted synchronously before selection; active ID and route are set explicitly; creation guard and cloud-sync protection added. E2E asserts exactly one new active project at Step 1. |
+| F-02 flagship brand/content mismatch | **Fixed** | Per-genre content resolver supplies brand, headline, products and offerings to all 8 templates; E2E asserts the preview H1 changes on genre selection. |
+| F-03 genre → live template | **Fixed** | `src/preview/genres/genreContent.ts` resolves all 32 genres; `PreviewFrame` merges project overrides; all templates consume resolved content. |
+| F-04 draft preview ribbon | **Not reproduced** | Option-card `onPreviewDraft` wiring is present; no ribbon appeared during manual hover/click testing. Left as an unverified risk, not claimed fixed. |
+| A-01 false "verified" claims | **Fixed** | Status cards and badges now derive from `auditSemanticContrast`; audit mode and preview toolbar are synchronised via a shared event; the production ZIP stays disabled while any pair fails. |
+| U-01 mobile landing overflow | **Fixed** | `overflow-x-hidden` on the landing root and document; E2E asserts no overflow at 390px. |
+| U-02 misleading "Review" button | **Fixed** | Relabelled to "Export" (it opens the Export Center). |
+| U-03 silent validation | **Fixed** | Inline required-field message with `aria-invalid` / `aria-describedby` in Step 2. |
+| U-04 false numeric claims | **Fixed** | 14→11 steps, 5→13 formats, "Smooth 60 FPS"→"Target 60 FPS". |
+| U-05 clipped profile modal | **Fixed** | Modal is viewport-bounded with internal scroll. |
+| T-01 serverless persistence | **Implemented, requires configuration** | `api/projectStore.ts` adds a local-file adapter for development and an Upstash-compatible REST adapter for production; rate limiting uses shared storage when configured. Set `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (see `.env.example`) before deploying to Vercel. |
+| G-01 duplicate history systems | **Partially addressed** | `MAX_HISTORY` is now exported from `tokenReducer` and used by `App.tsx`; the reducer itself remains as the tested reference implementation. Full reducer adoption is still a refactor. |
+| G-02 missing CI gates | **Fixed** | Playwright + axe added (7 E2E specs), `test:e2e` scripts, and CI runs lint → unit → build → e2e. Lighthouse/visual regression remain future work. |
+| D-01 documentation drift | **Fixed** | README, PROJECT_DOCUMENTATION, rules, security spec and roadmap docs reconciled with the code. |
+
+New regression coverage: `tests/preview/genreContent.test.ts`, `tests/utils/persistence.test.ts`, and `tests/e2e/*.e2e.ts` (7 specs, including axe).
+

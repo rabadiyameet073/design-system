@@ -220,7 +220,7 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
             aria-hidden="true"
           />
           <div>
-            <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">
+            <span className="text-[10px] font-semibold text-neutral-600 uppercase tracking-wider block">
               Active Color
             </span>
             <input
@@ -306,15 +306,15 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
           {/* Color Coordinates (HSL, RGB) */}
           <div className="grid grid-cols-3 gap-2 p-3 bg-neutral-50 border border-neutral-100 rounded-lg text-xs font-mono text-center">
             <div>
-              <span className="text-[10px] text-neutral-400 block uppercase font-sans">Hue</span>
+              <span className="text-[10px] text-neutral-600 block uppercase font-sans">Hue</span>
               <strong className="text-neutral-900">{hsl.h}°</strong>
             </div>
             <div>
-              <span className="text-[10px] text-neutral-400 block uppercase font-sans">Saturation</span>
+              <span className="text-[10px] text-neutral-600 block uppercase font-sans">Saturation</span>
               <strong className="text-neutral-900">{hsl.s}%</strong>
             </div>
             <div>
-              <span className="text-[10px] text-neutral-400 block uppercase font-sans">Lightness</span>
+              <span className="text-[10px] text-neutral-600 block uppercase font-sans">Lightness</span>
               <strong className="text-neutral-900">{hsl.l}%</strong>
             </div>
           </div>

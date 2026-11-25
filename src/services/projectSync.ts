@@ -39,8 +39,29 @@ function saveProjectsToStorage(userId: string, projects: DesignProject[]): void 
 }
 
 /**
+ * Merge two project lists by id, keeping the newer `updatedAt` version of each project.
+ * Used whenever the local cache and the server-side store are reconciled so that
+ * offline edits are never silently overwritten by an older server copy.
+ */
+export function mergeProjectsByRecency(
+  local: DesignProject[],
+  remote: DesignProject[]
+): DesignProject[] {
+  const map = new Map<string, DesignProject>();
+  local.forEach(p => map.set(p.id, p));
+  remote.forEach(p => {
+    if (!p || !p.id) return;
+    const existing = map.get(p.id);
+    if (!existing || (p.updatedAt || 0) > (existing.updatedAt || 0)) {
+      map.set(p.id, p);
+    }
+  });
+  return Array.from(map.values()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+}
+
+/**
  * Subscribes to real-time multi-tab updates for projects belonging to the user.
- * Loads from both local cache and backend JSON storage, keeping them seamlessly synchronized.
+ * Loads from both local cache and the server-side store, keeping them seamlessly synchronized.
  */
 export function subscribeToUserProjects(
   userId: string,
@@ -94,7 +115,8 @@ export function subscribeToUserProjects(
 }
 
 /**
- * Loads projects from backend JSON user storage.
+ * Loads projects from the server-side store and reconciles them with the local cache.
+ * The newest edit wins per project; the merged result is written back locally.
  */
 export async function fetchUserProjectsFromServer(userId: string): Promise<DesignProject[]> {
   try {
@@ -102,8 +124,9 @@ export async function fetchUserProjectsFromServer(userId: string): Promise<Desig
     if (!res.ok) return [];
     const data = await res.json();
     if (data.success && Array.isArray(data.projects)) {
-      saveProjectsToStorage(userId, data.projects);
-      return data.projects;
+      const merged = mergeProjectsByRecency(loadProjectsFromStorage(userId), data.projects);
+      saveProjectsToStorage(userId, merged);
+      return merged;
     }
     return [];
   } catch (e) {

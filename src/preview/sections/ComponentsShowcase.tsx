@@ -108,9 +108,10 @@ export const ComponentsShowcase: React.FC<ComponentsShowcaseProps> = ({ id = 'co
 
               {/* Destructive */}
               <button
-                className="px-4 py-2 text-sm font-medium transition-all hover:opacity-90 active:scale-95 cursor-pointer text-white"
+                className="px-4 py-2 text-sm font-medium transition-all hover:opacity-90 active:scale-95 cursor-pointer"
                 style={{
-                  backgroundColor: 'var(--color-status-danger)',
+                  color: 'var(--color-status-danger-fg)',
+                  backgroundColor: 'var(--color-status-danger-bg)',
                   borderRadius: 'var(--radius-button, var(--radius-md))'
                 }}
               >
@@ -193,10 +194,11 @@ export const ComponentsShowcase: React.FC<ComponentsShowcaseProps> = ({ id = 'co
           >
             {/* Outline Input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[var(--color-fg-default)]">
+              <label htmlFor="showcase-outline-input" className="text-xs font-semibold text-[var(--color-fg-default)]">
                 Outline Input
               </label>
               <input
+                id="showcase-outline-input"
                 type="text"
                 defaultValue="Jane Doe"
                 className="w-full px-3.5 py-2 text-sm border bg-[var(--color-bg-surface)] text-[var(--color-fg-default)] focus:outline-2 focus:outline-offset-2 focus:outline-[var(--color-focus-ring)] transition-all"
@@ -210,10 +212,11 @@ export const ComponentsShowcase: React.FC<ComponentsShowcaseProps> = ({ id = 'co
 
             {/* Filled Input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[var(--color-fg-default)]">
+              <label htmlFor="showcase-filled-input" className="text-xs font-semibold text-[var(--color-fg-default)]">
                 Filled Input
               </label>
               <input
+                id="showcase-filled-input"
                 type="text"
                 defaultValue="Acme Studio"
                 className="w-full px-3.5 py-2 text-sm border border-transparent bg-[var(--color-bg-surface)] text-[var(--color-fg-default)] focus:outline-2 focus:outline-offset-2 focus:outline-[var(--color-focus-ring)] transition-all"
@@ -226,11 +229,12 @@ export const ComponentsShowcase: React.FC<ComponentsShowcaseProps> = ({ id = 'co
 
             {/* Select Input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[var(--color-fg-default)]">
+              <label htmlFor="showcase-select" className="text-xs font-semibold text-[var(--color-fg-default)]">
                 Select Dropdown
               </label>
               <div className="relative">
                 <select
+                  id="showcase-select"
                   defaultValue="enterprise"
                   className="w-full appearance-none px-3.5 py-2 text-sm border bg-[var(--color-bg-surface)] text-[var(--color-fg-default)] focus:outline-2 focus:outline-offset-2 focus:outline-[var(--color-focus-ring)] transition-all cursor-pointer"
                   style={{
@@ -249,10 +253,11 @@ export const ComponentsShowcase: React.FC<ComponentsShowcaseProps> = ({ id = 'co
 
             {/* Error State */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[var(--color-status-danger)]">
+              <label htmlFor="showcase-error-input" className="text-xs font-semibold text-[var(--color-status-danger)]">
                 Validation Error
               </label>
               <input
+                id="showcase-error-input"
                 type="text"
                 defaultValue="invalid_slug#99"
                 className="w-full px-3.5 py-2 text-sm border bg-[var(--color-bg-surface)] text-[var(--color-fg-default)] transition-all"
@@ -321,13 +326,13 @@ export const ComponentsShowcase: React.FC<ComponentsShowcaseProps> = ({ id = 'co
                 borderRadius: 'var(--radius-card, var(--radius-lg))'
               }}
             >
-              <span className="text-[10px] font-mono uppercase font-bold text-[var(--color-fg-muted)]">
+              <span className="text-[10px] font-mono uppercase font-bold text-[var(--color-fg-default)]">
                 Treatment: Elevated
               </span>
               <h4 className="text-base font-bold text-[var(--color-fg-default)] mt-1">
                 Brand-Tinted Shadow
               </h4>
-              <p className="text-xs text-[var(--color-fg-muted)] mt-2 leading-relaxed">
+              <p className="text-xs text-[var(--color-fg-default)] mt-2 leading-relaxed">
                 Multi-layer soft shadow with subtle brand hue tinting to avoid dead, dirty-black shadows.
               </p>
             </div>

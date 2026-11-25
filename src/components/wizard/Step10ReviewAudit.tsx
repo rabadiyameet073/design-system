@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Sparkles,
   ShieldCheck,
@@ -35,6 +35,22 @@ interface Step10ReviewAuditProps {
 
 export const Step10ReviewAudit: React.FC<Step10ReviewAuditProps> = ({ project, onChange }) => {
   const [activeMode, setActiveMode] = useState<'light' | 'dark'>('light');
+
+  // Keep the audit mode in sync with the always-on preview toolbar so the
+  // A11y badge, the audit table and the Step 11 gate never disagree.
+  useEffect(() => {
+    const handleMode = (e: Event) => {
+      const next = (e as CustomEvent<'light' | 'dark'>).detail;
+      if (next === 'light' || next === 'dark') setActiveMode(next);
+    };
+    window.addEventListener('dss:set-theme-mode', handleMode);
+    return () => window.removeEventListener('dss:set-theme-mode', handleMode);
+  }, []);
+
+  const changeMode = (next: 'light' | 'dark') => {
+    setActiveMode(next);
+    window.dispatchEvent(new CustomEvent('dss:set-theme-mode', { detail: next }));
+  };
   const [previousSemantic, setPreviousSemantic] = useState<any | null>(null);
   const [lastFixSummary, setLastFixSummary] = useState<string | null>(null);
 
@@ -179,7 +195,7 @@ export const Step10ReviewAudit: React.FC<Step10ReviewAuditProps> = ({ project, o
           Verify WCAG 2.2 AA compliance and system health
         </h1>
         <p className="text-sm text-neutral-600 leading-relaxed max-w-2xl">
-          Universal accessibility is mathematically verified. Below is the live contrast matrix for all active semantic token pairs. If any pair falls short of the 4.5:1 ratio, click "Auto-Fix" to nudge lightness into full compliance.
+          Universal accessibility is continuously measured. Below is the live contrast matrix for all active semantic token pairs. If any pair falls short of the 4.5:1 ratio, click "Auto-Fix" to nudge lightness into full compliance.
         </p>
       </div>
 
@@ -203,7 +219,7 @@ export const Step10ReviewAudit: React.FC<Step10ReviewAuditProps> = ({ project, o
           {/* Mode toggle */}
           <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-xl">
             <button
-              onClick={() => setActiveMode('light')}
+              onClick={() => changeMode('light')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 activeMode === 'light' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-500 hover:text-neutral-900'
               }`}
@@ -212,7 +228,7 @@ export const Step10ReviewAudit: React.FC<Step10ReviewAuditProps> = ({ project, o
               <span>Light</span>
             </button>
             <button
-              onClick={() => setActiveMode('dark')}
+              onClick={() => changeMode('dark')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 activeMode === 'dark' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-500 hover:text-neutral-900'
               }`}
@@ -266,13 +282,19 @@ export const Step10ReviewAudit: React.FC<Step10ReviewAuditProps> = ({ project, o
         <div className="p-4 rounded-xl bg-white border border-neutral-200 shadow-2xs space-y-1">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
             <span>WCAG 2.2 AA Contrast</span>
-            <Check className="w-3.5 h-3.5 text-emerald-600" />
+            {audit.failCount === 0 ? (
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+            ) : (
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+            )}
           </div>
           <div className="text-sm font-extrabold text-neutral-900 font-mono">
             {audit.passCount}/{audit.totalCount} Pass
           </div>
-          <p className="text-[10px] text-neutral-400">
-            {activeMode === 'light' ? 'Light mode verified' : 'Dark mode verified'}
+          <p className={`text-[10px] ${audit.failCount === 0 ? 'text-neutral-400' : 'text-amber-600'}`}>
+            {audit.failCount === 0
+              ? `${activeMode === 'light' ? 'Light' : 'Dark'} mode verified`
+              : `${audit.failCount} pair${audit.failCount === 1 ? '' : 's'} still failing in ${activeMode} mode`}
           </p>
         </div>
 
@@ -304,7 +326,7 @@ export const Step10ReviewAudit: React.FC<Step10ReviewAuditProps> = ({ project, o
             24×24px Minimum
           </div>
           <p className="text-[10px] text-neutral-400">
-            All buttons & controls verified
+            24×24 CSS px minimum configured
           </p>
         </div>
 

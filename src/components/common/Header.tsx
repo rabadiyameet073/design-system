@@ -90,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenShortcuts && (
             <button
               onClick={onOpenShortcuts}
-              className="w-8 h-8 rounded-xl border border-ink/15 hover:border-ink/35 bg-white hover:bg-neutral-50 flex items-center justify-center text-xs font-bold text-ink/70 hover:text-ink transition-colors cursor-pointer shadow-2xs"
+              className="w-8 h-8 rounded-xl border border-ink/15 hover:border-ink/35 bg-white hover:bg-neutral-50 hidden sm:flex items-center justify-center text-xs font-bold text-ink/70 hover:text-ink transition-colors cursor-pointer shadow-2xs"
               title="Keyboard Shortcuts (?)"
             >
               ?
@@ -228,7 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
           {currentView === 'wizard' && onTogglePreviewDrawer && (
             <button
               onClick={onTogglePreviewDrawer}
-              className={`group flex items-stretch rounded-xl border transition-all active:scale-[0.98] overflow-hidden shrink-0 cursor-pointer text-xs font-medium ${
+              className={`group hidden lg:flex items-stretch rounded-xl border transition-all active:scale-[0.98] overflow-hidden shrink-0 cursor-pointer text-xs font-medium ${
                 isPreviewDrawerOpen
                   ? 'bg-ink text-white border-ink'
                   : 'bg-white text-ink border-ink/20 hover:border-ink/40 hover:bg-ink/[0.03]'
@@ -307,8 +307,9 @@ export const Header: React.FC<HeaderProps> = ({
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
               </div>
-              <div className="flex items-center justify-center px-3.5 sm:px-4 py-2 tracking-wide whitespace-nowrap">
-                Review & Export
+              <div className="flex items-center justify-center px-3 sm:px-4 py-2 tracking-wide whitespace-nowrap">
+                <span className="hidden sm:inline">Review &amp; Export</span>
+                <span className="sm:hidden">Export</span>
               </div>
             </button>
           )}

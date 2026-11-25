@@ -23,20 +23,27 @@ import {
 } from 'lucide-react';
 import {
   ComponentsShowcase,
-  TypeSpecimen
+  TypeSpecimen,
+  GenreOfferings
 } from '../sections';
 import { TemplateProps } from './index';
 
 export const PortfolioTemplate: React.FC<TemplateProps> = ({
-  brandName = 'STUDIO VORTEX Design & Direction',
-  headline,
-  subtitle,
-  badge = 'Awwwards Studio of the Year 2025 · D&AD Black Pencil',
-  heroImage = '/src/assets/images/preview_editorial_arch_1792316647413.jpg',
+  content,
+  brandName: brandNameProp,
+  headline: headlineProp,
+  subtitle: subtitleProp,
+  badge: badgeProp,
+  heroImage: heroImageProp,
   genreId = '',
   components,
   buttonStyle
 }) => {
+  const brandName = content?.brandName || brandNameProp || 'STUDIO VORTEX Design & Direction';
+  const headline = headlineProp || content?.headline;
+  const subtitle = subtitleProp || content?.subtitle;
+  const badge = content?.badge || badgeProp || 'Awwwards Studio of the Year 2025 · D&AD Black Pencil';
+  const heroImage = content?.heroImage || heroImageProp;
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [selectedScope, setSelectedScope] = useState<'flagship' | 'system' | 'spatial'>('flagship');
   const [selectedTimeline, setSelectedTimeline] = useState<'sprint' | 'full'>('full');
@@ -728,6 +735,7 @@ export const PortfolioTemplate: React.FC<TemplateProps> = ({
         )}
 
         {/* 10. Components & Type Specimen (Doc 02 §4.3 mandatory) */}
+        <GenreOfferings content={content} />
         {(isEnabled('components') || isEnabled('componentsShowcase')) && <ComponentsShowcase />}
         <TypeSpecimen />
       </main>
