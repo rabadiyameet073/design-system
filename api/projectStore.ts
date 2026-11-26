@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 /**
  * Per-user project persistence abstraction.
@@ -16,7 +17,9 @@ export interface ProjectStore {
   remove(userId: string): Promise<void>;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), '.data', 'users');
+const DATA_DIR = process.env.VERCEL
+  ? path.resolve(os.tmpdir(), 'dss-data', 'users')
+  : path.resolve(process.cwd(), '.data', 'users');
 
 function safeId(userId: string): string {
   return userId.replace(/[^a-zA-Z0-9_\-]/g, '_');
@@ -127,6 +130,12 @@ function projectKey(userId: string): string {
 function resolveStore(): ProjectStore {
   if (getRedisConfig()) return restStore;
   if (process.env.NODE_ENV === 'production') {
+    if (process.env.VERCEL) {
+      console.warn(
+        '[DesignSystemStudio] Notice: UPSTASH_REDIS_REST_URL is not configured in Vercel environment variables. Using temporary storage. For multi-region persistent sync, configure Upstash Redis in your Vercel project settings.'
+      );
+      return localFileStore;
+    }
     throw new Error(
       'Production project storage is not configured. Set UPSTASH_REDIS_REST_URL and ' +
         'UPSTASH_REDIS_REST_TOKEN (see .env.example) before starting the server.'
