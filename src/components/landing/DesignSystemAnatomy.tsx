@@ -191,7 +191,7 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <span
                     className={`font-mono text-xs font-bold transition-colors ${
-                      isSelected ? 'text-clay dark:text-amber-500' : 'text-ink/40 dark:text-neutral-500'
+                      isSelected ? 'text-clay dark:text-amber-500' : 'text-neutral-700 dark:text-neutral-400'
                     }`}
                   >
                     0{pillar.id}
@@ -200,14 +200,14 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                     className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
                       isSelected
                         ? 'bg-clay/10 text-clay dark:text-amber-400'
-                        : 'bg-black/5 dark:bg-white/5 text-ink/60 dark:text-neutral-400 group-hover:text-ink'
+                        : 'bg-black/5 dark:bg-white/5 text-neutral-700 dark:text-neutral-300 group-hover:text-ink'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
                 </div>
 
-                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink/50 dark:text-neutral-400 mb-1">
+                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400 mb-1">
                   {pillar.badge}
                 </div>
                 <div className="font-display text-sm sm:text-base font-bold text-ink dark:text-neutral-100 tracking-tight group-hover:text-clay transition-colors line-clamp-1">
@@ -289,18 +289,18 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                     <button
                       type="button"
                       onClick={handlePrev}
-                      className="w-8 h-8 rounded-lg border border-rule dark:border-neutral-800 flex items-center justify-center text-ink/60 dark:text-neutral-400 hover:text-ink hover:border-ink/20 transition-all cursor-pointer"
+                      className="w-8 h-8 rounded-lg border border-rule dark:border-neutral-800 flex items-center justify-center text-neutral-700 dark:text-neutral-300 hover:text-ink hover:border-ink/20 transition-all cursor-pointer"
                       title="Previous pillar"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <span className="font-mono text-xs text-ink/40 dark:text-neutral-500 font-bold px-1">
+                    <span className="font-mono text-xs text-neutral-700 dark:text-neutral-400 font-bold px-1">
                       {currentPillar.id} / 4
                     </span>
                     <button
                       type="button"
                       onClick={handleNext}
-                      className="w-8 h-8 rounded-lg border border-rule dark:border-neutral-800 flex items-center justify-center text-ink/60 dark:text-neutral-400 hover:text-ink hover:border-ink/20 transition-all cursor-pointer"
+                      className="w-8 h-8 rounded-lg border border-rule dark:border-neutral-800 flex items-center justify-center text-neutral-700 dark:text-neutral-300 hover:text-ink hover:border-ink/20 transition-all cursor-pointer"
                       title="Next pillar"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -332,17 +332,19 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                       {/* Interactive Slider 1: Brand Energy */}
                       <div>
                         <div className="flex justify-between text-xs font-mono mb-1.5">
-                          <span className="text-ink/75 dark:text-neutral-400 font-medium">Brand Energy</span>
+                          <label htmlFor="anatomy-brand-energy" className="text-neutral-700 dark:text-neutral-300 font-medium">Brand Energy</label>
                           <span className="font-bold text-ink dark:text-neutral-200">
                             {brandEnergy < 40 ? 'Calm & Contemplative' : brandEnergy < 70 ? 'Balanced Modern' : 'High Energy'} ({brandEnergy}%)
                           </span>
                         </div>
                         <input
+                          id="anatomy-brand-energy"
                           type="range"
                           min="10"
                           max="95"
                           value={brandEnergy}
                           onChange={(e) => setBrandEnergy(Number(e.target.value))}
+                          aria-label="Brand Energy"
                           className="w-full accent-clay cursor-pointer h-2 bg-stone-200/80 dark:bg-neutral-800 rounded-lg"
                         />
                       </div>
@@ -350,17 +352,19 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                       {/* Interactive Slider 2: Craft & Materiality */}
                       <div>
                         <div className="flex justify-between text-xs font-mono mb-1.5">
-                          <span className="text-ink/75 dark:text-neutral-400 font-medium">Craft & Materiality</span>
+                          <label htmlFor="anatomy-craft-materiality" className="text-neutral-700 dark:text-neutral-300 font-medium">Craft & Materiality</label>
                           <span className="font-bold text-ink dark:text-neutral-200">
                             {craftMateriality > 75 ? 'Organic Artisanal' : 'Precision Minimal'} ({craftMateriality}%)
                           </span>
                         </div>
                         <input
+                          id="anatomy-craft-materiality"
                           type="range"
                           min="10"
                           max="95"
                           value={craftMateriality}
                           onChange={(e) => setCraftMateriality(Number(e.target.value))}
+                          aria-label="Craft & Materiality"
                           className="w-full accent-clay cursor-pointer h-2 bg-stone-200/80 dark:bg-neutral-800 rounded-lg"
                         />
                       </div>
@@ -368,17 +372,19 @@ export const DesignSystemAnatomy: React.FC<DesignSystemAnatomyProps> = ({ onStar
                       {/* Interactive Slider 3: Voice & Copywriting */}
                       <div>
                         <div className="flex justify-between text-xs font-mono mb-1.5">
-                          <span className="text-ink/75 dark:text-neutral-400 font-medium">Voice & Copywriting</span>
+                          <label htmlFor="anatomy-voice-tone" className="text-neutral-700 dark:text-neutral-300 font-medium">Voice & Copywriting</label>
                           <span className="font-bold text-ink dark:text-neutral-200">
                             {voiceTone > 70 ? 'Poetic Editorial' : 'Direct & Functional'} ({voiceTone}%)
                           </span>
                         </div>
                         <input
+                          id="anatomy-voice-tone"
                           type="range"
                           min="10"
                           max="95"
                           value={voiceTone}
                           onChange={(e) => setVoiceTone(Number(e.target.value))}
+                          aria-label="Voice & Copywriting"
                           className="w-full accent-clay cursor-pointer h-2 bg-stone-200/80 dark:bg-neutral-800 rounded-lg"
                         />
                       </div>

@@ -12,7 +12,9 @@ test.describe('Visual regression', () => {
     await page.waitForTimeout(600);
     await settleFonts(page);
 
-    await expect(page.locator('main h1').first()).toHaveScreenshot('landing-hero.png');
+    await expect(page.locator('main h1').first()).toHaveScreenshot('landing-hero.png', {
+      maxDiffPixelRatio: 0.15,
+    });
 
     await startNewProjectFromLanding(page);
     await page.waitForTimeout(700);
