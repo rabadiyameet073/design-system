@@ -145,6 +145,7 @@ export interface DesignTokens {
     platformTarget?: 'web' | 'web-app';
     frameworkTarget?: 'tailwind' | 'css' | 'shadcn';
     scripts: string[];
+    activeScript?: string;
     darkMode: 'none' | 'auto' | 'manual';
     updatedAt?: number;
     personality: {
@@ -232,6 +233,7 @@ export const DesignTokensSchema = z.object({
     platformTarget: z.enum(['web', 'web-app']).optional(),
     frameworkTarget: z.enum(['tailwind', 'css', 'shadcn']).optional(),
     scripts: z.array(z.string()).default(['latin']),
+    activeScript: z.string().optional(),
     darkMode: z.enum(['none', 'auto', 'manual']).default('auto'),
     updatedAt: z.number().optional(),
     personality: z.object({

@@ -72,6 +72,14 @@ export interface ResolvedGenreContent {
   highlights: ContentHighlight[];
   quotes: ContentQuote[];
   faqs: { q: string; a: string }[];
+  ui?: Record<string, string>;
+  scriptMeta?: {
+    id: string;
+    label: string;
+    nativeLabel: string;
+    lang: string;
+    dir: 'ltr' | 'rtl';
+  };
 }
 
 interface CategoryCopy {

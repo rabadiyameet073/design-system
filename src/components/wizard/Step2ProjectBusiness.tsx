@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { DesignProject } from '../../types/designSystem';
 import { generateFullTypeScale } from '../../utils/typeScale';
+import { getScriptMeta } from '../../preview/i18n/localizeContent';
 
 interface Step2ProjectBusinessProps {
   project: DesignProject;
@@ -147,16 +148,66 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
       nextScripts = [...currentScripts, scriptId];
     }
 
+    // Determine active script: prefer the script just clicked/toggled, or first non-latin, or latin
+    const activeScript = nextScripts.includes(scriptId)
+      ? scriptId
+      : (nextScripts.find(s => s !== 'latin') || nextScripts[0] || 'latin');
+
+    const scriptMeta = getScriptMeta(activeScript);
+
+    // Auto-update typography roles with native glyph support when non-latin script is selected
+    const currentRoles = project.tokens.typography.roles;
+    const updatedRoles = {
+      ...currentRoles,
+      ...(activeScript !== 'latin' && scriptMeta.fonts ? {
+        display: currentRoles.display ? {
+          ...currentRoles.display,
+          family: scriptMeta.fonts.display,
+          fallback: ['serif']
+        } : {
+          family: scriptMeta.fonts.display,
+          fallback: ['serif'],
+          weight: 700,
+          lineHeight: 1.1,
+          letterSpacing: '-0.02em'
+        },
+        heading: currentRoles.heading ? {
+          ...currentRoles.heading,
+          family: scriptMeta.fonts.heading,
+          fallback: ['sans-serif']
+        } : {
+          family: scriptMeta.fonts.heading,
+          fallback: ['sans-serif'],
+          weight: 600,
+          lineHeight: 1.25,
+          letterSpacing: '-0.01em'
+        },
+        body: currentRoles.body ? {
+          ...currentRoles.body,
+          family: scriptMeta.fonts.body,
+          fallback: ['sans-serif']
+        } : {
+          family: scriptMeta.fonts.body,
+          fallback: ['sans-serif'],
+          weight: 400,
+          lineHeight: 1.5,
+          letterSpacing: '0em'
+        }
+      } : {})
+    };
+
     onChange({
       tokens: {
         ...project.tokens,
         meta: {
           ...project.tokens.meta,
-          scripts: nextScripts
+          scripts: nextScripts,
+          activeScript
         },
         typography: {
           ...project.tokens.typography,
-          scripts: nextScripts
+          scripts: nextScripts,
+          roles: updatedRoles
         }
       }
     });
@@ -543,23 +594,33 @@ export const Step2ProjectBusiness: React.FC<Step2ProjectBusinessProps> = ({ proj
           {AVAILABLE_SCRIPTS.map(script => {
             const isChecked = currentScripts.includes(script.id);
             return (
-              <label
+              <button
                 key={script.id}
+                type="button"
+                role="checkbox"
+                aria-checked={isChecked}
                 onClick={() => toggleScript(script.id)}
-                className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all text-left ${
                   isChecked
                     ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
                     : 'bg-neutral-50 hover:bg-neutral-100 border-neutral-200 text-neutral-800'
                 }`}
               >
                 <span className="text-xs font-medium">{script.label}</span>
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  readOnly
-                  className="rounded text-neutral-900 focus:ring-0"
-                />
-              </label>
+                <div
+                  className={`w-4 h-4 rounded flex items-center justify-center transition-colors ${
+                    isChecked
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-neutral-300 bg-white'
+                  }`}
+                >
+                  {isChecked && (
+                    <svg className="w-2.5 h-2.5 text-white stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </div>
+              </button>
             );
           })}
         </div>

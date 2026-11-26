@@ -210,10 +210,13 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
   // Genre-resolved copy replaces the flagship Aether arrays when supplied.
   // With no content prop the original flagship experience is preserved.
   const brandName = content?.brandName || brandNameProp || 'AETHER Sound & Precision Gear';
-  const headline = headlineProp || content?.headline;
-  const subtitle = subtitleProp || content?.subtitle;
+  const headline = content?.headline || headlineProp;
+  const subtitle = content?.subtitle || subtitleProp;
   const badge = content?.badge || badgeProp || 'Gen-3 Acoustic Reference';
   const effectiveHeroImage = heroImage || content?.heroImage;
+  const isSouthAsianScript = content?.scriptMeta?.lang === 'gu' || content?.scriptMeta?.lang === 'hi';
+  const isArabicScript = content?.scriptMeta?.lang === 'ar';
+  const currencySymbol = isSouthAsianScript ? '₹' : (isArabicScript ? 'د.إ ' : '$');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedColorway, setSelectedColorway] = useState<number>(0);
   const [activePillarIndex, setActivePillarIndex] = useState<number>(0);
@@ -362,7 +365,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
 
   const categoryTabs = content
     ? [
-        { id: 'all', label: 'All' },
+        { id: 'all', label: content.ui?.allProducts || 'All' },
         ...content.items.map((item, index) => ({ id: `item-${index}`, label: item.title.split(' ').slice(0, 2).join(' ') }))
       ]
     : [
@@ -375,12 +378,11 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
 
   const navLinks = content
     ? [
-        { label: content.items[0]?.title || 'Collection', href: '#products' },
-        { label: content.items[1]?.title || 'Details', href: '#products' },
-        { label: content.featuresTitle, href: '#technology' },
-        { label: content.sectionTitle, href: '#specs' },
-        { label: 'Reviews', href: '#reviews' },
-        { label: 'FAQ', href: '#faq' }
+        { label: content.ui?.home || 'Home', href: '#hero' },
+        { label: content.ui?.collection || 'Collection', href: '#products' },
+        { label: content.ui?.features || 'Features', href: '#technology' },
+        { label: content.ui?.reviews || 'Reviews', href: '#reviews' },
+        { label: content.ui?.faq || 'FAQ', href: '#faq' }
       ]
     : [
         { label: 'Headphones', href: '#products' },
@@ -405,7 +407,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
 
   const handleAddToCart = (productName: string) => {
     setCartCount(prev => prev + 1);
-    setAddedToast(`Added "${productName}" to your cart`);
+    setAddedToast(content?.ui?.addedToCartToast ? `${content.ui.addedToCartToast}: "${productName}"` : `Added "${productName}" to your cart`);
     setTimeout(() => setAddedToast(null), 3000);
   };
 
@@ -446,12 +448,10 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
         <aside aria-label="Announcement" className="w-full py-2.5 px-4 bg-[var(--color-bg-surface)] border-b border-[var(--color-border-default)] text-xs text-center font-medium tracking-wide flex items-center justify-center gap-3 text-[var(--color-fg-muted)]">
           <span className="inline-flex items-center gap-1.5 font-semibold text-[var(--color-action-primary)]">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Spring 2026 Release</span>
+            <span>{content?.badge || 'Spring 2026 Release'}</span>
           </span>
           <span className="hidden sm:inline">·</span>
-          <span className="hidden sm:inline">Complimentary Worldwide Express Air on Orders Over $150</span>
-          <span>·</span>
-          <span>30-Day Risk-Free Trial</span>
+          <span>{content?.ui?.announcement || 'Complimentary Worldwide Express Air on Orders Over $150 · 30-Day Risk-Free Trial'}</span>
         </aside>
       )}
 
@@ -480,14 +480,16 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
 
           {/* Actions & Cart Badge */}
           <div className="flex items-center gap-4">
-            <span className="text-xs font-mono font-medium text-[var(--color-fg-muted)] hidden sm:inline">USD ($)</span>
+            <span className="text-xs font-mono font-medium text-[var(--color-fg-muted)] hidden sm:inline">
+              {isSouthAsianScript ? 'INR (₹)' : (isArabicScript ? 'AED (د.إ)' : 'USD ($)')}
+            </span>
             <button
               type="button"
               onClick={() => handleAddToCart(PRODUCTS[0]?.name || brandName)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] hover:bg-[var(--color-bg-default)] transition-all text-xs font-semibold cursor-pointer"
             >
               <ShoppingBag className="w-3.5 h-3.5 text-[var(--color-action-primary)]" />
-              <span>Cart</span>
+              <span>{content?.ui?.cart || 'Cart'}</span>
               <span className="w-4 h-4 rounded-full bg-[var(--color-action-primary)] text-[var(--color-action-primary-fg)] text-[10px] flex items-center justify-center font-bold">
                 {cartCount}
               </span>
@@ -756,11 +758,11 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                     <div className="pt-2 flex items-center justify-between border-t border-[var(--color-border-default)]">
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-lg font-black text-[var(--color-fg-default)]">
-                          ${product.price}
+                          {currencySymbol}{product.price}
                         </span>
                         {product.originalPrice && (
                           <span className="text-xs text-[var(--color-fg-muted)] line-through">
-                            ${product.originalPrice}
+                            {currencySymbol}{product.originalPrice}
                           </span>
                         )}
                       </div>
@@ -772,7 +774,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                         style={getPrimaryBtnStyle()}
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Add</span>
+                        <span>{content?.ui?.addToCart || 'Add'}</span>
                       </button>
                     </div>
                   </div>
@@ -1137,7 +1139,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                   type="email"
                   value={emailInput}
                   onChange={e => setEmailInput(e.target.value)}
-                  placeholder="Enter your email address"
+                  placeholder={content?.ui?.emailPlaceholder || 'Enter your email address'}
                   required
                   className="w-full px-4 py-3 rounded-full text-xs border border-[var(--color-border-default)] bg-[var(--color-bg-default)] text-[var(--color-fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--color-action-primary)]"
                 />
@@ -1146,7 +1148,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
                   className="w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold tracking-wide uppercase transition-all shadow-[var(--shadow-sm)] hover:opacity-90 shrink-0 cursor-pointer"
                   style={getPrimaryBtnStyle()}
                 >
-                  Join VIP
+                  {content?.ui?.subscribe || 'Join VIP'}
                 </button>
               </form>
             )}
@@ -1204,7 +1206,7 @@ export const CommerceTemplate: React.FC<TemplateProps> = ({
         </div>
 
         <div className="max-w-7xl mx-auto pt-6 border-t border-[var(--color-border-default)] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
-          <p>© {new Date().getFullYear()} {brandName}. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {brandName}. {content?.ui?.rightsReserved || 'All rights reserved.'}</p>
           <div className="flex items-center gap-6">
             <a href="#faq" className="hover:text-[var(--color-fg-default)]">Privacy Policy</a>
             <a href="#faq" className="hover:text-[var(--color-fg-default)]">Terms of Service</a>

@@ -47,6 +47,32 @@ function updateFontStylesheets(tokens: DesignTokens) {
     }
   });
 
+  // Ensure non-latin script Google Fonts are reliably loaded with complete glyph subsets
+  const scripts = tokens?.meta?.scripts || [];
+  const activeScript = ((tokens?.meta as any)?.activeScript || scripts.find(s => s.toLowerCase() !== 'latin') || '').toLowerCase();
+  if (activeScript === 'gujarati') {
+    if (!familyWeightsMap.has('Noto Sans Gujarati')) {
+      familyWeightsMap.set('Noto Sans Gujarati', new Set([400, 500, 600, 700]));
+    }
+    if (!familyWeightsMap.has('Noto Serif Gujarati')) {
+      familyWeightsMap.set('Noto Serif Gujarati', new Set([600, 700]));
+    }
+  } else if (activeScript === 'devanagari') {
+    if (!familyWeightsMap.has('Noto Sans Devanagari')) {
+      familyWeightsMap.set('Noto Sans Devanagari', new Set([400, 500, 600, 700]));
+    }
+    if (!familyWeightsMap.has('Poppins')) {
+      familyWeightsMap.set('Poppins', new Set([400, 600, 700]));
+    }
+  } else if (activeScript === 'arabic') {
+    if (!familyWeightsMap.has('Cairo')) {
+      familyWeightsMap.set('Cairo', new Set([400, 600, 700]));
+    }
+    if (!familyWeightsMap.has('Amiri')) {
+      familyWeightsMap.set('Amiri', new Set([400, 700]));
+    }
+  }
+
   if (familyWeightsMap.size === 0) {
     if (activeFontLink) {
       activeFontLink.remove();

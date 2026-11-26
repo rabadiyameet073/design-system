@@ -6,6 +6,8 @@ import { TEMPLATE_REGISTRY } from './templates';
 import { getGenreById, GENRE_CONFIGS } from './genres';
 import { resolveGenreContent } from './genres/genreContent';
 import { auditSemanticContrast } from '../tokens/contrastEngine';
+import { localizeGenreContent, getScriptMeta } from './i18n/localizeContent';
+import { Globe } from 'lucide-react';
 
 export const PreviewFrame: React.FC = () => {
   const [tokens, setTokens] = useState<DesignTokens>(DEFAULT_DESIGN_TOKENS);
@@ -41,9 +43,12 @@ export const PreviewFrame: React.FC = () => {
           if (data.genreId) setGenreId(data.genreId);
           if (data.project) setProjectMeta(data.project);
           const activeMode = data.mode || mode;
-          if (data.mode) setMode(data.mode);
+          if (data.mode) setMode(activeMode);
           if (data.tokens) {
             setTokens(data.tokens);
+            if (data.tokens.meta?.activeScript) {
+              setActiveScriptOverride(null);
+            }
             applyTokens(data.tokens, activeMode);
 
             const semantic = data.tokens.color?.semantic?.[activeMode] || data.tokens.color?.semantic?.light;
@@ -71,6 +76,9 @@ export const PreviewFrame: React.FC = () => {
           }
           if (data.tokens) {
             setTokens(data.tokens);
+            if (data.tokens.meta?.activeScript) {
+              setActiveScriptOverride(null);
+            }
             const nextGenre = data.genreId || data.tokens.meta?.genreId;
             if (nextGenre) {
               setGenreId(nextGenre);
@@ -250,18 +258,52 @@ export const PreviewFrame: React.FC = () => {
     badge: projectMeta.visualDirection?.archetype || projectMeta.visualDirection?.name || undefined
   });
 
-  const { brandName, headline, subtitle, badge } = content;
+  // Multi-script & Writing System Detection (Gujarati, Devanagari, Arabic, Cyrillic, Latin)
+  const selectedScripts: string[] = tokens.meta?.scripts || ['latin'];
+  const [activeScriptOverride, setActiveScriptOverride] = useState<string | null>(null);
 
-  // RTL Internationalization Detection (Doc 04 §Internationalization)
-  const isRtl = Boolean(
-    (tokens.meta as any)?.direction === 'rtl' ||
-    tokens.meta?.scripts?.some(s => ['arabic', 'hebrew', 'farsi', 'urdu', 'ar', 'he'].includes(s.toLowerCase()))
+  const activeScript = (
+    activeScriptOverride ||
+    tokens.meta?.activeScript ||
+    selectedScripts.find(s => s.toLowerCase() !== 'latin') ||
+    selectedScripts[0] ||
+    'latin'
+  ).toLowerCase();
+
+  const localizedContent = localizeGenreContent(
+    content,
+    activeScript,
+    category,
+    customName
   );
 
+  const { brandName, headline, subtitle, badge, scriptMeta } = localizedContent;
+  const isRtl = scriptMeta.dir === 'rtl';
+
   useEffect(() => {
-    document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
-    document.documentElement.lang = isRtl ? 'ar' : 'en';
-  }, [isRtl]);
+    document.documentElement.dir = scriptMeta.dir;
+    document.documentElement.lang = scriptMeta.lang;
+
+    // Dynamically apply native typography for non-latin scripts
+    if (activeScript !== 'latin' && scriptMeta.fonts) {
+      document.documentElement.style.setProperty('--font-display', `"${scriptMeta.fonts.display}", serif`);
+      document.documentElement.style.setProperty('--font-heading', `"${scriptMeta.fonts.heading}", sans-serif`);
+      document.documentElement.style.setProperty('--font-body', `"${scriptMeta.fonts.body}", sans-serif`);
+    } else {
+      document.documentElement.style.removeProperty('--font-display');
+      document.documentElement.style.removeProperty('--font-heading');
+      document.documentElement.style.removeProperty('--font-body');
+    }
+
+    // Ensure Google Fonts for the active script are loaded in preview iframe
+    applyTokens({
+      ...tokens,
+      meta: {
+        ...tokens.meta,
+        activeScript
+      }
+    }, mode);
+  }, [scriptMeta, activeScript, tokens, mode]);
 
   const effectiveComponents = {
     ...tokens.component,
@@ -272,14 +314,42 @@ export const PreviewFrame: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen overflow-x-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="w-full min-h-screen overflow-x-hidden relative" dir={scriptMeta.dir}>
+      {/* Floating Language Script Switcher Pill when multi-script is configured */}
+      {selectedScripts.length > 1 && (
+        <aside
+          aria-label="Language script switcher"
+          className="fixed top-3 right-4 z-50 flex items-center gap-1.5 p-1 rounded-full bg-white/95 dark:bg-neutral-900/95 border border-neutral-300/80 dark:border-neutral-700 shadow-lg backdrop-blur-md text-[11px] font-bold"
+        >
+          <Globe className="w-3.5 h-3.5 ml-1.5 text-neutral-600 dark:text-neutral-400" />
+          {selectedScripts.map((s) => {
+            const meta = getScriptMeta(s);
+            const isActive = activeScript === s.toLowerCase();
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setActiveScriptOverride(s.toLowerCase())}
+                className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-2xs font-bold'
+                    : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900'
+                }`}
+              >
+                {meta.nativeLabel || s}
+              </button>
+            );
+          })}
+        </aside>
+      )}
+
       <TemplateComponent
-        content={content}
+        content={localizedContent}
         brandName={brandName}
         headline={headline}
         subtitle={subtitle}
         badge={badge}
-        heroImage={content.heroImage}
+        heroImage={localizedContent.heroImage}
         genreId={resolvedGenreId}
         components={effectiveComponents}
         buttonStyle={effectiveComponents.buttonStyle}
