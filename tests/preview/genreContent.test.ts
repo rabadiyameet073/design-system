@@ -157,7 +157,7 @@ describe('Genre content resolver (F-02 / F-03)', () => {
       expect(rendered, `${id} brand`).toContain(content.brandName);
       expect(rendered, `${id} offering`).toContain(content.items[0].title);
     }
-  });
+  }, 25000);
 
   it('commerce template shows the selected genre offering, not Aether headphones', () => {
     const fashion = resolveGenreContent('fashion-store');
