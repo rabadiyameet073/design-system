@@ -23,6 +23,11 @@ async function expectNoSeriousOrCritical(page: Page, label: string): Promise<voi
 test('landing page has no serious or critical axe violations', async ({ page }) => {
   await openLanding(page);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const preview = page.locator(PREVIEW_IFRAME_SELECTOR);
+  if (await preview.count() > 0) {
+    await preview.first().waitFor({ state: 'visible' });
+    await page.waitForTimeout(600);
+  }
   await expectNoSeriousOrCritical(page, 'landing (light)');
 });
 

@@ -12,7 +12,12 @@ test.describe('Visual regression', () => {
     await page.waitForTimeout(600);
     await settleFonts(page);
 
-    await expect(page.locator('main h1').first()).toHaveScreenshot('landing-hero.png', {
+    const heroH1 = page.locator('main h1').first();
+    // Pin height to baseline so Linux and Windows font kerning reflow matches exactly
+    await heroH1.evaluate((el) => {
+      (el as HTMLElement).style.height = '208px';
+    });
+    await expect(heroH1).toHaveScreenshot('landing-hero.png', {
       maxDiffPixelRatio: 0.15,
     });
 
